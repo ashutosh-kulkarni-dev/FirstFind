@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Inter", Arial, sans-serif; background: #eef2f4; }
+  a { color: #1478d1; text-decoration: none; }
+  a:hover { color: #0e5aa8; }
+  button { font: inherit; cursor: pointer; }
+  input { font: inherit; }
+  ::-webkit-scrollbar { width: 9px; }
+  ::-webkit-scrollbar-thumb { background: #cdd6de; border-radius: 6px; }
+  @keyframes chUp { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: none; } }
+  @keyframes chDot { 0%,60%,100% { transform: translateY(0); opacity:.4; } 30% { transform: translateY(-4px); opacity:1; } }
+</style>
+</helmet>
+
+<main style="width:100%; height:100vh; display:flex; flex-direction:column; background:#eef2f4; overflow:hidden;">
+
+  <nav style="display:flex; align-items:center; height:60px; padding:0 26px; background:#0f1a2b; color:#fff; flex-shrink:0;">
+    <a href="FirstFind Landing.dc.html" style="color:#fff; font-family:'Anton',sans-serif; font-size:23px; letter-spacing:-.5px;">FIRSTFIND</a>
+    <div style="display:flex; gap:22px; margin-left:40px;">
+      <a href="FirstFind Explore.dc.html" style="color:rgba(255,255,255,.72); font-size:13px; font-weight:500;" style-hover="color:#fff;">Explore</a>
+      <a href="FirstFind Chat.dc.html" style="color:#fff; font-size:13px; font-weight:600; border-bottom:2px solid #33a0e6; padding-bottom:2px;">Assistant</a>
+      <a href="#" style="color:rgba(255,255,255,.72); font-size:13px; font-weight:500;" style-hover="color:#fff;">Zones</a>
+    </div>
+    <div style="margin-left:auto; display:flex; align-items:center; gap:14px;">
+      <span style="color:rgba(255,255,255,.72); font-size:13px;">Hi, Aditi</span>
+      <button style="padding:8px 15px; border:0; border-radius:22px; background:#fff; color:#111; font-size:12px; font-weight:700;" style-hover="background:#e9f2fb;">Log out</button>
+    </div>
+  </nav>
+
+  <div style="flex:1; display:flex; flex-direction:column; align-items:center; min-height:0;">
+
+    <div style="width:100%; max-width:720px; padding:20px 24px 6px; flex-shrink:0;">
+      <div style="font-family:'Anton',sans-serif; font-size:26px; letter-spacing:-.5px; color:#0f1a2b;">STYLE ASSISTANT</div>
+      <p style="color:#6c7885; font-size:13px; margin-top:2px;">One assistant, three brains — search, recommend, and map, in plain language.</p>
+    </div>
+
+    <div ref="{{ setThread }}" style="flex:1; width:100%; max-width:720px; overflow-y:auto; padding:14px 24px 8px; display:flex; flex-direction:column; gap:16px; min-height:0;"></div>
+
+    <div style="width:100%; max-width:720px; padding:6px 24px 4px; display:flex; flex-wrap:wrap; gap:8px; flex-shrink:0;">
+      <sc-for list="{{ chips }}" as="chip" hint-placeholder-count="4">
+        <button onClick="{{ chip.send }}" style="padding:7px 13px; border:1px solid #d3dce4; border-radius:18px; background:#fff; color:#3a4652; font-size:12.5px; font-weight:500; transition:all .18s ease;" style-hover="border-color:#33a0e6; color:#0e5aa8; background:#f2f9ff;">{{ chip.label }}</button>
+      </sc-for>
+    </div>
+
+    <div style="width:100%; max-width:720px; padding:10px 24px 22px; flex-shrink:0;">
+      <form onSubmit="{{ submit }}" style="display:flex; gap:10px; align-items:center; background:#fff; border:1px solid #d7dee4; border-radius:26px; padding:6px 6px 6px 18px; box-shadow:0 3px 12px rgba(15,26,43,.06);">
+        <input ref="{{ setInput }}" placeholder="Ask about stores, areas, budgets…" style="flex:1; border:0; outline:none; font-size:14px; background:transparent; color:#1a2330;">
+        <button type="submit" style="display:grid; place-items:center; width:40px; height:40px; border:0; border-radius:50%; background:#0f1a2b; color:#fff; font-size:17px; transition:transform .18s ease, background .18s ease;" style-hover="transform:scale(1.06); background:#1c3252;">↑</button>
+      </form>
+    </div>
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  storeBank = [
+    { name:"Retrospect", area:"Indiranagar", cat:"Vintage", rating:4.8, price:"\u20b9\u20b9", open:true },
+    { name:"The Rework Room", area:"Jayanagar", cat:"Designer resale", rating:4.9, price:"\u20b9\u20b9\u20b9", open:false },
+    { name:"Second Wind", area:"Koramangala", cat:"Streetwear", rating:4.6, price:"\u20b9\u20b9", open:true },
+    { name:"Curated Chaos", area:"HSR Layout", cat:"Vintage", rating:4.7, price:"\u20b9", open:false },
+    { name:"Nine Lives", area:"Jayanagar", cat:"Streetwear", rating:4.3, price:"\u20b9", open:true },
+    { name:"Heirloom", area:"Malleshwaram", cat:"Vintage", rating:4.5, price:"\u20b9\u20b9", open:false },
+  ];
+  state = { msgs: [], typing: false };
+  setThread=e=>{this.threadEl=e}; setInput=e=>{this.inputEl=e};
+
+  componentDidMount(){
+    this.setState({ msgs:[{ who:"bot", text:"Hi Aditi \u2014 I'm your FirstFind style assistant. Tell me what you're after, or tap a suggestion below.", intent:"help", stores:[] }] });
+    setTimeout(()=>this.paint(),30);
+  }
+  componentDidUpdate(){ this.paint(); }
+
+  color(r){ return r>=4.5?"#22c55e":r>=4.0?"#84cc16":r>=3.5?"#f59e0b":"#f43f5e"; }
+
+  route(text){
+    const t=text.toLowerCase();
+    const has=(...w)=>w.some(x=>t.includes(x));
+    if(has("indiranagar","koramangala","jayanagar","hsr","malleshwaram","mg road","area","near"))
+      return {intent:"find_by_area", reply:"Here are top-rated stores in that area:", pick:s=>true, map:true};
+    if(has("cheap","budget","under","\u20b9","affordable"))
+      return {intent:"find_by_budget", reply:"These fit a tighter budget \u2014 great finds, lower price bands:", pick:s=>s.price.length<=2, map:false};
+    if(has("open","now","tonight"))
+      return {intent:"find_open_now", reply:"Open right now near you:", pick:s=>s.open, map:true};
+    if(has("vintage","streetwear","designer","retro"))
+      return {intent:"find_by_category", reply:"Matching that style category:", pick:s=>t.includes(s.cat.split(" ")[0].toLowerCase()), map:false};
+    if(has("best","recommend","top","suggest"))
+      return {intent:"recommendation", reply:"Based on ratings and community sentiment, I'd start here:", pick:s=>s.rating>=4.5, map:true};
+    if(has("zone","cluster","walk","radius"))
+      return {intent:"zone_discovery", reply:"There's a dense thrift cluster in Jayanagar \u2014 five stores within a 1.5 km walk:", pick:s=>s.area==="Jayanagar", map:true};
+    return {intent:"general", reply:"Here are a few standouts across Bengaluru you might like:", pick:s=>s.rating>=4.3, map:false};
+  }
+
+  send=(text)=>{
+    if(!text||!text.trim())return;
+    const msgs=[...this.state.msgs,{who:"user",text:text.trim()}];
+    this.setState({msgs,typing:true});
+    const r=this.route(text);
+    setTimeout(()=>{
+      const stores=this.storeBank.filter(r.pick).slice(0,4);
+      this.setState({typing:false,msgs:[...msgs,{who:"bot",text:r.reply,intent:r.intent,stores,map:r.map&&stores.length>0}]});
+    },1050);
+  };
+
+  submit=(e)=>{ e.preventDefault(); const v=this.inputEl?this.inputEl.value:""; if(this.inputEl)this.inputEl.value=""; this.send(v); };
+
+  paint(){
+    const host=this.threadEl; if(!host)return;
+    host.innerHTML="";
+    this.state.msgs.forEach(m=>host.appendChild(this.bubble(m)));
+    if(this.state.typing)host.appendChild(this.typing());
+    host.scrollTop=host.scrollHeight;
+  }
+
+  bubble(m){
+    const wrap=document.createElement("div");
+    const mine=m.who==="user";
+    wrap.style.cssText=`display:flex; flex-direction:column; align-items:${mine?"flex-end":"flex-start"}; animation:chUp .28s ease both;`;
+    const b=document.createElement("div");
+    b.style.cssText=`max-width:78%; padding:11px 15px; font-size:13.5px; line-height:1.5; border-radius:16px; ${mine?"background:#0f1a2b; color:#fff; border-bottom-right-radius:5px;":"background:#fff; color:#1a2330; border:1px solid #e4e9ee; border-bottom-left-radius:5px;"}`;
+    b.textContent=m.text;
+    wrap.appendChild(b);
+    if(m.stores&&m.stores.length){
+      const grid=document.createElement("div");
+      grid.style.cssText="display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:9px; max-width:78%;";
+      m.stores.forEach(s=>grid.appendChild(this.card(s)));
+      wrap.appendChild(grid);
+    }
+    if(m.map){
+      const mm=document.createElement("a");
+      mm.href="FirstFind Explore.dc.html";
+      mm.style.cssText="display:flex; align-items:center; gap:8px; margin-top:9px; max-width:78%; padding:10px 13px; border-radius:12px; overflow:hidden; position:relative; background:#141d2b; color:#cfe4f5; font-size:12.5px; font-weight:600; text-decoration:none;";
+      mm.innerHTML=`<span style="display:inline-grid; place-items:center; width:26px; height:26px; border-radius:7px; background:#33a0e6; color:#fff;">\u25c9</span> View these on the full map \u2192
+        <span style="position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px); background-size:18px 18px; pointer-events:none;"></span>`;
+      wrap.appendChild(mm);
+    }
+    if(m.intent){
+      const tag=document.createElement("div");
+      tag.style.cssText="margin-top:6px; font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:#9aa5b1;";
+      tag.textContent="intent \u00b7 "+m.intent;
+      wrap.appendChild(tag);
+    }
+    return wrap;
+  }
+
+  card(s){
+    const c=this.color(s.rating);
+    const el=document.createElement("a");
+    el.href="#";
+    el.style.cssText="display:block; padding:11px 12px; border:1px solid #e4e9ee; border-radius:12px; background:#fff; text-decoration:none; transition:border-color .18s ease, transform .18s ease;";
+    el.onmouseenter=()=>{el.style.borderColor="#33a0e6"; el.style.transform="translateY(-2px)";};
+    el.onmouseleave=()=>{el.style.borderColor="#e4e9ee"; el.style.transform="none";};
+    el.innerHTML=`
+      <div style="font-family:'Anton',sans-serif; font-size:15px; letter-spacing:-.2px; color:#0f1a2b;">${s.name.toUpperCase()}</div>
+      <div style="margin-top:2px; color:#6c7885; font-size:11.5px;">${s.area} \u00b7 ${s.cat}</div>
+      <div style="margin-top:7px; display:flex; align-items:center; gap:6px;">
+        <span style="display:inline-grid; place-items:center; padding:2px 7px; border-radius:11px; background:${c}22; color:${c}; font-size:11px; font-weight:700;">\u2b50 ${s.rating}</span>
+        <span style="color:#4a5560; font-size:11px; font-weight:600;">${s.price}</span>
+        <span style="margin-left:auto; font-size:10.5px; font-weight:600; color:${s.open?'#16a34a':'#94a3b8'};">${s.open?'Open':'Closed'}</span>
+      </div>`;
+    return el;
+  }
+
+  typing(){
+    const w=document.createElement("div");
+    w.style.cssText="display:flex; animation:chUp .2s ease both;";
+    w.innerHTML=`<div style="display:flex; gap:4px; padding:13px 16px; background:#fff; border:1px solid #e4e9ee; border-radius:16px; border-bottom-left-radius:5px;">
+      <span style="width:7px;height:7px;border-radius:50%;background:#9aa5b1;animation:chDot 1.1s infinite;"></span>
+      <span style="width:7px;height:7px;border-radius:50%;background:#9aa5b1;animation:chDot 1.1s infinite .18s;"></span>
+      <span style="width:7px;height:7px;border-radius:50%;background:#9aa5b1;animation:chDot 1.1s infinite .36s;"></span></div>`;
+    return w;
+  }
+
+  renderVals(){
+    const labels=["Vintage under \u20b9500","Best stores in Indiranagar","What's open now?","Streetwear near me","Recommend me a store"];
+    return {
+      chips:labels.map(l=>({label:l, send:()=>this.send(l)})),
+      submit:this.submit, setThread:this.setThread, setInput:this.setInput
+    };
+  }
+}
+</script>
+</body>
+</html>

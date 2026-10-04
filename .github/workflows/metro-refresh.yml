@@ -1,0 +1,50 @@
+name: Refresh Metro Data
+
+on:
+  schedule:
+    # Every Monday at 03:00 UTC — quiet time, avoids Overpass peak load
+    - cron: '0 3 * * 1'
+  workflow_dispatch:  # allow manual trigger from GitHub Actions UI
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests truststore
+
+      - name: Run metro refresh script
+        run: python scripts/refresh_metro.py
+
+      - name: Check if data changed
+        id: diff
+        run: |
+          if git diff --quiet data/metro_stations_blr.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create PR if data changed
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "data: refresh Namma Metro stations from OSM"
+          branch: auto/metro-refresh
+          title: "[auto] Refresh Namma Metro data"
+          body: |
+            Automated weekly refresh of `data/metro_stations_blr.json` from OpenStreetMap Overpass API.
+
+            Review the diff to confirm station counts and line coverage look correct before merging.
+          labels: data, automated

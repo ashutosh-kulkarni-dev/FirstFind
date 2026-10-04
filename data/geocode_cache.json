@@ -1,0 +1,392 @@
+{
+ "Koramangala, Bengaluru, Karnataka": {
+  "lat": 12.9357366,
+  "lng": 77.624081,
+  "matched": "Koramangala, Sri Lakshmi Devi Ward, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560095, India"
+ },
+ "Indiranagar, Bengaluru, Karnataka": {
+  "lat": 12.9732913,
+  "lng": 77.6404672,
+  "matched": "Indiranagar, Jogpalya, Bengaluru Central City Corporation, Bengaluru, Bangalore East, Bengaluru Urban, Karnataka, 560008, India"
+ },
+ "Kothanur, Bengaluru, Karnataka": {
+  "lat": 12.8701259,
+  "lng": 77.5820178,
+  "matched": "Kothanur, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, India"
+ },
+ "Sivanchetti Gardens, Bengaluru, Karnataka": {
+  "lat": 12.9845768,
+  "lng": 77.6131984,
+  "matched": "Sivanchetti Gardens, K Kamaraj Ward, Bengaluru Central City Corporation, Bengaluru, Bangalore North, Bengaluru Urban, Karnataka, 560042, India"
+ },
+ "JP Nagar, Bengaluru, Karnataka": {
+  "lat": 12.9096941,
+  "lng": 77.5866067,
+  "matched": "JP Nagar, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, India"
+ },
+ "BTM 1st Stage,Gangothri Circle, Bengaluru, Karnataka": null,
+ "Gangothri Circle, Bengaluru, Karnataka": {
+  "lat": 12.9196341,
+  "lng": 77.6129048,
+  "matched": "Gangothri Circle, 20th Main Road, Maruthi Nagara, BTM Layout 1st Stage, Madiwala, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560068, India"
+ },
+ "Chandra Layout, Bengaluru, Karnataka": {
+  "lat": 12.955333,
+  "lng": 77.5238903,
+  "matched": "Chandra Layout, Bengaluru West City Corporation, Bengaluru, Bangalore North, Bengaluru Urban, Karnataka, India"
+ },
+ "Rajajinagar, Bengaluru, Karnataka": {
+  "lat": 13.0005232,
+  "lng": 77.5496166,
+  "matched": "Rajajinagar, Chord Road, Nagapura, Mahalakshmipuram, Nagapura, Bengaluru West City Corporation, Bengaluru, Bangalore North, Bengaluru Urban, Karnataka, 560086, India"
+ },
+ "Lingarajapuram, Bengaluru, Karnataka": {
+  "lat": 13.0093949,
+  "lng": 77.6267881,
+  "matched": "Lingarajapuram, Maruthi Seva Nagara, Bengaluru North City Corporation, Bengaluru, Bangalore North, Bengaluru Urban, Karnataka, 560084, India"
+ },
+ "Church Street, Bengaluru, Karnataka": {
+  "lat": 12.9734314,
+  "lng": 77.6517971,
+  "matched": "Church Street, New Thippasandra, Bengaluru Central City Corporation, Bengaluru, Bangalore East, Bengaluru Urban, Karnataka, 560075, India"
+ },
+ "BTM Layout, Bengaluru, Karnataka": {
+  "lat": 12.9140008,
+  "lng": 77.6102821,
+  "matched": "BTM Layout, Viswamanava Kuvempu Ward, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560076, India"
+ },
+ "Shivaji Nagar, Bengaluru, Karnataka": {
+  "lat": 12.9883249,
+  "lng": 77.6004488,
+  "matched": "Shivaji Nagar Police Quarters, Benson Town, Jayamahal, Bengaluru Central City Corporation, Bengaluru, Bangalore North, Bengaluru Urban, Karnataka, India"
+ },
+ "Kr Market/chikpet, Bengaluru, Karnataka": null,
+ "J.P Nagar 5th Phase, Bengaluru, Karnataka": null,
+ "Mathikere Extension, Bengaluru, Karnataka": null,
+ "Shampura main road, Bengaluru, Karnataka": {
+  "lat": 13.0288569,
+  "lng": 77.6157713,
+  "matched": "Shampura Main Road, Rashad Nagar, Govindapura, Bengaluru North City Corporation, Bengaluru, Bangalore North, Bengaluru Urban, Karnataka, 560045, India"
+ },
+ "Pattandur Agrahara Maithri Layout 4th Cross Rd,Whitefield, Bengaluru, Karnataka": null,
+ "Whitefield, Bengaluru, Karnataka": {
+  "lat": 12.9957428,
+  "lng": 77.7579489,
+  "matched": "Whitefield (Kadugodi), SH35, Belathur, Bengaluru East City Corporation, Bengaluru, Bangalore East, Bengaluru Urban, Karnataka, 560067, India"
+ },
+ "Narayan Pillai Street, Commercial Street Cross, Bengaluru, Karnataka": null,
+ "Commercial Street Cross, Bengaluru, Karnataka": null,
+ "HillCrest,House of Hiranandani, Bengaluru, Karnataka": null,
+ "House of Hiranandani, Bengaluru, Karnataka": {
+  "lat": 12.9723543,
+  "lng": 77.6409111,
+  "matched": "House of Hiranandani, 757B, 100 Feet Road, Indiranagar, Jogpalya, Bengaluru Central City Corporation, Bengaluru, Bangalore East, Bengaluru Urban, Karnataka, 560008, India"
+ },
+ "211, Rhs Plaza, 253, 14th Main Rd, Sector 7, Hsr Layout, Bengaluru, Bengaluru, Karnataka": null,
+ "Bengaluru, Bengaluru, Karnataka": {
+  "lat": 12.9767936,
+  "lng": 77.590082,
+  "matched": "Bengaluru, Bangalore North, Bengaluru Urban, Karnataka, India"
+ },
+ "Gullama Road,Kacharakanahalli, Bengaluru, Karnataka": null,
+ "Kacharakanahalli, Bengaluru, Karnataka": {
+  "lat": 13.0222071,
+  "lng": 77.6319093,
+  "matched": "Kacharakanahalli, Bengaluru North City Corporation, Bengaluru, Bangalore North, Bengaluru Urban, Karnataka, India"
+ },
+ "Krishna Gardens,Kattigenahalli, Bengaluru, Karnataka": null,
+ "Kattigenahalli, Bengaluru, Karnataka": {
+  "lat": 13.1177735,
+  "lng": 77.6261222,
+  "matched": "Kattigenahalli, Bengaluru, Yelahanka taluku, Bengaluru Urban, Karnataka, 560064, India"
+ },
+ "Taverekere,Bengaluru, Bengaluru, Karnataka": null,
+ "3rd Phase,JP Nagar, Bengaluru, Karnataka": {
+  "lat": 12.9100191,
+  "lng": 77.5925018,
+  "matched": "Karnataka Bank, 9th Cross Road, KSRTC Layout, JP Nagar 2nd Phase, Shakambarinagara, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560078, India"
+ },
+ "Am Street,Kalasipalaya, Bengaluru, Karnataka": {
+  "lat": 12.9605656,
+  "lng": 77.5767802,
+  "matched": "E Street, Kalasipalyam, D.V Gundappa Ward, Bengaluru Central City Corporation, Bengaluru, Bangalore North, Bengaluru Urban, Karnataka, 560002, India"
+ },
+ "Hayanth Street,Kalasipalaya, Bengaluru, Karnataka": null,
+ "Kalasipalaya, Bengaluru, Karnataka": {
+  "lat": 12.958189,
+  "lng": 77.5768148,
+  "matched": "Kalasipalyam, D.V Gundappa Ward, Bengaluru Central City Corporation, Bengaluru, Bangalore North, Bengaluru Urban, Karnataka, 560002, India"
+ },
+ "Koramangala 8th Block, Bengaluru, Karnataka": {
+  "lat": 12.9408685,
+  "lng": 77.617338,
+  "matched": "Koramangala 8th Block, Adugodi, A Adugodi, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, India"
+ },
+ "Bannerghata Road,Arekere, Bengaluru, Karnataka": null,
+ "Arekere, Bengaluru, Karnataka": {
+  "lat": 12.8872086,
+  "lng": 77.5960493,
+  "matched": "Arekere, Doresanipalya, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560076, India"
+ },
+ "27th Main road,HSR Layout, Bengaluru, Karnataka": {
+  "lat": 12.9100899,
+  "lng": 77.6518771,
+  "matched": "27th Main Road, Parangipalya, Sector 2, HSR Layout, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560102, India"
+ },
+ "Ramaswamipalaya Jayamahal, Bengaluru, Karnataka": null,
+ "Electronic City, Bengaluru, Karnataka": {
+  "lat": 12.8487599,
+  "lng": 77.648253,
+  "matched": "Prime City Apartments, Electronic City, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560100, India"
+ },
+ "SG Palya,Bengaluru, Bengaluru, Karnataka": {
+  "lat": 12.9318731,
+  "lng": 77.6076887,
+  "matched": "Srinivasa Theatre, SG palaya, 7th Cross Road, Sadgunte Palya, Chikka Adugodi, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560029, India"
+ },
+ "Electronic City,Bengaluru, Bengaluru, Karnataka": {
+  "lat": 12.8487599,
+  "lng": 77.648253,
+  "matched": "Prime City Apartments, Electronic City, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560100, India"
+ },
+ "Richards Town,Bengaluru, Bengaluru, Karnataka": {
+  "lat": 13.0042369,
+  "lng": 77.6170601,
+  "matched": "Richards Town, Sagayapuram, Bengaluru North City Corporation, Bengaluru, Bangalore North, Bengaluru Urban, Karnataka, 560005, India"
+ },
+ "RBI Layout,JP Nagar, Bengaluru, Karnataka": null,
+ "1st Cross,Kallappa Block,Sriramapura, Bengaluru, Karnataka": null,
+ "Sriramapura, Bengaluru, Karnataka": {
+  "lat": 12.8715399,
+  "lng": 77.6842714,
+  "matched": "Sriramapura, Anekal, Bengaluru Urban, Karnataka, India"
+ },
+ "Bapuji,Nagar, Bengaluru, Karnataka": {
+  "lat": 12.955015,
+  "lng": 77.540974,
+  "matched": "Bapuji Nagar, 2nd Main Road, Bapuji Nagar, Bapuji Nagara, Bengaluru West City Corporation, Bengaluru, Bangalore North, Bengaluru Urban, Karnataka, 566026, India"
+ },
+ "Bendre Nagar, Bengaluru, Karnataka": {
+  "lat": 12.910206,
+  "lng": 77.5639218,
+  "matched": "Bendre Nagar, Kumaraswamy Layout, Gowdanapalya, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560070, India"
+ },
+ "Opp Old Zara Churchgate, Bengaluru, Karnataka": null,
+ "Commercial Street, Bengaluru, Karnataka": {
+  "lat": 12.9822157,
+  "lng": 77.6082513,
+  "matched": "Commercial Street, Commercial Street Shopping Area, Shivajinagar, Bengaluru Central City Corporation, Bengaluru, Bangalore North, Bengaluru Urban, Karnataka, 560001, India"
+ },
+ "Jayanagar 4th Block, Bengaluru, Karnataka": {
+  "lat": 12.9265737,
+  "lng": 77.5835041,
+  "matched": "Jayanagar 4th Block, Tilak Nagara, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560011, India"
+ },
+ "Rest House Road, Bengaluru, Karnataka": {
+  "lat": 12.9737631,
+  "lng": 77.6064116,
+  "matched": "Rest House Road, Ashok Nagar, Ashokanagar, Bengaluru Central City Corporation, Bengaluru, Bangalore North, Bengaluru Urban, Karnataka, 560025, India"
+ },
+ "Attiguppe, Bengaluru, Karnataka": {
+  "lat": 12.9618581,
+  "lng": 77.5335932,
+  "matched": "Attiguppe, Chord Road, Hampi Nagar, Bengaluru West City Corporation, Bengaluru, Bangalore North, Bengaluru Urban, Karnataka, 560104, India"
+ },
+ "Hbr Layout, Bengaluru, Karnataka": {
+  "lat": 13.031992,
+  "lng": 77.6280789,
+  "matched": "HBR Layout, Bengaluru North City Corporation, Bengaluru, Bangalore North, Bengaluru Urban, Karnataka, India"
+ },
+ "Muhammed Hayat Street,Near KR Market Bengaluru, Bengaluru, Karnataka": null,
+ "Near KR Market Bengaluru, Bengaluru, Karnataka": null,
+ "Beside Sindhoor Caf\u00e9,Madiwala, Bengaluru, Karnataka": null,
+ "Madiwala, Bengaluru, Karnataka": {
+  "lat": 12.9218931,
+  "lng": 77.6177348,
+  "matched": "Madiwala, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, India"
+ },
+ "Ibrahim Saheeb Street,Shivajinagar, Bengaluru, Karnataka": null,
+ "Shivajinagar, Bengaluru, Karnataka": {
+  "lat": 12.9855286,
+  "lng": 77.6054496,
+  "matched": "Shivajinagar, Bengaluru Central City Corporation, Bengaluru, Bangalore North, Bengaluru Urban, Karnataka, 560051, India"
+ },
+ "Bengaluru,HSR, Bengaluru, Karnataka": {
+  "lat": 12.9086277,
+  "lng": 77.6279831,
+  "matched": "Electronic City Flyover, Sector 7, HSR Layout, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560068, India"
+ },
+ "Near Merry Berry fashions,Jayanagar 4th Block, Bengaluru, Karnataka": null,
+ "Malleshwaram 8th cross street shopping, Bengaluru, Karnataka": null,
+ "Kamaraj Rd,Tasker Town,Shivaji Nagar,Bengaluru, Bengaluru, Karnataka": null,
+ "nan, Bengaluru, Karnataka": {
+  "lat": 12.935001,
+  "lng": 77.5931866,
+  "matched": "Nan Mane, 23, 4th Cross Road, Canara Bank Colony, Jayanagar East, BHEL Ward, Bengaluru Central City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560011, India"
+ },
+ "Bengaluru,near complex kr market, Bengaluru, Karnataka": null,
+ "near complex kr market, Bengaluru, Karnataka": null,
+ "Bhavani Nagar,Sg Palya, Bengaluru, Karnataka": null,
+ "Sg Palya, Bengaluru, Karnataka": {
+  "lat": 12.9328434,
+  "lng": 77.6094915,
+  "matched": "Vilage hyper market, Bharathi layout, 1st cross road, SG palya, 4th Cross Road, Sadgunte Palya, S.G Palya, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560029, India"
+ },
+ "SG Palya,Bharathi Layout, Bengaluru, Karnataka": null,
+ "Bharathi Layout, Bengaluru, Karnataka": {
+  "lat": 12.9328434,
+  "lng": 77.6094915,
+  "matched": "Vilage hyper market, Bharathi layout, 1st cross road, SG palya, 4th Cross Road, Sadgunte Palya, S.G Palya, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560029, India"
+ },
+ "SG Palya main road,Bharathi Layout, Bengaluru, Karnataka": null,
+ "SG Palya main road,Bhavani nagar, Bengaluru, Karnataka": null,
+ "Bhavani nagar, Bengaluru, Karnataka": {
+  "lat": 13.0020764,
+  "lng": 77.619925,
+  "matched": "Bhavani Nilayam, 29, Lazar Road, Lazar Layout, Frazer Town, Pulakeshi Nagar, Bengaluru North City Corporation, Bengaluru, Bangalore North, Bengaluru Urban, Karnataka, 560005, India"
+ },
+ "Near Srinivasa theatre,Venkateswara layout,SG Palya, Bengaluru, Karnataka": null,
+ "SG Palya, Bengaluru, Karnataka": {
+  "lat": 12.9328434,
+  "lng": 77.6094915,
+  "matched": "Vilage hyper market, Bharathi layout, 1st cross road, SG palya, 4th Cross Road, Sadgunte Palya, S.G Palya, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560029, India"
+ },
+ "SG Palya main road,Venkateswara layout, Bengaluru, Karnataka": null,
+ "Venkateswara layout, Bengaluru, Karnataka": {
+  "lat": 12.9093844,
+  "lng": 77.6378877,
+  "matched": "Sri Venkateswara Garments, 253, 14th Main Road, Sector 7, HSR Layout, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560102, India"
+ },
+ "3rd Cross Rd,Venkatewara layout, Bengaluru, Karnataka": null,
+ "Venkatewara layout, Bengaluru, Karnataka": null,
+ "SG Palya main road,Opposite to Lakshmi theatre, Bengaluru, Karnataka": null,
+ "Opposite to Lakshmi theatre, Bengaluru, Karnataka": null,
+ "Drc Post,Venkateswara layout,Koramangala, Bengaluru, Karnataka": null,
+ "Taverekere,SG Palya,Opposite Christ Backgate, Bengaluru, Karnataka": null,
+ "Opposite Christ Backgate, Bengaluru, Karnataka": null,
+ "Jayanagar,Bengaluru, Bengaluru, Karnataka": {
+  "lat": 12.9292731,
+  "lng": 77.5824229,
+  "matched": "Jayanagar, Tilak Nagara, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560011, India"
+ },
+ "Malleshwaram, Bengaluru, Karnataka": {
+  "lat": 13.0027353,
+  "lng": 77.5703253,
+  "matched": "Malleswaram, Malleshwaram, Bengaluru West City Corporation, Bengaluru, Bangalore North, Bengaluru Urban, Karnataka, 560003, India"
+ },
+ "Drc Post,Venkateswara layout,SG Palya, Bengaluru, Karnataka": null,
+ "1st Main road,Taverkere,S G Palya, Bengaluru, Karnataka": null,
+ "S G Palya, Bengaluru, Karnataka": {
+  "lat": 12.9324773,
+  "lng": 77.6046399,
+  "matched": "S.G Palya, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560029, India"
+ },
+ "Taverekere Main Rd,Krishna Murthi layout, S G Palya, Bengaluru, Karnataka": null,
+ "Taverekere Main Rd,2and Stage, S G Palya, Bengaluru, Karnataka": null,
+ "Taverekere main rd,near Balaji Theatre,S G Palya, Bengaluru, Karnataka": null,
+ "Taverekere Main road,Opposite to health india hospital, Bengaluru, Karnataka": null,
+ "Opposite to health india hospital, Bengaluru, Karnataka": null,
+ "Muni Reddy Building,Taverekere main road,Near health india hospital, Bengaluru, Karnataka": null,
+ "Near health india hospital, Bengaluru, Karnataka": null,
+ "1st floor,Taverkkere main road,opposite to Mangaluru lunch home, Bengaluru, Karnataka": null,
+ "opposite to Mangaluru lunch home, Bengaluru, Karnataka": null,
+ "11,6th cross road,Taverekere main road,Btm Ist stage, Bengaluru, Karnataka": null,
+ "Btm Ist stage, Bengaluru, Karnataka": null,
+ "12,2and cross road,Maruthi nagar 1st stage,Taverekere main rd, Bengaluru, Karnataka": null,
+ "Taverekere main rd, Bengaluru, Karnataka": null,
+ "Suree's Blr residence,Btm 1st stage,Taverekere,Madiwala, Bengaluru, Karnataka": null,
+ "Taverekere,Cashier Layout,1st Stage, Bengaluru, Karnataka": null,
+ "1st Stage, Bengaluru, Karnataka": {
+  "lat": 12.9393328,
+  "lng": 77.5539819,
+  "matched": "Banashankari 1st Stage, Ashoka Nagara, Bengaluru West City Corporation, Bengaluru, Bangalore North, Bengaluru Urban, Karnataka, 560050, India"
+ },
+ "1st cross road,Taverekere,Cashier layout, Bengaluru, Karnataka": null,
+ "Cashier layout, Bengaluru, Karnataka": null,
+ "1st cross road,Taverekere,Maruti Nagar, Bengaluru, Karnataka": null,
+ "Maruti Nagar, Bengaluru, Karnataka": {
+  "lat": 13.00317,
+  "lng": 77.6326118,
+  "matched": "Maruthi Seva Nagar, Cooke Town, Maruthi Seva Nagara, Bengaluru North City Corporation, Bengaluru, Bangalore North, Bengaluru Urban, Karnataka, 560033, India"
+ },
+ "16,2and A Main road,Old Madiwala, Bengaluru, Karnataka": null,
+ "Old Madiwala, Bengaluru, Karnataka": {
+  "lat": 12.9612429,
+  "lng": 77.6369997,
+  "matched": "HAL Old Airport Road, Domlur Village, Domlur, Domluru, Bengaluru Central City Corporation, Bengaluru, Bangalore North, Bengaluru Urban, Karnataka, 560071, India"
+ },
+ "1188,1st Cross road,Taverekere main road,Btm 1st Stage, Bengaluru, Karnataka": null,
+ "Btm 1st Stage, Bengaluru, Karnataka": {
+  "lat": 12.916193,
+  "lng": 77.6053993,
+  "matched": "Karnataka Bank, 1st Cross Road, BHBCS Layout, BTM Layout 2nd Stage, Viswamanava Kuvempu Ward, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560076, India"
+ },
+ "17 cross,6th main road,Old Madiwala,1st stage, Bengaluru, Karnataka": null,
+ "1st stage, Bengaluru, Karnataka": {
+  "lat": 12.9393328,
+  "lng": 77.5539819,
+  "matched": "Banashankari 1st Stage, Ashoka Nagara, Bengaluru West City Corporation, Bengaluru, Bangalore North, Bengaluru Urban, Karnataka, 560050, India"
+ },
+ "Old Madiwala,Btm 1st stage, Bengaluru, Karnataka": null,
+ "Btm 1st stage, Bengaluru, Karnataka": {
+  "lat": 12.916193,
+  "lng": 77.6053993,
+  "matched": "Karnataka Bank, 1st Cross Road, BHBCS Layout, BTM Layout 2nd Stage, Viswamanava Kuvempu Ward, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560076, India"
+ },
+ "1st Main road,Old Madiwala, Bengaluru, Karnataka": null,
+ "14 th cross roadOld Madiwala, Bengaluru, Karnataka": null,
+ "Sri Ragavendra Complex,Maruthi nagar main rd, Bengaluru, Karnataka": null,
+ "Maruthi nagar main rd, Bengaluru, Karnataka": {
+  "lat": 13.0094565,
+  "lng": 77.6431811,
+  "matched": "Maruthi School, 7th Main Road, Chikka Banasawadi, HRBR Layout 1st Block, Kalyanagar, Bengaluru North City Corporation, Bengaluru, Bangalore East, Bengaluru Urban, Karnataka, 560043, India"
+ },
+ "9-9,Old madiwala,1st Stage,Btm 1st Stage, Bengaluru, Karnataka": null,
+ "25,old Madiwala,1st stage,Btm 1st stage, Bengaluru, Karnataka": null,
+ "30,Maruthi nagar main rd,Old Madiwala, Bengaluru, Karnataka": null,
+ "202,5th cross road,Madiwala,1st Stage,Koramangala, Bengaluru, Karnataka": null,
+ "25/1 Maruthi nagar main rd,Madiwala new extension, Bengaluru, Karnataka": null,
+ "Madiwala new extension, Bengaluru, Karnataka": null,
+ "15,Maruthi Nagar main rd,Madiwala new extension, Bengaluru, Karnataka": null,
+ "Shop no 5,8-th cross road,Madiwala new extension, Bengaluru, Karnataka": null,
+ "8-th cross road,Madiwala new extensio, Bengaluru, Karnataka": null,
+ "Madiwala new extensio, Bengaluru, Karnataka": null,
+ "10/15,1st main road,Madiwala 1st stage, Bengaluru, Karnataka": null,
+ "Madiwala 1st stage, Bengaluru, Karnataka": {
+  "lat": 12.9610268,
+  "lng": 77.6386351,
+  "matched": "HAL Old Airport Road, Domlur 1st Stage, Domlur, Domluru, Bengaluru Central City Corporation, Bengaluru, Bangalore North, Bengaluru Urban, Karnataka, 560071, India"
+ },
+ "9/19,1st main road,Madiwala new extension, Bengaluru, Karnataka": null,
+ "8/19,Madiwala new extension,Btm 1st stage, Bengaluru, Karnataka": null,
+ "24,1st main road,Madiwala new extension,Btm 1st stage, Bengaluru, Karnataka": null,
+ "9/17,Maruthi nagar main rd,Btm 1st stage, Bengaluru, Karnataka": null,
+ "9/17 marthi nagar main rd,Btm 1st stage, Bengaluru, Karnataka": null,
+ "15,3rd cross road,Btm 1st stage, Bengaluru, Karnataka": {
+  "lat": 12.9178327,
+  "lng": 77.6134779,
+  "matched": "3rd Cross Road, BTM Layout 1st Stage, New Tavarekere, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560068, India"
+ },
+ "9-20,Madiwala new extension, Bengaluru, Karnataka": null,
+ "19/61,3rd Cross rd,Btm Ist stage, Bengaluru, Karnataka": null,
+ "Madiwala new extension,Maruthi nagar,Btm 1st stage, Bengaluru, Karnataka": null,
+ "12/64 Maruthi nagar main rd,Madiwala new extension, Bengaluru, Karnataka": null,
+ "01,Old Madiwala,1st Stage,Btm 1st stage, Bengaluru, Karnataka": null,
+ "25,Maruthi Nagar,Btm layout, Bengaluru, Karnataka": {
+  "lat": 12.9234788,
+  "lng": 77.6146246,
+  "matched": "Maruthi Nagar Main Road, Maruthi Nagara, BTM Layout 1st Stage, New Tavarekere, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560029, India"
+ },
+ "11/7,1st cross road,S G Palya, Bengaluru, Karnataka": {
+  "lat": 12.9338122,
+  "lng": 77.6083601,
+  "matched": "1st Cross Road, S.G Palya, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560029, India"
+ },
+ "25/3,1st cross road,Main road madiwala, Bengaluru, Karnataka": null,
+ "Main road madiwala, Bengaluru, Karnataka": {
+  "lat": 12.9175652,
+  "lng": 77.6203154,
+  "matched": "36th Main Road, Dollar Scheme Colony, Madiwala, Bengaluru South City Corporation, Bengaluru, Bangalore South, Bengaluru Urban, Karnataka, 560068, India"
+ },
+ "Madiwala,S G Palya, Bengaluru, Karnataka": null
+}

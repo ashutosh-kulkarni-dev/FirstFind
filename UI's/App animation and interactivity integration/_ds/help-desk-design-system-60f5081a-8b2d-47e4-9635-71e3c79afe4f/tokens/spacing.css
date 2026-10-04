@@ -1,0 +1,53 @@
+/* ─────────────────────────────────────────────────────────────
+   SPACING, RADII, SHADOW & LAYOUT TOKENS — Help Desk
+   ───────────────────────────────────────────────────────────── */
+:root {
+  /* ── Spacing scale (px) ── */
+  --sp-1:  2px;
+  --sp-2:  4px;
+  --sp-3:  6px;
+  --sp-4:  8px;
+  --sp-5:  10px;
+  --sp-6:  12px;
+  --sp-7:  14px;
+  --sp-8:  16px;
+  --sp-9:  18px;
+  --sp-10: 20px;
+  --sp-12: 24px;
+  --sp-14: 28px;
+  --sp-18: 36px;
+  --sp-20: 40px;
+  --sp-24: 48px;
+
+  /* ── Corner radii ── */
+  --r-xs:   4px;    /* bubble tail corner, micro chips */
+  --r-sm:   6px;    /* small controls, header icon */
+  --r-md:   7px;    /* buttons, inputs */
+  --r-lg:   8px;    /* primary buttons, list controls */
+  --r-xl:   10px;   /* toasts, status panels */
+  --r-2xl:  12px;   /* cards, bubbles, table wrap */
+  --r-3xl:  14px;   /* modal card */
+  --r-4xl:  16px;   /* login card */
+  --r-pill: 20px;   /* badges, pills */
+  --r-full: 9999px; /* avatars, dots */
+
+  /* ── Elevation ──
+     Flat product: hairline borders carry most separation.
+     Shadows reserved for floating surfaces. */
+  --shadow-card:  0 4px 24px rgba(0, 0, 0, .06);   /* login card */
+  --shadow-toast: 0 6px 20px rgba(0, 0, 0, .12);   /* toast */
+  --shadow-modal: 0 8px 40px rgba(0, 0, 0, .15);   /* modal */
+
+  /* ── Layout constants (from the live product) ── */
+  --header-h:        56px;    /* top bar height */
+  --panel-w:         380px;   /* tickets side panel */
+  --chat-max:        640px;   /* chat column max width */
+  --login-card-w:    360px;
+  --modal-card-w:    520px;
+
+  /* ── Motion ── */
+  --ease:      cubic-bezier(.4, 0, .2, 1);  /* @kind other */
+  --dur-fast:  .12s;  /* @kind other */
+  --dur-base:  .15s;  /* @kind other */
+  --dur-enter: .2s;   /* @kind other */
+}

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Inter", Arial, sans-serif; background: #eef2f4; }
+  a { color: #1478d1; text-decoration: none; }
+  a:hover { color: #0e5aa8; }
+  button { font: inherit; cursor: pointer; }
+  input[type=range] { accent-color: #33a0e6; }
+  ::-webkit-scrollbar { width: 9px; }
+  ::-webkit-scrollbar-thumb { background: #cdd6de; border-radius: 6px; }
+  @keyframes zUp { from { opacity: 0; transform: translateY(11px); } to { opacity: 1; transform: none; } }
+  @keyframes zRing { from { transform: translate(-50%,-50%) scale(.4); opacity: 0; } to { transform: translate(-50%,-50%) scale(1); opacity: 1; } }
+</style>
+</helmet>
+
+<main style="width:100%; height:100vh; display:flex; flex-direction:column; background:#eef2f4; overflow:hidden;">
+
+  <nav style="display:flex; align-items:center; height:60px; padding:0 26px; background:#0f1a2b; color:#fff; flex-shrink:0;">
+    <a href="FirstFind Landing.dc.html" style="color:#fff; font-family:'Anton',sans-serif; font-size:23px; letter-spacing:-.5px;">FIRSTFIND</a>
+    <div style="display:flex; gap:22px; margin-left:40px;">
+      <a href="FirstFind Explore.dc.html" style="color:rgba(255,255,255,.72); font-size:13px; font-weight:500;" style-hover="color:#fff;">Explore</a>
+      <a href="FirstFind Chat.dc.html" style="color:rgba(255,255,255,.72); font-size:13px; font-weight:500;" style-hover="color:#fff;">Assistant</a>
+      <a href="FirstFind Zones.dc.html" style="color:#fff; font-size:13px; font-weight:600; border-bottom:2px solid #33a0e6; padding-bottom:2px;">Zones</a>
+    </div>
+    <div style="margin-left:auto; display:flex; align-items:center; gap:14px;">
+      <span style="color:rgba(255,255,255,.72); font-size:13px;">Hi, Aditi</span>
+      <button style="padding:8px 15px; border:0; border-radius:22px; background:#fff; color:#111; font-size:12px; font-weight:700;" style-hover="background:#e9f2fb;">Log out</button>
+    </div>
+  </nav>
+
+  <div style="flex:1; display:grid; grid-template-columns:352px 1fr; min-height:0;">
+
+    <!-- CONTROL PANEL -->
+    <aside style="display:flex; flex-direction:column; background:#fff; border-right:1px solid #dde3e8; overflow-y:auto;">
+      <div style="padding:22px 22px 4px;">
+        <div style="font-family:'Anton',sans-serif; font-size:30px; letter-spacing:-.5px; color:#0f1a2b; line-height:.95;">THRIFT<br>ZONES</div>
+        <p style="margin-top:9px; color:#6c7885; font-size:12.5px; line-height:1.5;">Store clusters found by K-Means, or draw your own walkable radius.</p>
+      </div>
+
+      <div style="display:flex; margin:16px 22px 0; padding:4px; background:#eef2f4; border-radius:12px;">
+        <button onClick="{{ setPrecomputed }}" style="flex:1; padding:9px; border:0; border-radius:9px; font-size:12.5px; font-weight:700; transition:all .18s ease; background:{{ modeA }}; color:{{ modeAInk }};">AI zones</button>
+        <button onClick="{{ setInteractive }}" style="flex:1; padding:9px; border:0; border-radius:9px; font-size:12.5px; font-weight:700; transition:all .18s ease; background:{{ modeB }}; color:{{ modeBInk }};">Draw radius</button>
+      </div>
+
+      <sc-if value="{{ interactive }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:18px 22px 4px; animation:zUp .25s ease both;">
+          <div style="font-size:10px; font-weight:700; letter-spacing:.6px; color:#9aa5b1; text-transform:uppercase; margin-bottom:6px;">Center area</div>
+          <select onChange="{{ onArea }}" style="width:100%; padding:10px 12px; border:1px solid #d7dee4; border-radius:9px; font-size:13px; outline:none; background:#fff;">
+            <option>Indiranagar</option><option>Koramangala</option><option>Jayanagar</option>
+            <option>HSR Layout</option><option>Malleshwaram</option><option>MG Road</option>
+          </select>
+
+          <div style="display:flex; align-items:baseline; justify-content:space-between; margin-top:16px;">
+            <div style="font-size:10px; font-weight:700; letter-spacing:.6px; color:#9aa5b1; text-transform:uppercase;">Radius</div>
+            <div style="font-family:'Anton',sans-serif; font-size:20px; color:#0f1a2b;">{{ radius }} km</div>
+          </div>
+          <input type="range" min="0.5" max="10" step="0.5" value="{{ radius }}" onInput="{{ onRadius }}" style="width:100%; margin-top:6px;">
+          <div style="display:flex; gap:6px; margin-top:10px;">
+            <sc-for list="{{ presets }}" as="p" hint-placeholder-count="4">
+              <button onClick="{{ p.set }}" style="flex:1; padding:7px 0; border:1px solid #d7dee4; border-radius:9px; background:#fff; font-size:11px; font-weight:600; color:#4a5560;" style-hover="border-color:#33a0e6; color:#0e5aa8;">{{ p.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <div style="padding:16px 22px 8px; display:flex; align-items:center; justify-content:space-between; border-top:1px solid #eef2f4; margin-top:14px;">
+        <span style="font-family:'Anton',sans-serif; font-size:17px; color:#0f1a2b;">{{ panelTitle }}</span>
+        <span style="color:#9aa5b1; font-size:12px; font-weight:600;">{{ zoneCount }}</span>
+      </div>
+
+      <div ref="{{ setList }}" style="flex:1; padding:0 22px 20px; display:flex; flex-direction:column; gap:11px; overflow-y:auto;"></div>
+    </aside>
+
+    <!-- MAP -->
+    <section ref="{{ setMap }}" onClick="{{ mapClick }}" style="position:relative; overflow:hidden; background:#141d2b; cursor:{{ mapCursor }};">
+      <div style="position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px); background-size:46px 46px;"></div>
+      <svg viewBox="0 0 1000 720" preserveAspectRatio="none" style="position:absolute; inset:0; width:100%; height:100%; opacity:.5;">
+        <path d="M0 250 L1000 210" stroke="#26344a" stroke-width="9" fill="none"/>
+        <path d="M120 0 L200 720" stroke="#26344a" stroke-width="11" fill="none"/>
+        <path d="M0 480 L1000 520" stroke="#26344a" stroke-width="8" fill="none"/>
+        <path d="M620 0 L680 720" stroke="#26344a" stroke-width="7" fill="none"/>
+      </svg>
+      <div style="position:absolute; top:16px; left:16px; z-index:6; padding:7px 13px; border-radius:20px; background:rgba(15,26,43,.82); backdrop-filter:blur(4px); color:#cfe4f5; font-size:11px; font-weight:600; letter-spacing:.4px;">{{ mapBadge }}</div>
+      <div ref="{{ setOverlay }}" style="position:absolute; inset:0;"></div>
+    </section>
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  zones = [
+    { id:1, label:"Indiranagar Core", count:9, score:4.6, radius:1.2, price:"\u20b9\u20b9", x:56, y:30, top:["Retrospect","Overrun","Loop"] },
+    { id:2, label:"Jayanagar Belt", count:7, score:4.5, radius:1.5, price:"\u20b9", x:32, y:66, top:["The Rework Room","Nine Lives","Heirloom"] },
+    { id:3, label:"Koramangala Grid", count:6, score:4.2, radius:1.0, price:"\u20b9\u20b9", x:44, y:52, top:["Second Wind","Faded Glory","Loop"] },
+    { id:4, label:"HSR Pocket", count:5, score:4.4, radius:0.9, price:"\u20b9\u20b9\u20b9", x:70, y:60, top:["Thread Count","Curated Chaos"] },
+  ];
+  areaPos = { "Indiranagar":[56,30],"Koramangala":[44,52],"Jayanagar":[32,66],"HSR Layout":[70,60],"Malleshwaram":[26,24],"MG Road":[50,44] };
+  state = { interactive:false, radius:2, area:"Indiranagar", center:[56,30], selected:1 };
+
+  setMap=e=>{this.mapEl=e}; setOverlay=e=>{this.ovEl=e}; setList=e=>{this.listEl=e};
+
+  componentDidMount(){ this.paint(); }
+  componentDidUpdate(){ this.paint(); }
+
+  scoreColor(s){ return s>=4.5?"#22c55e":s>=4.0?"#84cc16":"#f59e0b"; }
+
+  clusterCount(){
+    // stores within radius of center, scaled: ~radius km maps to more stores
+    return Math.max(2, Math.round(this.state.radius*2.4));
+  }
+
+  paint(){
+    const ov=this.ovEl; if(!ov)return;
+    ov.innerHTML="";
+    if(this.state.interactive){
+      const [cx,cy]=this.state.center;
+      const rpx=this.state.radius*24; // px radius on the map overlay
+      const ring=document.createElement("div");
+      ring.style.cssText=`position:absolute; left:${cx}%; top:${cy}%; width:${rpx*2}px; height:${rpx*2}px; transform:translate(-50%,-50%); border-radius:50%; background:rgba(51,160,230,.16); border:2px solid #33a0e6; animation:zRing .3s ease both;`;
+      ov.appendChild(ring);
+      const pin=document.createElement("div");
+      pin.style.cssText=`position:absolute; left:${cx}%; top:${cy}%; transform:translate(-50%,-50%); z-index:5;`;
+      pin.innerHTML=`<div style="width:18px;height:18px;border-radius:50% 50% 50% 0;background:#33a0e6;border:2px solid #fff;transform:rotate(-45deg);box-shadow:0 3px 8px rgba(0,0,0,.4);"></div>`;
+      ov.appendChild(pin);
+    } else {
+      this.zones.forEach((z,i)=>{
+        const sel=this.state.selected===z.id;
+        const rpx=z.radius*30;
+        const c=this.scoreColor(z.score);
+        const el=document.createElement("div");
+        el.style.cssText=`position:absolute; left:${z.x}%; top:${z.y}%; width:${rpx*2}px; height:${rpx*2}px; transform:translate(-50%,-50%); border-radius:50%; background:${c}22; border:2px ${sel?'solid':'dashed'} ${c}; display:grid; place-items:center; cursor:pointer; z-index:${sel?4:2}; animation:zRing .35s ease ${i*0.06}s both;`;
+        el.innerHTML=`<div style="text-align:center; pointer-events:none;">
+          <div style="font-family:'Anton',sans-serif; font-size:15px; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,.6);">${z.count}</div>
+          <div style="font-size:9px; font-weight:700; color:#cfe4f5;">STORES</div></div>`;
+        el.onclick=()=>this.setState({selected:z.id});
+        ov.appendChild(el);
+      });
+    }
+    this.paintList();
+  }
+
+  paintList(){
+    const host=this.listEl; if(!host)return;
+    host.innerHTML="";
+    if(this.state.interactive){
+      const n=this.clusterCount();
+      const card=document.createElement("div");
+      card.style.cssText="padding:15px; border:1px solid #e2e6ea; border-radius:13px; animation:zUp .25s ease both;";
+      card.innerHTML=`
+        <div style="display:flex; align-items:baseline; justify-content:space-between;">
+          <div style="font-family:'Anton',sans-serif; font-size:19px; color:#0f1a2b;">${this.state.area}</div>
+          <div style="font-size:12px; color:#33a0e6; font-weight:700;">${this.state.radius} km</div>
+        </div>
+        <div style="margin-top:8px; display:flex; gap:18px;">
+          <div><div style="font-family:'Anton',sans-serif; font-size:26px; color:#0f1a2b; line-height:1;">${n}</div><div style="font-size:10px; color:#9aa5b1; font-weight:700; letter-spacing:.4px;">STORES IN RANGE</div></div>
+          <div><div style="font-family:'Anton',sans-serif; font-size:26px; color:#0f1a2b; line-height:1;">${(4.1+Math.random()*0.5).toFixed(1)}</div><div style="font-size:10px; color:#9aa5b1; font-weight:700; letter-spacing:.4px;">AVG SCORE</div></div>
+        </div>
+        ${n>8?`<button style="margin-top:13px; width:100%; padding:9px; border:0; border-radius:9px; background:#0f1a2b; color:#fff; font-size:12px; font-weight:700;">Split into sub-zones \u2192</button>`:''}
+        <a href="FirstFind Explore.dc.html" style="display:block; margin-top:10px; text-align:center; font-size:12.5px; font-weight:700;">View these on the full map \u2192</a>`;
+      host.appendChild(card);
+      const hint=document.createElement("div");
+      hint.style.cssText="padding:12px 14px; border:1px dashed #cbd5e1; border-radius:11px; color:#6c7885; font-size:11.5px; line-height:1.5;";
+      hint.textContent="Click anywhere on the map to drop a new center, or drag the radius slider.";
+      host.appendChild(hint);
+      return;
+    }
+    this.zones.forEach(z=>{
+      const sel=this.state.selected===z.id;
+      const c=this.scoreColor(z.score);
+      const el=document.createElement("div");
+      el.style.cssText=`padding:14px; border:1px solid ${sel?'#33a0e6':'#e4e9ee'}; ${sel?'background:#f4faff;':''} border-radius:13px; cursor:pointer; transition:all .18s ease; animation:zUp .25s ease both;`;
+      el.onclick=()=>this.setState({selected:z.id});
+      el.onmouseenter=()=>{if(!sel)el.style.borderColor="#c3d3e0";};
+      el.onmouseleave=()=>{if(!sel)el.style.borderColor="#e4e9ee";};
+      el.innerHTML=`
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="font-family:'Anton',sans-serif; font-size:17px; color:#0f1a2b;">${z.label}</div>
+          <span style="margin-left:auto; padding:2px 8px; border-radius:11px; background:${c}22; color:${c}; font-size:11px; font-weight:700;">\u2b50 ${z.score}</span>
+        </div>
+        <div style="margin-top:8px; display:flex; gap:16px; color:#4a5560; font-size:11.5px;">
+          <span><b style="color:#0f1a2b;">${z.count}</b> stores</span>
+          <span><b style="color:#0f1a2b;">${z.radius}</b> km</span>
+          <span>avg <b style="color:#0f1a2b;">${z.price}</b></span>
+        </div>
+        <div style="margin-top:9px; display:flex; flex-wrap:wrap; gap:5px;">
+          ${z.top.map(t=>`<span style="padding:3px 9px; border-radius:12px; background:#eef4fb; color:#1c5fa8; font-size:11px; font-weight:600;">${t}</span>`).join("")}
+        </div>`;
+      host.appendChild(el);
+    });
+  }
+
+  setPrecomputed=()=>this.setState({interactive:false});
+  setInteractive=()=>this.setState({interactive:true});
+  onArea=e=>{const a=e.target.value; this.setState({area:a,center:this.areaPos[a]});};
+  onRadius=e=>this.setState({radius:parseFloat(e.target.value)});
+  mapClick=(e)=>{
+    if(!this.state.interactive)return;
+    const r=this.mapEl.getBoundingClientRect();
+    const x=((e.clientX-r.left)/r.width)*100, y=((e.clientY-r.top)/r.height)*100;
+    this.setState({center:[+x.toFixed(1),+y.toFixed(1)]});
+  };
+
+  renderVals(){
+    const ia=this.state.interactive;
+    const on="#0f1a2b", onInk="#fff", off="transparent", offInk="#6c7885";
+    const presets=[["Walk",1],["Scooter",3],["Auto",5],["Cab",8]].map(([label,km])=>({label,set:()=>this.setState({radius:km})}));
+    return {
+      interactive:ia,
+      modeA:ia?off:on, modeAInk:ia?offInk:onInk, modeB:ia?on:off, modeBInk:ia?onInk:offInk,
+      radius:this.state.radius, presets,
+      panelTitle:ia?"YOUR CLUSTER":"AI ZONES", zoneCount:ia?"live":this.zones.length+" found",
+      mapBadge:ia?"DRAW MODE \u00b7 CLICK TO SET CENTER":"K-MEANS ZONES \u00b7 BENGALURU",
+      mapCursor:ia?"crosshair":"default",
+      setMap:this.setMap,setOverlay:this.setOverlay,setList:this.setList,
+      setPrecomputed:this.setPrecomputed,setInteractive:this.setInteractive,
+      onArea:this.onArea,onRadius:this.onRadius,mapClick:this.mapClick
+    };
+  }
+}
+</script>
+</body>
+</html>

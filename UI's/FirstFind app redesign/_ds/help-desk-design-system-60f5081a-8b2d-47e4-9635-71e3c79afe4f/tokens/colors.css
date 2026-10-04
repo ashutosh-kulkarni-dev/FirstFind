@@ -1,0 +1,78 @@
+/* ─────────────────────────────────────────────────────────────
+   COLOR TOKENS — Help Desk
+   Base palette is the exact product palette (do not change values).
+   Semantic aliases sit on top so components read intent, not hue.
+   ───────────────────────────────────────────────────────────── */
+:root {
+  /* ── Neutrals ── */
+  --white:   #ffffff;
+  --bg:      #f5f6f8;   /* app canvas */
+  --border:  #e2e5ea;   /* hairlines, card edges */
+  --text:    #1a1d23;   /* primary ink */
+  --muted:   #6b7280;   /* secondary ink, labels */
+
+  /* ── Blue · Student / primary action ── */
+  --blue:    #2563eb;
+  --blue-dk: #1d4ed8;   /* hover / pressed */
+  --blue-lt: #eff6ff;   /* tinted surface */
+  --blue-bd: #bfdbfe;   /* tinted border */
+  --blue-disabled: #93c5fd;
+
+  /* ── Green · Success / resolved ── */
+  --green:    #16a34a;
+  --green-dk: #15803d;
+  --green-lt: #f0fdf4;
+  --green-bd: #bbf7d0;
+
+  /* ── Red · Danger / destructive ── */
+  --red:    #be123c;
+  --red-dk: #9f1239;
+  --red-lt: #fff1f2;
+  --red-bd: #fecdd3;
+
+  /* ── Orange · Warning / pending ── */
+  --orange:    #d97706;
+  --orange-dk: #b45309;
+  --orange-lt: #fffbeb;
+  --orange-bd: #fde68a;
+
+  /* ── Purple · Admin / secondary brand ── */
+  --purple:    #7c3aed;
+  --purple-dk: #6d28d9;
+  --purple-lt: #f5f3ff;
+  --purple-bd: #ddd6fe;
+  --purple-disabled: #c4b5fd;
+
+  /* ── Star / rating ── */
+  --star:       #f59e0b;
+  --star-empty: #d1d5db;
+
+  /* ─────────────────────────────────────────────
+     SEMANTIC ALIASES — prefer these in components
+     ───────────────────────────────────────────── */
+  --surface:        var(--white);   /* cards, panels, inputs */
+  --surface-canvas: var(--bg);      /* page background */
+  --surface-sunken: var(--bg);      /* table head, inset wells */
+  --border-default: var(--border);
+  --text-primary:   var(--text);
+  --text-secondary: var(--muted);
+  --text-on-accent: #ffffff;
+
+  --accent:          var(--blue);   /* student-portal accent (default) */
+  --accent-hover:    var(--blue-dk);
+  --accent-tint:     var(--blue-lt);
+  --accent-tint-bd:  var(--blue-bd);
+  --accent-disabled: var(--blue-disabled);
+
+  --overlay: rgba(0, 0, 0, .35);    /* modal scrim */
+}
+
+/* ── Admin portal scope — swaps the accent to purple ──
+   Wrap admin surfaces in .admin-portal to re-theme accents. */
+.admin-portal {
+  --accent:          var(--purple);
+  --accent-hover:    var(--purple-dk);
+  --accent-tint:     var(--purple-lt);
+  --accent-tint-bd:  var(--purple-bd);
+  --accent-disabled: var(--purple-disabled);
+}

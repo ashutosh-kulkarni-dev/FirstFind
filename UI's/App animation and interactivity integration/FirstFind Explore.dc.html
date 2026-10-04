@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Inter", Arial, sans-serif; background: #eef2f4; }
+  a { color: #1478d1; text-decoration: none; }
+  a:hover { color: #0e5aa8; }
+  button { font: inherit; cursor: pointer; }
+  input, select { font: inherit; }
+  @keyframes exUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @keyframes exPing { 0% { transform: scale(1); opacity: .55; } 100% { transform: scale(2.4); opacity: 0; } }
+  @keyframes exPop { from { opacity: 0; transform: translate(-50%,-50%) scale(.5); } to { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
+</style>
+</helmet>
+
+<main style="width:100%; min-height:100vh; display:flex; flex-direction:column; background:#eef2f4;">
+
+  <!-- NAVBAR -->
+  <nav style="display:flex; align-items:center; height:60px; padding:0 26px; background:#0f1a2b; color:#fff; flex-shrink:0;">
+    <a href="FirstFind Landing.dc.html" style="color:#fff; font-family:'Anton',sans-serif; font-size:23px; letter-spacing:-.5px;">FIRSTFIND</a>
+    <div style="display:flex; gap:22px; margin-left:40px;">
+      <a href="FirstFind Explore.dc.html" style="color:#fff; font-size:13px; font-weight:600; border-bottom:2px solid #33a0e6; padding-bottom:2px;">Explore</a>
+      <a href="#" style="color:rgba(255,255,255,.72); font-size:13px; font-weight:500;" style-hover="color:#fff;">Assistant</a>
+      <a href="#" style="color:rgba(255,255,255,.72); font-size:13px; font-weight:500;" style-hover="color:#fff;">Zones</a>
+    </div>
+    <div style="margin-left:auto; display:flex; align-items:center; gap:14px;">
+      <span style="color:rgba(255,255,255,.72); font-size:13px;">Hi, Aditi</span>
+      <button style="padding:8px 15px; border:0; border-radius:22px; background:#fff; color:#111; font-size:12px; font-weight:700;" style-hover="background:#e9f2fb;">Log out</button>
+    </div>
+  </nav>
+
+  <div style="flex:1; display:grid; grid-template-columns:332px 1fr; min-height:0;">
+
+    <!-- SIDEBAR -->
+    <aside style="display:flex; flex-direction:column; background:#fff; border-right:1px solid #dde3e8; overflow-y:auto;">
+      <div style="padding:22px 22px 16px;">
+        <div style="font-family:'Anton',sans-serif; font-size:30px; letter-spacing:-.5px; color:#0f1a2b; line-height:.95;">EXPLORE<br>STORES</div>
+        <p style="margin-top:9px; color:#6c7885; font-size:12.5px; line-height:1.5;">48 verified thrift &amp; second-hand stores across Bengaluru, scored by our AI.</p>
+      </div>
+
+      <div style="padding:0 22px; display:flex; flex-direction:column; gap:13px;">
+        <label style="display:block;">
+          <span style="display:block; font-size:10px; font-weight:700; letter-spacing:.6px; color:#9aa5b1; text-transform:uppercase; margin-bottom:5px;">Search</span>
+          <input ref="{{ setSearch }}" onInput="{{ onSearch }}" placeholder="Store name…" style="width:100%; padding:10px 12px; border:1px solid #d7dee4; border-radius:9px; font-size:13px; outline:none; transition:border-color .2s ease, box-shadow .2s ease;" style-focus="border-color:#33a0e6; box-shadow:0 0 0 3px rgba(51,160,230,.16);">
+        </label>
+
+        <label style="display:block;">
+          <span style="display:block; font-size:10px; font-weight:700; letter-spacing:.6px; color:#9aa5b1; text-transform:uppercase; margin-bottom:5px;">Area</span>
+          <select ref="{{ setArea }}" onChange="{{ onArea }}" style="width:100%; padding:10px 12px; border:1px solid #d7dee4; border-radius:9px; font-size:13px; outline:none; background:#fff;">
+            <option>All areas</option>
+            <option>Indiranagar</option>
+            <option>Koramangala</option>
+            <option>Jayanagar</option>
+            <option>HSR Layout</option>
+            <option>Malleshwaram</option>
+            <option>MG Road</option>
+          </select>
+        </label>
+
+        <label style="display:block;">
+          <span style="display:block; font-size:10px; font-weight:700; letter-spacing:.6px; color:#9aa5b1; text-transform:uppercase; margin-bottom:5px;">Category</span>
+          <select ref="{{ setCat }}" onChange="{{ onCat }}" style="width:100%; padding:10px 12px; border:1px solid #d7dee4; border-radius:9px; font-size:13px; outline:none; background:#fff;">
+            <option>All categories</option>
+            <option>Vintage</option>
+            <option>Streetwear</option>
+            <option>Designer resale</option>
+            <option>Retro</option>
+          </select>
+        </label>
+
+        <label style="display:flex; align-items:center; gap:9px; padding:2px; cursor:pointer; user-select:none;">
+          <input type="checkbox" ref="{{ setOpen }}" onChange="{{ onOpen }}" style="width:16px; height:16px; accent-color:#33a0e6; cursor:pointer;">
+          <span style="font-size:13px; color:#3a4652; font-weight:500;">Open now only</span>
+        </label>
+      </div>
+
+      <div style="margin:18px 22px 8px; padding-top:16px; border-top:1px solid #eef2f4; display:flex; align-items:center; justify-content:space-between;">
+        <span style="font-family:'Anton',sans-serif; font-size:18px; color:#0f1a2b;">{{ count }} RESULTS</span>
+        <button onClick="{{ clearFilters }}" style="padding:5px 11px; border:1px solid #d7dee4; border-radius:16px; background:#fff; color:#6c7885; font-size:11px; font-weight:600;" style-hover="border-color:#33a0e6; color:#0e5aa8;">Reset</button>
+      </div>
+
+      <div style="padding:0 22px 8px;">
+        <div style="font-size:10px; font-weight:700; letter-spacing:.6px; color:#9aa5b1; text-transform:uppercase; margin-bottom:7px;">AI score legend</div>
+        <div style="display:flex; flex-direction:column; gap:5px;">
+          <div style="display:flex; align-items:center; gap:8px; font-size:11.5px; color:#4a5560;"><span style="width:11px; height:11px; border-radius:50%; background:#22c55e;"></span> 4.5–5.0 · Exceptional</div>
+          <div style="display:flex; align-items:center; gap:8px; font-size:11.5px; color:#4a5560;"><span style="width:11px; height:11px; border-radius:50%; background:#84cc16;"></span> 4.0–4.5 · Great</div>
+          <div style="display:flex; align-items:center; gap:8px; font-size:11.5px; color:#4a5560;"><span style="width:11px; height:11px; border-radius:50%; background:#f59e0b;"></span> 3.5–4.0 · Good</div>
+          <div style="display:flex; align-items:center; gap:8px; font-size:11.5px; color:#4a5560;"><span style="width:11px; height:11px; border-radius:50%; background:#f43f5e;"></span> Below 3.5</div>
+        </div>
+      </div>
+
+      <div style="flex:1; min-height:8px;"></div>
+
+      <div style="padding:14px 22px; border-top:1px solid #eef2f4;">
+        <sc-if value="{{ selected }}" hint-placeholder-val="{{ true }}">
+          <div style="animation:exUp .25s ease both;">
+            <div style="font-size:10px; font-weight:700; letter-spacing:.6px; color:#33a0e6; text-transform:uppercase; margin-bottom:4px;">Selected store</div>
+            <div style="font-family:'Anton',sans-serif; font-size:19px; color:#0f1a2b;">{{ selName }}</div>
+            <div style="margin-top:2px; color:#6c7885; font-size:12px;">{{ selArea }} · ⭐ {{ selRating }}</div>
+            <a href="#" style="display:inline-block; margin-top:9px; font-size:12.5px; font-weight:700;">View store →</a>
+          </div>
+        </sc-if>
+      </div>
+    </aside>
+
+    <!-- MAP -->
+    <section ref="{{ setMap }}" style="position:relative; overflow:hidden; background:#141d2b;">
+      <div style="position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px); background-size:46px 46px;"></div>
+      <svg viewBox="0 0 1000 720" preserveAspectRatio="none" style="position:absolute; inset:0; width:100%; height:100%; opacity:.5;">
+        <path d="M0 250 L1000 210" stroke="#26344a" stroke-width="9" fill="none"/>
+        <path d="M120 0 L200 720" stroke="#26344a" stroke-width="11" fill="none"/>
+        <path d="M0 480 L1000 520" stroke="#26344a" stroke-width="8" fill="none"/>
+        <path d="M620 0 L680 720" stroke="#26344a" stroke-width="7" fill="none"/>
+        <path d="M0 90 L1000 130" stroke="#1f2c40" stroke-width="5" fill="none"/>
+        <path d="M400 0 L470 720" stroke="#1f2c40" stroke-width="5" fill="none"/>
+        <path d="M850 0 L900 720" stroke="#1f2c40" stroke-width="6" fill="none"/>
+        <circle cx="470" cy="360" r="150" stroke="#233149" stroke-width="2" fill="none"/>
+      </svg>
+
+      <div style="position:absolute; top:16px; left:16px; z-index:6; padding:7px 13px; border-radius:20px; background:rgba(15,26,43,.82); backdrop-filter:blur(4px); color:#cfe4f5; font-size:11px; font-weight:600; letter-spacing:.4px;">BENGALURU · LIVE MAP</div>
+
+      <div ref="{{ setMarkers }}" style="position:absolute; inset:0;"></div>
+
+      <div style="position:absolute; right:16px; bottom:16px; z-index:6; display:flex; flex-direction:column; border-radius:9px; overflow:hidden; box-shadow:0 4px 14px rgba(0,0,0,.4);">
+        <button style="width:34px; height:34px; border:0; background:#fff; color:#222; font-size:18px; border-bottom:1px solid #e2e6ea;" style-hover="background:#eef4fa;">+</button>
+        <button style="width:34px; height:34px; border:0; background:#fff; color:#222; font-size:18px;" style-hover="background:#eef4fa;">−</button>
+      </div>
+    </section>
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  stores = [
+    { id:1, name:"Retrospect", area:"Indiranagar", cat:"Vintage", rating:4.8, open:true, x:52, y:34 },
+    { id:2, name:"Second Wind", area:"Koramangala", cat:"Streetwear", rating:4.6, open:true, x:44, y:58 },
+    { id:3, name:"The Rework Room", area:"Jayanagar", cat:"Designer resale", rating:4.9, open:false, x:33, y:70 },
+    { id:4, name:"Thread Count", area:"HSR Layout", cat:"Retro", rating:4.2, open:true, x:66, y:66 },
+    { id:5, name:"Overrun", area:"Indiranagar", cat:"Streetwear", rating:3.9, open:true, x:60, y:28 },
+    { id:6, name:"Heirloom", area:"Malleshwaram", cat:"Vintage", rating:4.5, open:false, x:26, y:24 },
+    { id:7, name:"Loop", area:"MG Road", cat:"Designer resale", rating:4.1, open:true, x:50, y:46 },
+    { id:8, name:"Faded Glory", area:"Koramangala", cat:"Retro", rating:3.4, open:true, x:40, y:50 },
+    { id:9, name:"Curated Chaos", area:"HSR Layout", cat:"Vintage", rating:4.7, open:false, x:72, y:54 },
+    { id:10, name:"Nine Lives", area:"Jayanagar", cat:"Streetwear", rating:4.3, open:true, x:30, y:60 },
+  ];
+  state = { q:"", area:"All areas", cat:"All categories", openOnly:false, selectedId:null };
+
+  setSearch=e=>{this.searchEl=e}; setArea=e=>{this.areaEl=e}; setCat=e=>{this.catEl=e};
+  setOpen=e=>{this.openEl=e}; setMap=e=>{this.mapEl=e}; setMarkers=e=>{this.markEl=e};
+
+  componentDidMount(){ this.paint(); }
+  componentDidUpdate(){ this.paint(); }
+
+  color(r){ return r>=4.5?"#22c55e":r>=4.0?"#84cc16":r>=3.5?"#f59e0b":"#f43f5e"; }
+
+  filtered(){
+    const {q,area,cat,openOnly}=this.state;
+    return this.stores.filter(s=>
+      (!q || s.name.toLowerCase().includes(q.toLowerCase())) &&
+      (area==="All areas" || s.area===area) &&
+      (cat==="All categories" || s.cat===cat) &&
+      (!openOnly || s.open));
+  }
+
+  paint(){
+    const host=this.markEl; if(!host) return;
+    const list=this.filtered();
+    host.innerHTML="";
+    list.forEach((s,i)=>{
+      const sel=this.state.selectedId===s.id;
+      const wrap=document.createElement("div");
+      wrap.style.cssText=`position:absolute; left:${s.x}%; top:${s.y}%; transform:translate(-50%,-50%); z-index:${sel?9:5}; animation:exPop .3s cubic-bezier(.2,.8,.2,1) ${i*0.04}s both;`;
+      const c=this.color(s.rating);
+      wrap.innerHTML=`
+        <div style="position:relative; cursor:pointer;">
+          ${s.open?`<span style="position:absolute; left:50%; top:50%; width:20px; height:20px; margin:-10px 0 0 -10px; border-radius:50%; background:${c}; animation:exPing 1.8s ease-out infinite;"></span>`:``}
+          <span style="position:relative; display:grid; place-items:center; width:${sel?26:20}px; height:${sel?26:20}px; border-radius:50%; background:${c}; border:2.5px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,.45); transition:width .15s,height .15s; font:700 9px Inter; color:#0f1a2b;">${s.rating}</span>
+        </div>`;
+      wrap.querySelector("div").onclick=()=>this.setState({selectedId:s.id});
+      if(sel){
+        const pop=document.createElement("div");
+        pop.style.cssText="position:absolute; left:50%; bottom:30px; transform:translateX(-50%); width:180px; background:#fff; border-radius:11px; padding:12px 13px; box-shadow:0 10px 30px rgba(0,0,0,.4); z-index:12;";
+        pop.innerHTML=`
+          <div style="font-family:'Anton',sans-serif; font-size:16px; color:#0f1a2b; letter-spacing:-.3px;">${s.name.toUpperCase()}</div>
+          <div style="margin-top:2px; color:#6c7885; font-size:11.5px;">${s.area} \u00b7 ${s.cat}</div>
+          <div style="margin-top:6px; display:flex; align-items:center; gap:6px;">
+            <span style="display:inline-grid; place-items:center; padding:2px 7px; border-radius:12px; background:${c}22; color:${c}; font-size:11px; font-weight:700;">\u2b50 ${s.rating}</span>
+            <span style="font-size:11px; color:${s.open?'#16a34a':'#94a3b8'}; font-weight:600;">${s.open?'Open now':'Closed'}</span>
+          </div>
+          <a href="#" style="display:inline-block; margin-top:8px; color:#1478d1; font-size:12px; font-weight:700;">View store \u2192</a>
+          <span style="position:absolute; left:50%; bottom:-6px; transform:translateX(-50%) rotate(45deg); width:12px; height:12px; background:#fff;"></span>`;
+        wrap.appendChild(pop);
+      }
+      host.appendChild(wrap);
+    });
+  }
+
+  onSearch=e=>this.setState({q:e.target.value});
+  onArea=e=>this.setState({area:e.target.value,selectedId:null});
+  onCat=e=>this.setState({cat:e.target.value,selectedId:null});
+  onOpen=e=>this.setState({openOnly:e.target.checked,selectedId:null});
+  clearFilters=()=>{
+    if(this.searchEl)this.searchEl.value="";
+    if(this.areaEl)this.areaEl.value="All areas";
+    if(this.catEl)this.catEl.value="All categories";
+    if(this.openEl)this.openEl.checked=false;
+    this.setState({q:"",area:"All areas",cat:"All categories",openOnly:false,selectedId:null});
+  };
+
+  renderVals(){
+    const list=this.filtered();
+    const sel=this.stores.find(s=>s.id===this.state.selectedId);
+    return {
+      count:list.length,
+      selected:!!sel,
+      selName:sel?sel.name:"", selArea:sel?sel.area:"", selRating:sel?sel.rating:"",
+      setSearch:this.setSearch,setArea:this.setArea,setCat:this.setCat,setOpen:this.setOpen,
+      setMap:this.setMap,setMarkers:this.setMarkers,
+      onSearch:this.onSearch,onArea:this.onArea,onCat:this.onCat,onOpen:this.onOpen,clearFilters:this.clearFilters
+    };
+  }
+}
+</script>
+</body>
+</html>

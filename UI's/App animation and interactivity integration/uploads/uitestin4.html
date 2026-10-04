@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>FIRSTFIND — Fashion Landing Page</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    :root {
+      --blue: #086dcc;
+      --blue-light: #168fd0;
+      --blue-dark: #0757b5;
+      --pink: #ff2865;
+      --white: #fff;
+      --black: #050505;
+      --gray: #eeeeee;
+      --muted: #a7a7a7;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-height: 100vh;
+      background: #fff;
+      color: #111;
+      font-family: "Inter", Arial, sans-serif;
+      overflow-x: hidden;
+    }
+
+    button,
+    a {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    /* =========================================================
+       MAIN PAGE
+    ========================================================= */
+
+    .page {
+      width: 100%;
+      min-height: 100vh;
+      padding: 10px 38px 20px;
+    }
+
+    .layout {
+      position: relative;
+      width: min(1200px, 100%);
+      min-height: 720px;
+      margin: 0 auto;
+      overflow: hidden;
+
+      border: 1px solid #d8d8d8;
+      border-radius: 7px;
+
+      background:
+        linear-gradient(
+          180deg,
+          #176dcc 0%,
+          #0876cc 42%,
+          #eaf5fb 100%
+        );
+
+      box-shadow:
+        0 2px 8px rgba(0, 0, 0, .08);
+    }
+
+    /* subtle sky */
+    .layout::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+
+      background:
+        radial-gradient(
+          ellipse at 15% 5%,
+          rgba(255,255,255,.14),
+          transparent 25%
+        ),
+        radial-gradient(
+          ellipse at 82% 12%,
+          rgba(255,255,255,.12),
+          transparent 24%
+        );
+
+      pointer-events: none;
+    }
+
+    /* =========================================================
+       CONTENT GRID
+    ========================================================= */
+
+    .content {
+      position: relative;
+      z-index: 2;
+
+      display: grid;
+      grid-template-columns: 1.45fr .95fr;
+
+      width: calc(100% - 95px);
+      min-height: 720px;
+
+      margin: 47px auto 0;
+
+      background: #fff;
+    }
+
+    /* =========================================================
+       LEFT / HERO COLUMN
+    ========================================================= */
+
+    .hero-column {
+      position: relative;
+      min-width: 0;
+      overflow: hidden;
+
+      border: 1px solid rgba(255,255,255,.7);
+
+      background:
+        linear-gradient(
+          180deg,
+          #1469c9 0%,
+          #1478d1 42%,
+          #dceff8 64%,
+          #fff 77%
+        );
+    }
+
+    /* =========================================================
+       NAVIGATION
+    ========================================================= */
+
+    .navbar {
+      position: absolute;
+      top: 15px;
+      left: 14px;
+      right: 14px;
+
+      z-index: 20;
+
+      display: flex;
+      align-items: center;
+    }
+
+    .logo {
+      color: #fff;
+
+      font-family: "Anton", sans-serif;
+      font-size: 19px;
+      line-height: 1;
+      letter-spacing: -.5px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      margin-left: auto;
+      margin-right: 10px;
+    }
+
+    .nav-links a {
+      padding: 4px 7px;
+
+      border-radius: 15px;
+
+      background: rgba(255,255,255,.14);
+
+      color: #fff;
+
+      font-size: 5px;
+      font-weight: 600;
+
+      transition:
+        background .2s ease,
+        color .2s ease;
+    }
+
+    .nav-links a:hover {
+      background: #fff;
+      color: #116dca;
+    }
+
+    .order-button {
+      padding: 6px 12px;
+
+      border: 0;
+      border-radius: 20px;
+
+      background: #fff;
+      color: #111;
+
+      font-size: 6px;
+      font-weight: 700;
+
+      box-shadow: 0 3px 10px rgba(0,0,0,.1);
+
+      transition:
+        transform .2s ease,
+        background .2s ease;
+    }
+
+    .order-button:hover {
+      transform: translateY(-1px);
+      background: #f4f4f4;
+    }
+
+    /* =========================================================
+       HERO TITLE
+    ========================================================= */
+
+    .hero-title {
+      position: absolute;
+      z-index: 3;
+
+      top: 62px;
+      left: 12px;
+
+      color: #fff;
+
+      font-family: "Anton", sans-serif;
+      font-size: clamp(85px, 13vw, 157px);
+      line-height: .78;
+
+      letter-spacing: -4px;
+
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    /* =========================================================
+       STATIC HERO AREA
+       
+       The dynamic center model and skateboard have been removed.
+       The hero area now contains only the typography and content.
+    ========================================================= */
+
+    .hero-art {
+      position: absolute;
+      z-index: 7;
+
+      top: 48px;
+      left: 0;
+
+      width: 100%;
+      height: 390px;
+
+      pointer-events: none;
+    }
+
+    /* =========================================================
+       DESCRIPTION
+    ========================================================= */
+
+    .hero-description {
+      position: absolute;
+
+      z-index: 12;
+
+      top: 264px;
+      left: 13px;
+
+      width: 195px;
+
+      color: rgba(255,255,255,.92);
+
+      font-size: 6px;
+      line-height: 1.45;
+    }
+
+    /* =========================================================
+       SHOP BUTTON
+    ========================================================= */
+
+    .shop-button {
+      position: absolute;
+
+      z-index: 20;
+
+      top: 332px;
+      left: 13px;
+
+      display: flex;
+      align-items: center;
+      gap: 7px;
+
+      border: 0;
+      border-radius: 20px;
+
+      padding: 7px 7px 7px 11px;
+
+      background: #fff;
+
+      color: #111;
+
+      font-size: 6px;
+      font-weight: 700;
+
+      transition:
+        transform .2s ease,
+        background .2s ease;
+    }
+
+    .shop-button:hover {
+      transform: translateY(-1px);
+      background: #f7f7f7;
+    }
+
+    .shop-button span {
+      display: grid;
+      place-items: center;
+
+      width: 17px;
+      height: 17px;
+
+      border-radius: 50%;
+
+      background: #050505;
+      color: #fff;
+
+      font-size: 8px;
+    }
+
+    /* =========================================================
+       REVIEW CARD
+    ========================================================= */
+
+    .review-card {
+      position: absolute;
+
+      z-index: 25;
+
+      top: 166px;
+      right: 14px;
+
+      width: 112px;
+      height: 143px;
+
+      padding: 10px;
+
+      border-radius: 7px;
+
+      background:
+        rgba(154, 154, 154, .72);
+
+      backdrop-filter: blur(5px);
+
+      box-shadow:
+        0 5px 15px rgba(0,0,0,.1);
+    }
+
+    .review-score {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+
+      color: #fff;
+    }
+
+    .review-score strong {
+      font-size: 24px;
+      font-weight: 400;
+      line-height: .8;
+    }
+
+    .review-score span {
+      margin-bottom: 1px;
+      font-size: 5px;
+    }
+
+    .review-caption {
+      margin-top: 5px;
+
+      color: #fff;
+
+      font-size: 4px;
+      text-transform: uppercase;
+    }
+
+    .review-photo {
+      position: absolute;
+
+      left: 9px;
+      right: 9px;
+      bottom: 9px;
+
+      height: 68px;
+
+      overflow: hidden;
+
+      border-radius: 3px;
+
+      background: #ccc;
+    }
+
+    .review-photo img {
+      display: block;
+
+      width: 100%;
+      height: 100%;
+
+      object-fit: cover;
+      object-position: center;
+
+      filter: blur(2px);
+    }
+
+    .review-arrow {
+      position: absolute;
+
+      right: 5px;
+      bottom: 5px;
+
+      display: grid;
+      place-items: center;
+
+      width: 17px;
+      height: 17px;
+
+      border-radius: 50%;
+
+      background: #050505;
+      color: #fff;
+
+      font-size: 7px;
+    }
+
+    /* =========================================================
+       DISCOVER SECTION
+    ========================================================= */
+
+    .discover {
+      position: absolute;
+
+      left: 0;
+      right: 0;
+
+      top: 424px;
+
+      height: 290px;
+
+      background: #fff;
+    }
+
+    .discover-title {
+      position: absolute;
+
+      top: 12px;
+      left: 50%;
+
+      width: 300px;
+
+      transform: translateX(-50%);
+
+      text-align: center;
+
+      color: #050505;
+
+      font-family: "Anton", sans-serif;
+      font-size: 25px;
+      line-height: 1.1;
+
+      letter-spacing: -.5px;
+    }
+
+    .discover-bg {
+      position: absolute;
+
+      left: -8px;
+      bottom: 8px;
+
+      color: #e5e5e5;
+
+      font-family: "Anton", sans-serif;
+      font-size: 73px;
+
+      line-height: .8;
+
+      white-space: nowrap;
+
+      z-index: 1;
+    }
+
+    /* =========================================================
+       DISCOVER MODEL
+       
+       This model remains static. No dynamic/parallax movement.
+    ========================================================= */
+
+    .discover-model {
+      position: absolute;
+
+      z-index: 5;
+
+      left: 50%;
+      bottom: 4px;
+
+      width: 105px;
+      height: 140px;
+
+      object-fit: cover;
+      object-position: center top;
+
+      transform:
+        translateX(-50%)
+        rotate(-8deg);
+
+      border: 5px solid #fff;
+
+      box-shadow:
+        0 3px 8px rgba(0,0,0,.12);
+    }
+
+    /* =========================================================
+       RIGHT COLUMN
+    ========================================================= */
+
+    .side-column {
+      min-width: 0;
+
+      background: #fff;
+    }
+
+    /* =========================================================
+       CATEGORY PANEL
+    ========================================================= */
+
+    .categories {
+      position: relative;
+
+      height: 250px;
+
+      overflow: hidden;
+
+      border-bottom: 1px solid #ddd;
+
+      background: #fff;
+    }
+
+    .category-word {
+      position: absolute;
+
+      left: 50%;
+
+      transform: translateX(-50%);
+
+      width: 100%;
+
+      text-align: center;
+
+      font-family: "Anton", sans-serif;
+      font-size: 34px;
+
+      line-height: 1;
+
+      white-space: nowrap;
+    }
+
+    .category-word.men {
+      top: 30px;
+      color: #a9a9a9;
+    }
+
+    .category-word.women {
+      top: 74px;
+      color: #050505;
+    }
+
+    .category-word.accessories {
+      top: 118px;
+      color: #aaa;
+    }
+
+    .category-word.trends {
+      top: 164px;
+      color: #a8a8a8;
+    }
+
+    .category-line {
+      position: absolute;
+
+      left: 8%;
+      right: 8%;
+
+      height: 1px;
+
+      background: #dedede;
+    }
+
+    .category-line.one {
+      top: 72px;
+    }
+
+    .category-line.two {
+      top: 117px;
+    }
+
+    .category-line.three {
+      top: 162px;
+    }
+
+    /* Static category model */
+    .category-model {
+      position: absolute;
+
+      z-index: 5;
+
+      left: 50%;
+      top: 93px;
+
+      width: 88px;
+      height: 100px;
+
+      object-fit: cover;
+      object-position: center;
+
+      transform:
+        translateX(-50%)
+        rotate(8deg);
+
+      box-shadow:
+        0 3px 10px rgba(0,0,0,.16);
+    }
+
+    /* =========================================================
+       STATISTICS
+    ========================================================= */
+
+    .statistics {
+      position: relative;
+
+      height: 265px;
+
+      padding: 27px 18px 15px;
+
+      overflow: hidden;
+
+      background:
+        linear-gradient(
+          145deg,
+          #0587ca,
+          #0088c7 65%,
+          #0879bd
+        );
+    }
+
+    .statistics::before {
+      content: "";
+
+      position: absolute;
+
+      left: 0;
+      top: 0;
+
+      width: 100%;
+      height: 100%;
+
+      background:
+        linear-gradient(
+          120deg,
+          rgba(255,255,255,.05),
+          transparent
+        );
+
+      pointer-events: none;
+    }
+
+    .statistics-title {
+      position: relative;
+
+      z-index: 5;
+
+      color: #fff;
+
+      font-family: "Anton", sans-serif;
+      font-size: 30px;
+
+      line-height: 1;
+    }
+
+    .stats-grid {
+      position: relative;
+
+      z-index: 5;
+
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+
+      margin-top: 36px;
+
+      align-items: stretch;
+    }
+
+    .stat-card {
+      position: relative;
+
+      height: 93px;
+
+      overflow: hidden;
+
+      background: #fff;
+    }
+
+    .stat-card img {
+      display: block;
+
+      width: 100%;
+      height: 100%;
+
+      object-fit: cover;
+      object-position: center;
+
+      transition: transform .3s ease;
+    }
+
+    .stat-card:hover img {
+      transform: scale(1.05);
+    }
+
+    .stat-card-text {
+      position: absolute;
+
+      left: 7px;
+      right: 7px;
+      bottom: 7px;
+
+      padding: 5px;
+
+      background: rgba(255,255,255,.88);
+
+      color: #111;
+
+      font-size: 4px;
+      line-height: 1.35;
+    }
+
+    .percentage-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+
+      padding: 8px;
+
+      background: #fff;
+    }
+
+    .percentage-card small {
+      color: #222;
+      font-size: 5px;
+    }
+
+    .percentage {
+      margin-top: 13px;
+
+      font-family: "Anton", sans-serif;
+      font-size: 28px;
+
+      line-height: 1;
+    }
+
+    /* =========================================================
+       REMOVED:
+       
+       - Bottom-right quote section
+       - Quote mark
+       - Quote text
+       - Quote author
+       - Quote navigation dots
+       
+       The statistics section is now the final right-side
+       content.
+    ========================================================= */
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+
+    @media (max-width: 900px) {
+
+      .page {
+        padding: 8px;
+      }
+
+      .layout {
+        min-height: auto;
+      }
+
+      .content {
+        width: calc(100% - 30px);
+
+        grid-template-columns: 1fr;
+      }
+
+      .hero-column {
+        min-height: 690px;
+      }
+
+      .side-column {
+        display: grid;
+
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .categories,
+      .statistics {
+        min-height: 300px;
+      }
+    }
+
+    @media (max-width: 600px) {
+
+      .layout {
+        border-radius: 0;
+      }
+
+      .content {
+        width: 100%;
+        margin-top: 25px;
+      }
+
+      .hero-column {
+        min-height: 620px;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .hero-title {
+        top: 70px;
+        font-size: 25vw;
+      }
+
+      .hero-art {
+        top: 70px;
+        height: 330px;
+      }
+
+      .review-card {
+        top: 155px;
+        right: 8px;
+      }
+
+      .hero-description {
+        top: 290px;
+        width: 180px;
+      }
+
+      .shop-button {
+        top: 355px;
+      }
+
+      .discover {
+        top: 420px;
+      }
+
+      .discover-title {
+        width: 270px;
+        font-size: 22px;
+      }
+
+      .discover-bg {
+        font-size: 58px;
+      }
+
+      .side-column {
+        display: block;
+      }
+
+      .categories,
+      .statistics {
+        min-height: 250px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="page">
+
+    <div class="layout">
+
+      <div class="content">
+
+        <!-- ===================================================
+             LEFT HERO
+        ==================================================== -->
+
+        <section class="hero-column">
+
+          <nav class="navbar">
+
+            <a href="#" class="logo">
+              FIRSTFIND
+            </a>
+
+            <div class="nav-links">
+              <a href="#home">HOME</a>
+              <a href="#product">PRODUCT</a>
+              <a href="#pricing">PRICING</a>
+              <a href="#shops">OUR SHOPS</a>
+            </div>
+
+            <button
+              class="order-button"
+              id="orderButton"
+              type="button"
+            >
+              ORDER NOW
+            </button>
+
+          </nav>
+
+
+          <h1 class="hero-title">
+            FIRSTFIND
+          </h1>
+
+
+          <!-- =================================================
+               HERO ART
+
+               Center dynamic model REMOVED.
+               Skateboard REMOVED.
+          ================================================== -->
+
+          <div class="hero-art"></div>
+
+
+          <p class="hero-description">
+            Discover thoughtfully crafted fashion that blends
+            timeless elegance with everyday comfort. Designed
+            for modern lifestyles, made to elevate every moment.
+          </p>
+
+
+          <button
+            class="shop-button"
+            id="shopButton"
+            type="button"
+          >
+            SHOP COLLECTION
+            <span>↗</span>
+          </button>
+
+
+          <!-- =================================================
+               REVIEW CARD
+          ================================================== -->
+
+          <article class="review-card">
+
+            <div class="review-score">
+              <strong>4.8</strong>
+              <span>(360)</span>
+            </div>
+
+            <div class="review-caption">
+              Happy clients score
+            </div>
+
+            <div class="review-photo">
+
+              <img
+                src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=500&q=80"
+                alt="Fashion customer"
+              />
+
+              <span class="review-arrow">
+                ↗
+              </span>
+
+            </div>
+
+          </article>
+
+
+          <!-- =================================================
+               DISCOVER
+          ================================================== -->
+
+          <section class="discover">
+
+            <h2 class="discover-title">
+              DISCOVER LOOKS THAT DEFINE<br />
+              YOUR STYLE
+            </h2>
+
+            <div class="discover-bg">
+              START SHOPPING
+            </div>
+
+            <img
+              class="discover-model"
+              src="https://images.unsplash.com/photo-1485968579580-b6d095142e6e?auto=format&fit=crop&w=500&q=85"
+              alt="Fashion model wearing colorful clothing"
+            />
+
+          </section>
+
+        </section>
+
+
+        <!-- ===================================================
+             RIGHT COLUMN
+        ==================================================== -->
+
+        <aside class="side-column">
+
+
+          <!-- =================================================
+               CATEGORY SECTION
+          ================================================== -->
+
+          <section class="categories">
+
+            <div class="category-word men">
+              MEN'S WEAR
+            </div>
+
+            <div class="category-word women">
+              WOMEN'S WEAR
+            </div>
+
+            <div class="category-word accessories">
+              ACCESSORIES
+            </div>
+
+            <div class="category-word trends">
+              TRENDS NOW
+            </div>
+
+
+            <div class="category-line one"></div>
+            <div class="category-line two"></div>
+            <div class="category-line three"></div>
+
+
+            <img
+              class="category-model"
+              src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=500&q=85"
+              alt="Women's fashion"
+            />
+
+          </section>
+
+
+          <!-- =================================================
+               TRUST & STATISTICS
+          ================================================== -->
+
+          <section class="statistics">
+
+            <h2 class="statistics-title">
+              TRUST &amp; STATISTICS
+            </h2>
+
+
+            <div class="stats-grid">
+
+              <!-- MODEL 1 -->
+              <article class="stat-card">
+
+                <img
+                  src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=400&q=85"
+                  alt="Fashion customer"
+                />
+
+                <div class="stat-card-text">
+                  Our customers love the quality
+                  and modern design.
+                </div>
+
+              </article>
+
+
+              <!-- STAT 2 -->
+              <article class="stat-card percentage-card">
+
+                <small>
+                  Trusted Lifestyle<br />
+                  Support
+                </small>
+
+                <div class="percentage">
+                  95%
+                </div>
+
+                <div class="stat-card-text">
+                  of customers found another
+                  purchase after their first order.
+                </div>
+
+              </article>
+
+
+              <!-- MODEL 3 -->
+              <article class="stat-card">
+
+                <img
+                  src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=85"
+                  alt="Fashion customer wearing sunglasses"
+                />
+
+                <div class="stat-card-text">
+                  Crafted with care for those
+                  who believe in true style.
+                </div>
+
+              </article>
+
+            </div>
+
+          </section>
+
+        </aside>
+
+      </div>
+
+    </div>
+
+  </main>
+
+
+  <script>
+    "use strict";
+
+    document.addEventListener("DOMContentLoaded", () => {
+
+      const orderButton =
+        document.getElementById("orderButton");
+
+      const shopButton =
+        document.getElementById("shopButton");
+
+
+      /* =====================================================
+         ORDER BUTTON
+      ====================================================== */
+
+      orderButton.addEventListener("click", () => {
+
+        const originalText =
+          orderButton.textContent.trim();
+
+        orderButton.textContent =
+          "ORDERING...";
+
+        orderButton.disabled = true;
+
+        setTimeout(() => {
+
+          orderButton.textContent =
+            "ORDERED ✓";
+
+          setTimeout(() => {
+
+            orderButton.textContent =
+              originalText;
+
+            orderButton.disabled = false;
+
+          }, 1000);
+
+        }, 700);
+
+      });
+
+
+      /* =====================================================
+         SHOP BUTTON
+      ====================================================== */
+
+      shopButton.addEventListener("click", () => {
+
+        shopButton.innerHTML =
+          'COLLECTION <span>✓</span>';
+
+        setTimeout(() => {
+
+          shopButton.innerHTML =
+            'SHOP COLLECTION <span>↗</span>';
+
+        }, 1300);
+
+      });
+
+    });
+  </script>
+
+</body>
+</html>

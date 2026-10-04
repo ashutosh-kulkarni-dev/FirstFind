@@ -1,0 +1,7 @@
+/* ─────────────────────────────────────────────────────────────
+   FONTS — Help Desk
+   The product ships Inter (weights 400/500/600, +700 for emphasis),
+   loaded from Google Fonts. Swap this @import for self-hosted
+   @font-face rules + .woff2 binaries when shipping to production.
+   ───────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');

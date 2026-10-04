@@ -1,0 +1,13 @@
+# Keep the image small and free of dev-only / secret files.
+__pycache__/
+*.py[cod]
+*.db
+*.sqlite*
+.env
+.env.*
+!.env.example
+_verify.py
+_audit.py
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

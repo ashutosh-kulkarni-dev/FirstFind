@@ -1,0 +1,11 @@
+/* ═══════════════════════════════════════════════════════════════
+   Help Desk — Design System entry point
+   Consumers link THIS file only. Import order: fonts → tokens → base.
+   ═══════════════════════════════════════════════════════════════ */
+@import url('./tokens/fonts.css');
+@import url('./tokens/colors.css');
+@import url('./tokens/typography.css');
+@import url('./tokens/spacing.css');
+@import url('./base/reset.css');
+@import url('./base/components.css');
+@import url('./base/primitives.css');

@@ -1,0 +1,43 @@
+/* ─────────────────────────────────────────────────────────────
+   TYPOGRAPHY TOKENS — Help Desk
+   One family (Inter). Tight, functional UI type — never display.
+   ───────────────────────────────────────────────────────────── */
+:root {
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, monospace;
+
+  /* ── Size scale (px) — UI ranges from 10px micro-labels to 28px KPIs ── */
+  --fs-10: 10px;   /* status badges, KPI accents */
+  --fs-11: 11px;   /* meta, uppercase labels, ids */
+  --fs-12: 12px;   /* secondary text, controls */
+  --fs-13: 13px;   /* dense body, table cells, buttons */
+  --fs-14: 14px;   /* default body, chat bubbles */
+  --fs-15: 15px;   /* header title */
+  --fs-16: 16px;   /* modal title */
+  --fs-20: 20px;   /* view title, login title */
+  --fs-26: 26px;   /* star glyphs */
+  --fs-28: 28px;   /* dashboard KPI value */
+
+  /* ── Weights — only three ship in the product ── */
+  --fw-regular:  400;  /* @kind other */
+  --fw-medium:   500;  /* @kind other */
+  --fw-semibold: 600;  /* @kind other */
+  --fw-bold:     700;  /* @kind other */
+
+  /* ── Line heights ── */
+  --lh-tight: 1.2;   /* @kind other */
+  --lh-snug:  1.4;   /* @kind other */
+  --lh-body:  1.65;  /* @kind other */
+
+  /* ── Tracking ── */
+  --ls-label: .04em;   /* @kind other */
+  --ls-badge: .05em;   /* @kind other */
+
+  /* ── Semantic roles ── */
+  --text-body:    var(--fs-14);
+  --text-dense:   var(--fs-13);
+  --text-meta:    var(--fs-12);
+  --text-micro:   var(--fs-11);
+  --text-title:   var(--fs-20);
+  --text-heading: var(--fs-15);
+}

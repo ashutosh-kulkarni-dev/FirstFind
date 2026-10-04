@@ -1,0 +1,76 @@
+/* ─────────────────────────────────────────────────────────────
+   DESIGN-SYSTEM PRIMITIVES — Help Desk
+   Reusable, theme-aware classes for the React component library.
+   These read --accent (blue in the student scope, purple inside
+   .admin-portal) so one Button serves both portals. Visuals match
+   the live product's button family — no new look introduced.
+   ───────────────────────────────────────────────────────────── */
+
+/* ── Button ── */
+.hd-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  font-family:var(--font-sans);font-weight:500;line-height:1;
+  border:1px solid transparent;border-radius:var(--r-lg);
+  cursor:pointer;white-space:nowrap;
+  transition:background .15s,border-color .15s,color .15s,opacity .15s;
+}
+.hd-btn:disabled{cursor:not-allowed}
+.hd-btn--block{width:100%}
+
+/* sizes */
+.hd-btn--sm{padding:7px 13px;font-size:var(--fs-12)}
+.hd-btn--md{padding:9px 16px;font-size:var(--fs-13)}
+.hd-btn--lg{padding:12px 18px;font-size:var(--fs-14)}
+
+/* primary — solid accent */
+.hd-btn--primary{background:var(--accent);color:#fff}
+.hd-btn--primary:hover:not(:disabled){background:var(--accent-hover)}
+.hd-btn--primary:disabled{background:var(--accent-disabled)}
+
+/* secondary — outline */
+.hd-btn--secondary{background:var(--white);color:var(--text);border-color:var(--border)}
+.hd-btn--secondary:hover:not(:disabled){border-color:var(--accent);color:var(--accent);background:var(--accent-tint)}
+.hd-btn--secondary:disabled{opacity:.55}
+
+/* ghost — text only */
+.hd-btn--ghost{background:none;color:var(--muted)}
+.hd-btn--ghost:hover:not(:disabled){color:var(--accent);background:var(--accent-tint)}
+.hd-btn--ghost:disabled{opacity:.55}
+
+/* danger — destructive tint */
+.hd-btn--danger{background:var(--red-lt);color:var(--red);border-color:var(--red-bd)}
+.hd-btn--danger:hover:not(:disabled){background:#ffe4e6}
+.hd-btn--danger:disabled{opacity:.55}
+
+/* ── Icon button (square, icon-only) ── */
+.hd-iconbtn{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:28px;height:28px;border-radius:var(--r-sm);
+  border:1px solid var(--border);background:var(--white);color:var(--muted);
+  cursor:pointer;transition:all .15s;
+}
+.hd-iconbtn:hover:not(:disabled){border-color:var(--accent);color:var(--accent);background:var(--accent-tint)}
+.hd-iconbtn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ── Form fields ── */
+.hd-field{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.hd-label{font-size:var(--fs-12);font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.hd-input,.hd-textarea,.hd-select{
+  width:100%;font-family:var(--font-sans);font-size:var(--fs-14);color:var(--text);
+  background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);
+  padding:10px 12px;outline:none;transition:border-color .15s;
+}
+.hd-input::placeholder,.hd-textarea::placeholder{color:#9ca3af}
+.hd-input:focus,.hd-textarea:focus,.hd-select:focus{border-color:var(--accent)}
+.hd-input:disabled,.hd-textarea:disabled,.hd-select:disabled{background:var(--bg);color:var(--muted);cursor:not-allowed}
+.hd-textarea{resize:vertical;min-height:80px;line-height:1.6}
+.hd-select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:34px}
+.hd-input--error,.hd-textarea--error{border-color:var(--red-bd)}
+.hd-field-error{font-size:var(--fs-11);color:var(--red);display:flex;align-items:center;gap:4px}
+
+/* ── Choice card (radio / checkbox tile) ── */
+.hd-choice{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--r-lg);cursor:pointer;transition:border-color .15s,background .15s}
+.hd-choice:hover{border-color:var(--accent);background:var(--accent-tint)}
+.hd-choice input{margin-top:2px;accent-color:var(--accent);flex-shrink:0}
+.hd-choice-text strong{display:block;font-size:var(--fs-13);font-weight:500;color:var(--text)}
+.hd-choice-text span{font-size:var(--fs-11);color:var(--muted)}

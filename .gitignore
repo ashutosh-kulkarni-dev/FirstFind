@@ -1,0 +1,35 @@
+# ---- Secrets ----
+.env
+.env.*
+!.env.example
+*/.env
+**/.env
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---- Local databases / dumps ----
+*.db
+*.sqlite
+*.sqlite3
+
+# ---- Node / frontend ----
+node_modules/
+dist/
+.vite/
+
+# ---- Editor / OS ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ---- Build / deploy ----
+.vercel/

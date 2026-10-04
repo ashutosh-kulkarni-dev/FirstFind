@@ -1,0 +1,73 @@
+{
+  "topics": [
+    {
+      "keywords": ["jacket", "coat", "outerwear", "blazer"],
+      "tip": "For jackets and blazers: check the seams at the shoulders and armpits first — they carry the most stress. Run the zip the full length, try every button. Smell the lining before trying it on (old odours rarely wash out fully). Look at the collar for pilling or shine — synthetic collars wear fast. A structured shoulder is hard to alter; everything else is fixable.",
+      "category_hint": "formal"
+    },
+    {
+      "keywords": ["denim", "jeans", "jean"],
+      "tip": "For denim: check the inseam and crotch for thin patches or fraying — both are expensive to repair. Look at the rivets: brass ones are usually vintage or quality; plastic ones are budget. Hold the waistband and pull gently — any give means the elastic is shot. If the wash looks uneven, it's probably a cheap home dye job.",
+      "category_hint": "denim"
+    },
+    {
+      "keywords": ["vintage", "retro", "old school", "y2k"],
+      "tip": "For vintage: check the care label — pre-1971 garments had no mandatory labels; pre-1986 labels used older fibre names ('acetate' instead of 'viscose'). Look for union tags (ILGWU, ACWA) on American pieces. Seam allowances on true vintage are generous — a good sign for durability. Test for colour fastness: dampen a hidden spot and blot with a white cloth.",
+      "category_hint": "vintage"
+    },
+    {
+      "keywords": ["streetwear", "hoodie", "sneaker", "hoodie", "sweatshirt"],
+      "tip": "For streetwear: check drawstrings — asymmetrical lengths mean the cord has been pulled through and the hoodie has been washed wrong. On sweatshirts, hold the cuff ribbing and stretch; if it doesn't snap back, the elastic is gone. For sneakers, press the toe box — if it crinkles like paper the sole is delaminating. Check for yellowing on white midsoles.",
+      "category_hint": "streetwear"
+    },
+    {
+      "keywords": ["ethnic", "kurta", "saree", "sari", "embroidery", "dupatta"],
+      "tip": "For ethnic wear: check embroidery closely — loose threads or missing motifs are hard to match later. Hold silk up to the light; a genuine weave shows a consistent pattern. For sarees, run your fingers along the border — any roughness suggests machine embroidery stitched over a base fabric and it will fray quickly. Check the fall and petticoat band stitching.",
+      "category_hint": "ethnic"
+    },
+    {
+      "keywords": ["bag", "purse", "handbag", "tote", "leather"],
+      "tip": "For leather bags: flex the corners — real leather creases but doesn't crack on first bend; faux leather cracks immediately. Check the hardware: loose rivets or corroding clasps mean the structure is failing. Smell the lining — musty odours in closed bags rarely clear. For canvas totes, look at the handle stitching; two rows of stitching is the minimum for durability.",
+      "category_hint": "accessories"
+    },
+    {
+      "keywords": ["bargain", "negotiate", "price", "discount", "haggle", "deal"],
+      "tip": "Most Bengaluru thrift stores have fixed prices, especially the curated ones. Polite negotiation works best when: (a) you're buying multiple items, (b) there's a visible defect, or (c) you're a repeat customer. Never open with a lowball — start at 80–85% of the asking price. The phrase 'can you do a little better?' works better than 'will you reduce it?' — it's less adversarial.",
+      "category_hint": null
+    },
+    {
+      "keywords": ["check", "inspect", "quality", "look for", "what to look"],
+      "tip": "General thrift inspection order: (1) Smell it first — odours often survive washes. (2) Check the seams and stitching under good light; a seam ripper fixes bad stitching, but you can't un-shrink fabric. (3) Look for pilling, especially under the arms and on the inner thighs — it's structural wear, not surface dirt. (4) Test every zip, button, and snap before paying. (5) Hold knits up to the light and look for thin patches.",
+      "category_hint": null
+    },
+    {
+      "keywords": ["wash", "clean", "care", "laundry", "stain"],
+      "tip": "Before washing anything thrifted: spot-test a hidden corner with your detergent — some vintage dyes bleed. Turn dark items inside out and use cold water for the first two washes. For musty odours, soak in white vinegar (1 cup per bucket of cold water) for 30 minutes before washing — more effective than detergent alone. Never tumble-dry vintage or anything with a 'dry flat' symbol.",
+      "category_hint": null
+    },
+    {
+      "keywords": ["size", "fit", "sizing", "alter", "tailor"],
+      "tip": "Thrift sizing is inconsistent — vintage Indian sizes run smaller, Western vintage sizes run larger than modern equivalents. Always try on or measure against a garment you already own. When in doubt, buy bigger: taking in a seam costs ₹100–300 at any local tailor. Letting out a seam is only possible if there's enough seam allowance (hold the seam up to light — you'll see it).",
+      "category_hint": null
+    },
+    {
+      "keywords": ["timing", "when to go", "morning", "weekend", "best time", "fresh stock"],
+      "tip": "Weekday mornings just after opening (most Bengaluru thrift stores open 11am) give you first pick of fresh drops and no crowds. Avoid Sunday afternoons — most stores are packed and stock has been picked over. Many stores restock mid-week (Tuesday–Wednesday). Monday is a common closing day — always check before heading out.",
+      "category_hint": null
+    },
+    {
+      "keywords": ["fake", "replica", "authentic", "genuine", "original"],
+      "tip": "For branded or vintage pieces: check the font on labels — luxury brands never use inconsistent fonts. Feel the weight of hardware; real metal has heft. On vintage Levi's, the Red Tab should have a capital 'E' in LEVI'S on pieces before 1971. For sneakers, check the stitch count on the heel logo — originals are precise. If the price feels too good to be true, it usually is.",
+      "category_hint": null
+    }
+  ],
+  "category_tips": {
+    "vintage": "Buying vintage? Check the care label — pre-1971 pieces had no mandatory labels, and that's often a quality indicator.",
+    "denim": "Buying denim? Always check the inseam and crotch for thin patches before you pay — both are expensive to repair.",
+    "streetwear": "Buying streetwear? Stretch the cuff ribbing — if it doesn't snap back, the elastic is gone.",
+    "ethnic": "Buying ethnic wear? Run your fingers along the embroidery border for loose threads — hard to match later.",
+    "formal": "Buying formal wear? Check the shoulder seams and try every button before committing.",
+    "accessories": "Buying leather goods? Flex the corners — real leather creases; faux leather cracks immediately."
+  },
+  "general_tip": "General rule: smell first, seams second, zips and buttons third. If you'd skip any of those steps in a regular store, don't skip them here — returns are rare at thrift shops."
+}

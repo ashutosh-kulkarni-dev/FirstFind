@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Inter", Arial, sans-serif; background: #eef2f4; }
+  a { color: #1478d1; text-decoration: none; }
+  a:hover { color: #0e5aa8; }
+  button { font: inherit; cursor: pointer; }
+  textarea { font: inherit; }
+  ::-webkit-scrollbar { width: 9px; }
+  ::-webkit-scrollbar-thumb { background: #cdd6de; border-radius: 6px; }
+  @keyframes stUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+</style>
+</helmet>
+
+<main style="width:100%; min-height:100vh; background:#eef2f4;">
+
+  <nav style="display:flex; align-items:center; height:60px; padding:0 26px; background:#0f1a2b; color:#fff; position:sticky; top:0; z-index:20;">
+    <a href="FirstFind Landing.dc.html" style="color:#fff; font-family:'Anton',sans-serif; font-size:23px; letter-spacing:-.5px;">FIRSTFIND</a>
+    <div style="display:flex; gap:22px; margin-left:40px;">
+      <a href="FirstFind Explore.dc.html" style="color:rgba(255,255,255,.72); font-size:13px; font-weight:500;" style-hover="color:#fff;">Explore</a>
+      <a href="FirstFind Chat.dc.html" style="color:rgba(255,255,255,.72); font-size:13px; font-weight:500;" style-hover="color:#fff;">Assistant</a>
+      <a href="#" style="color:rgba(255,255,255,.72); font-size:13px; font-weight:500;" style-hover="color:#fff;">Zones</a>
+    </div>
+    <div style="margin-left:auto; display:flex; align-items:center; gap:14px;">
+      <span style="color:rgba(255,255,255,.72); font-size:13px;">Hi, Aditi</span>
+      <button style="padding:8px 15px; border:0; border-radius:22px; background:#fff; color:#111; font-size:12px; font-weight:700;" style-hover="background:#e9f2fb;">Log out</button>
+    </div>
+  </nav>
+
+  <div style="max-width:1080px; margin:0 auto; padding:22px 26px 60px;">
+    <a href="FirstFind Explore.dc.html" style="display:inline-block; margin-bottom:14px; color:#6c7885; font-size:12.5px; font-weight:600;" style-hover="color:#0e5aa8;">← Back to explore</a>
+
+    <!-- HEADER CARD -->
+    <section style="display:flex; gap:24px; padding:26px; background:#fff; border:1px solid #e2e6ea; border-radius:16px; animation:stUp .3s ease both;">
+      <div style="flex:1; min-width:0;">
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <div style="font-family:'Anton',sans-serif; font-size:40px; letter-spacing:-.5px; color:#0f1a2b; line-height:1;">RETROSPECT</div>
+          <span style="padding:4px 10px; border-radius:14px; background:#e6f7ec; color:#16a34a; font-size:11px; font-weight:700;">OPEN NOW</span>
+        </div>
+        <div style="margin-top:8px; display:flex; flex-wrap:wrap; gap:7px;">
+          <span style="padding:4px 11px; border-radius:15px; background:#eef4fb; color:#1c5fa8; font-size:11.5px; font-weight:600;">Vintage</span>
+          <span style="padding:4px 11px; border-radius:15px; background:#eef4fb; color:#1c5fa8; font-size:11.5px; font-weight:600;">Denim</span>
+          <span style="padding:4px 11px; border-radius:15px; background:#eef4fb; color:#1c5fa8; font-size:11.5px; font-weight:600;">Band tees</span>
+        </div>
+        <p style="margin-top:14px; color:#4a5560; font-size:13.5px; line-height:1.6; max-width:560px;">A tightly curated vintage room in Indiranagar — deadstock denim, 90s band tees and the occasional designer piece. Owner-run, restocked every Friday.</p>
+        <div style="margin-top:16px; display:flex; flex-wrap:wrap; gap:18px 26px; color:#3a4652; font-size:13px;">
+          <div><span style="color:#9aa5b1; font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; display:block; margin-bottom:2px;">Hours</span>11:00 – 20:30</div>
+          <div><span style="color:#9aa5b1; font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; display:block; margin-bottom:2px;">Price range</span>₹₹ · ₹400–2500</div>
+          <div><span style="color:#9aa5b1; font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; display:block; margin-bottom:2px;">Phone</span>+91 98450 12345</div>
+          <div><span style="color:#9aa5b1; font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; display:block; margin-bottom:2px;">Instagram</span><a href="#">@retrospect.blr</a></div>
+        </div>
+      </div>
+
+      <div style="flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:14px; width:150px;">
+        <div style="position:relative; width:120px; height:120px;">
+          <svg viewBox="0 0 120 120" style="width:100%; height:100%; transform:rotate(-90deg);">
+            <circle cx="60" cy="60" r="52" fill="none" stroke="#eef2f4" stroke-width="11"/>
+            <circle cx="60" cy="60" r="52" fill="none" stroke="#22c55e" stroke-width="11" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="26.1"/>
+          </svg>
+          <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+            <div style="font-family:'Anton',sans-serif; font-size:30px; color:#0f1a2b; line-height:1;">4.8</div>
+            <div style="font-size:9px; font-weight:700; letter-spacing:.5px; color:#9aa5b1;">AI SCORE</div>
+          </div>
+        </div>
+        <button ref="{{ setSave }}" onClick="{{ toggleSave }}" style="width:100%; padding:11px; border:1px solid #d7dee4; border-radius:11px; background:#fff; color:#0f1a2b; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:7px; transition:all .18s ease;" style-hover="border-color:#33a0e6; color:#0e5aa8;">{{ saveLabel }}</button>
+      </div>
+    </section>
+
+    <!-- TWO COLUMN -->
+    <div style="display:grid; grid-template-columns:1.55fr 1fr; gap:20px; margin-top:20px; align-items:start;">
+
+      <!-- REVIEWS -->
+      <section style="background:#fff; border:1px solid #e2e6ea; border-radius:16px; padding:22px; animation:stUp .3s ease .05s both;">
+        <div style="display:flex; align-items:baseline; justify-content:space-between;">
+          <div style="font-family:'Anton',sans-serif; font-size:22px; color:#0f1a2b;">COMMUNITY REVIEWS</div>
+          <span style="color:#9aa5b1; font-size:12px; font-weight:600;">{{ reviewCount }} reviews</span>
+        </div>
+
+        <div style="margin-top:14px;">
+          <div style="display:flex; height:10px; border-radius:6px; overflow:hidden;">
+            <span style="width:76%; background:#22c55e;"></span>
+            <span style="width:16%; background:#cbd5e1;"></span>
+            <span style="width:8%; background:#f43f5e;"></span>
+          </div>
+          <div style="display:flex; gap:16px; margin-top:8px; font-size:11.5px; color:#4a5560;">
+            <span style="display:flex; align-items:center; gap:5px;"><span style="width:9px;height:9px;border-radius:50%;background:#22c55e;"></span> 76% positive</span>
+            <span style="display:flex; align-items:center; gap:5px;"><span style="width:9px;height:9px;border-radius:50%;background:#cbd5e1;"></span> 16% neutral</span>
+            <span style="display:flex; align-items:center; gap:5px;"><span style="width:9px;height:9px;border-radius:50%;background:#f43f5e;"></span> 8% negative</span>
+          </div>
+        </div>
+
+        <div ref="{{ setReviews }}" style="margin-top:18px; display:flex; flex-direction:column; gap:14px;"></div>
+
+        <!-- COMPOSER -->
+        <div style="margin-top:20px; padding-top:18px; border-top:1px solid #eef2f4;">
+          <div style="font-size:13px; font-weight:700; color:#0f1a2b; margin-bottom:9px;">Write a review</div>
+          <div ref="{{ setStars }}" style="display:flex; gap:4px; margin-bottom:10px;"></div>
+          <textarea ref="{{ setText }}" onInput="{{ onType }}" placeholder="Share your find…" rows="3" style="width:100%; padding:11px 13px; border:1px solid #d7dee4; border-radius:11px; font-size:13px; resize:vertical; outline:none;" style-focus="border-color:#33a0e6; box-shadow:0 0 0 3px rgba(51,160,230,.16);"></textarea>
+          <div style="display:flex; align-items:center; gap:12px; margin-top:10px;">
+            <button onClick="{{ postReview }}" style="padding:10px 18px; border:0; border-radius:11px; background:#0f1a2b; color:#fff; font-size:13px; font-weight:700; transition:background .18s ease;" style-hover="background:#1c3252;">Post review</button>
+            <sc-if value="{{ hasDraft }}" hint-placeholder-val="{{ false }}">
+              <span style="font-size:12px; font-weight:600; color:{{ sentColor }};">Live sentiment: {{ sentLabel }}</span>
+            </sc-if>
+          </div>
+        </div>
+      </section>
+
+      <!-- SIMILAR -->
+      <aside style="background:#fff; border:1px solid #e2e6ea; border-radius:16px; padding:22px; animation:stUp .3s ease .1s both;">
+        <div style="font-family:'Anton',sans-serif; font-size:20px; color:#0f1a2b; line-height:1.05;">SHOPPERS<br>ALSO LIKED</div>
+        <div style="margin-top:4px; color:#9aa5b1; font-size:11.5px;">Collaborative filtering</div>
+        <div style="margin-top:15px; display:flex; flex-direction:column; gap:11px;">
+          <sc-for list="{{ similar }}" as="s" hint-placeholder-count="3">
+            <a href="#" style="display:block; padding:13px; border:1px solid #e4e9ee; border-radius:12px; text-decoration:none; transition:border-color .18s ease, transform .18s ease;" style-hover="border-color:#33a0e6; transform:translateY(-2px);">
+              <div style="font-family:'Anton',sans-serif; font-size:15px; color:#0f1a2b; letter-spacing:-.2px;">{{ s.name }}</div>
+              <div style="margin-top:2px; color:#6c7885; font-size:11.5px;">{{ s.area }} · {{ s.cat }}</div>
+              <div style="margin-top:7px; display:flex; align-items:center; gap:6px;">
+                <span style="padding:2px 7px; border-radius:11px; background:{{ s.tint }}; color:{{ s.ink }}; font-size:11px; font-weight:700;">⭐ {{ s.rating }}</span>
+                <span style="margin-left:auto; font-size:11px; color:#33a0e6; font-weight:700;">{{ s.match }}% match</span>
+              </div>
+            </a>
+          </sc-for>
+        </div>
+      </aside>
+    </div>
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { saved:false, rating:0, draft:"", reviews:[
+    { name:"Meghana R.", stars:5, sent:"pos", text:"Found a perfect Levi's trucker jacket for \u20b9900. Owner knows the stock inside out.", anomaly:false },
+    { name:"Karan V.", stars:5, sent:"pos", text:"Best band-tee selection in the city. Friday restocks are worth the trip.", anomaly:false },
+    { name:"Anon", stars:1, sent:"neg", text:"AMAZING!!! BEST STORE EVER 10/10 buy everything now!!!", anomaly:true },
+    { name:"Divya S.", stars:4, sent:"neutral", text:"Good range but a little pricey for thrift. Quality is solid though.", anomaly:false },
+  ]};
+
+  setSave=e=>{this.saveEl=e}; setReviews=e=>{this.revEl=e}; setStars=e=>{this.starEl=e}; setText=e=>{this.textEl=e};
+
+  similar=[
+    { name:"SECOND WIND", area:"Koramangala", cat:"Streetwear", rating:4.6, match:92, tint:"#dcfce7", ink:"#16a34a" },
+    { name:"CURATED CHAOS", area:"HSR Layout", cat:"Vintage", rating:4.7, match:88, tint:"#dcfce7", ink:"#16a34a" },
+    { name:"HEIRLOOM", area:"Malleshwaram", cat:"Vintage", rating:4.5, match:81, tint:"#dcfce7", ink:"#16a34a" },
+    { name:"NINE LIVES", area:"Jayanagar", cat:"Streetwear", rating:4.3, match:74, tint:"#ecfccb", ink:"#65a30d" },
+  ];
+
+  componentDidMount(){ this.paintReviews(); this.paintStars(); }
+  componentDidUpdate(){ this.paintReviews(); this.paintStars(); }
+
+  sentimentOf(t){
+    const s=t.toLowerCase();
+    const neg=["bad","rude","dirty","overpriced","waste","never","disappointed"].some(w=>s.includes(w));
+    const bangs=(t.match(/!/g)||[]).length;
+    const caps=t.length>10 && t.replace(/[^A-Z]/g,"").length/t.replace(/[^A-Za-z]/g,"").length>0.6;
+    if(neg)return{key:"neg",label:"Negative",color:"#e11d48"};
+    if(bangs>=3||caps)return{key:"anom",label:"Flagged \u00b7 possibly fake",color:"#d97706"};
+    if(["love","great","perfect","best","amazing","solid","worth"].some(w=>s.includes(w)))return{key:"pos",label:"Positive",color:"#16a34a"};
+    return{key:"neutral",label:"Neutral",color:"#64748b"};
+  }
+
+  badge(sent){
+    const map={pos:["#dcfce7","#16a34a","Positive"],neg:["#ffe4e6","#e11d48","Negative"],neutral:["#eef2f4","#64748b","Neutral"]};
+    return map[sent]||map.neutral;
+  }
+
+  paintReviews(){
+    const host=this.revEl; if(!host)return;
+    host.innerHTML="";
+    this.state.reviews.forEach(r=>{
+      const [bg,ink,lbl]=this.badge(r.sent);
+      const el=document.createElement("div");
+      el.style.cssText=`padding:14px; border:1px solid ${r.anomaly?'#f6d5a8':'#eef2f4'}; ${r.anomaly?'background:#fffaf0;':''} border-radius:12px; animation:stUp .25s ease both;`;
+      el.innerHTML=`
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="width:28px;height:28px;border-radius:50%;background:#0f1a2b;color:#fff;display:grid;place-items:center;font-size:11px;font-weight:700;">${r.name[0]}</div>
+          <div style="font-size:13px; font-weight:600; color:#1a2330;">${r.name}</div>
+          <div style="color:#f59e0b; font-size:12px; letter-spacing:1px;">${"\u2605".repeat(r.stars)}${"\u2606".repeat(5-r.stars)}</div>
+          <span style="margin-left:auto; padding:3px 9px; border-radius:11px; background:${bg}; color:${ink}; font-size:10px; font-weight:700;">${lbl.toUpperCase()}</span>
+        </div>
+        <p style="margin-top:8px; color:#4a5560; font-size:12.5px; line-height:1.55;">${r.text}</p>
+        ${r.anomaly?`<div style="margin-top:8px; display:flex; align-items:center; gap:6px; color:#d97706; font-size:11px; font-weight:600;">\u26a0 Flagged as anomalous by our review model</div>`:''}`;
+      host.appendChild(el);
+    });
+  }
+
+  paintStars(){
+    const host=this.starEl; if(!host)return;
+    host.innerHTML="";
+    for(let i=1;i<=5;i++){
+      const b=document.createElement("button");
+      b.textContent=i<=this.state.rating?"\u2605":"\u2606";
+      b.style.cssText=`border:0; background:none; cursor:pointer; font-size:26px; line-height:1; color:${i<=this.state.rating?'#f59e0b':'#cbd5e1'}; transition:transform .12s ease;`;
+      b.onmouseenter=()=>b.style.transform="scale(1.2)";
+      b.onmouseleave=()=>b.style.transform="none";
+      b.onclick=()=>this.setState({rating:i});
+      host.appendChild(b);
+    }
+  }
+
+  toggleSave=()=>this.setState(s=>({saved:!s.saved}));
+  onType=e=>this.setState({draft:e.target.value});
+
+  postReview=()=>{
+    const t=this.state.draft.trim(); if(!t||!this.state.rating)return;
+    const s=this.sentimentOf(t);
+    const sentKey=s.key==="anom"?"neutral":s.key;
+    const rev={name:"Aditi (you)",stars:this.state.rating,sent:sentKey,text:t,anomaly:s.key==="anom"};
+    this.setState(st=>({reviews:[rev,...st.reviews],draft:"",rating:0}));
+    if(this.textEl)this.textEl.value="";
+  };
+
+  renderVals(){
+    const s=this.state.draft.trim()?this.sentimentOf(this.state.draft):null;
+    return {
+      saveLabel:this.state.saved?"\u2713 Saved":"\u2661 Save store",
+      reviewCount:this.state.reviews.length,
+      hasDraft:!!this.state.draft.trim(),
+      sentLabel:s?s.label:"", sentColor:s?s.color:"#64748b",
+      similar:this.similar,
+      setSave:this.setSave,setReviews:this.setReviews,setStars:this.setStars,setText:this.setText,
+      toggleSave:this.toggleSave,onType:this.onType,postReview:this.postReview
+    };
+  }
+}
+</script>
+</body>
+</html>

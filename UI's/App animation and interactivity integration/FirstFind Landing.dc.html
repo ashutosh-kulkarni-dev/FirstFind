@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Anton&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { min-height: 100vh; font-family: "Inter", Arial, sans-serif; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; cursor: pointer; }
+  @keyframes ffFrameUp { from { opacity: 0; transform: translateY(44px) scale(.985); } to { opacity: 1; transform: none; } }
+  @keyframes ffBgIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes ffFade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes ffUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  @keyframes ffLetter { from { opacity: 0; transform: translateY(.95em) skewY(6deg); } to { opacity: 1; transform: none; } }
+  @keyframes ffPop { from { opacity: 0; transform: scale(.9) translateY(10px); } to { opacity: 1; transform: none; } }
+  @keyframes ffPulse { 0% { box-shadow: 0 0 0 0 rgba(255,40,101,.55); } 70% { box-shadow: 0 0 0 9px rgba(255,40,101,0); } 100% { box-shadow: 0 0 0 0 rgba(255,40,101,0); } }
+</style>
+</helmet>
+
+<main ref="{{ setRoot }}" style="--surface:#ffffff; --ink:#050505; --line:#dddddd; --muted:#a7a7a7; width:100%; min-height:100vh; padding:10px 38px 20px; background:#071523; animation:ffBgIn .55s ease both;">
+
+  <div style="position:relative; width:min(1200px,100%); min-height:720px; margin:0 auto; overflow:hidden; border:1px solid #d8d8d8; border-radius:7px; background:linear-gradient(180deg,var(--fr1,#176dcc) 0%,var(--fr2,#0876cc) 42%,var(--fr3,#eaf5fb) 100%); box-shadow:0 12px 40px rgba(0,0,0,.35); transition:background .45s ease; animation:ffFrameUp .8s cubic-bezier(.2,.8,.2,1) both;">
+
+    <div style="position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse at 15% 5%,rgba(255,255,255,.14),transparent 25%),radial-gradient(ellipse at 82% 12%,rgba(255,255,255,.12),transparent 24%);"></div>
+
+    <div style="position:relative; z-index:2; display:grid; grid-template-columns:1.45fr .95fr; width:calc(100% - 95px); min-height:720px; margin:47px auto 0; background:var(--surface,#fff); transition:background .4s ease;">
+
+      <!-- ===== LEFT HERO ===== -->
+      
+
+      <!-- ===== RIGHT COLUMN ===== -->
+      <section style="position:relative; min-width:0; overflow:hidden; border:1px solid rgba(255,255,255,.7); background:linear-gradient(180deg,var(--he1,#1469c9) 0%,var(--he2,#1478d1) 42%,var(--he3,#dceff8) 64%,var(--surface,#fff) 77%); transition:background .45s ease;">
+
+        <nav style="position:absolute; top:15px; left:14px; right:14px; z-index:20; display:flex; align-items:center;">
+          <a href="#" style="color: #fff; font-family: 'Anton',sans-serif; font-size: 19px; line-height: 1; letter-spacing: -.5px; animation: ffFade .5s ease .5s both; text-decoration-line: line-through; font-style: normal">FIRSTFIND</a>
+
+          <div style="display:flex; align-items:center; gap:9px; margin-left:auto; margin-right:9px;">
+            <a href="#" style="color:#fff; font-size:5px; font-weight:600; padding-bottom:1px; background-image:linear-gradient(#fff,#fff); background-size:0% 1px; background-position:left bottom; background-repeat:no-repeat; transition:background-size .25s ease; animation:ffUp .4s ease .72s both;" style-hover="background-size:100% 1px;">HOME</a>
+            <a href="#" style="color:#fff; font-size:5px; font-weight:600; padding-bottom:1px; background-image:linear-gradient(#fff,#fff); background-size:0% 1px; background-position:left bottom; background-repeat:no-repeat; transition:background-size .25s ease; animation:ffUp .4s ease .8s both;" style-hover="background-size:100% 1px;">EXPLORE</a>
+            <a href="#" style="color:#fff; font-size:5px; font-weight:600; padding-bottom:1px; background-image:linear-gradient(#fff,#fff); background-size:0% 1px; background-position:left bottom; background-repeat:no-repeat; transition:background-size .25s ease; animation:ffUp .4s ease .88s both;" style-hover="background-size:100% 1px;">ASSISTANT</a>
+            <a href="#" style="color:#fff; font-size:5px; font-weight:600; padding-bottom:1px; background-image:linear-gradient(#fff,#fff); background-size:0% 1px; background-position:left bottom; background-repeat:no-repeat; transition:background-size .25s ease; animation:ffUp .4s ease .96s both;" style-hover="background-size:100% 1px;">ZONES</a>
+          </div>
+
+          <button ref="{{ setSaved }}" type="button" onClick="{{ addSaved }}" style="display:flex; align-items:center; gap:3px; padding:4px 8px; margin-right:7px; border:0; border-radius:20px; background:rgba(255,255,255,.16); color:#fff; font-size:5px; font-weight:700; animation:ffUp .4s ease 1.04s both; transition:background .2s ease;" style-hover="background:rgba(255,255,255,.3);">SAVED ({{ saved }})</button>
+
+          <button type="button" onClick="{{ toggleDark }}" title="Toggle dark mode" style="display:grid; place-items:center; width:17px; height:17px; margin-right:7px; border:0; border-radius:50%; background:rgba(255,255,255,.16); color:#fff; font-size:8px; animation:ffUp .4s ease 1.12s both; transition:background .2s ease, transform .3s ease;" style-hover="background:rgba(255,255,255,.32); transform:rotate(-25deg);">{{ moonGlyph }}</button>
+
+          <button type="button" onClick="{{ orderClick }}" style="padding:6px 12px; border:0; border-radius:20px; background:#fff; color:#111; font-size:6px; font-weight:700; box-shadow:0 3px 10px rgba(0,0,0,.1); animation:ffUp .5s ease 1.7s both; transition:transform .2s ease, background .2s ease;" style-hover="transform:translateY(-1px); background:#f4f4f4;">OPEN APP</button>
+        </nav>
+
+        <h1 style="position:absolute; z-index:3; top:62px; left:12px; color:#fff; font-family:'Anton',sans-serif; font-size:clamp(85px,13vw,157px); line-height:.78; letter-spacing:-4px; white-space:nowrap; pointer-events:auto;">
+          <span style="display: inline-block; transform-origin: bottom; transition: transform .3s cubic-bezier(.34,1.56,.64,1),color .3s ease; animation: ffLetter .5s cubic-bezier(.2,.8,.2,1) both; animation-delay: 1s; padding-top: 70px; padding-right: 4px; padding-bottom: 70px; padding-left: 4px; text-decoration-line: none" style-hover="transform:scaleY(1.42) translateY(-4px); color:#ff2865;">F</span><span style="display: inline-block; transform-origin: bottom; transition: transform .3s cubic-bezier(.34,1.56,.64,1),color .3s ease; animation: ffLetter .5s cubic-bezier(.2,.8,.2,1) both; animation-delay: 1.06s; color: #ffffff; text-transform: none; padding-top: 4px; padding-right: 4px; padding-bottom: 4px; padding-left: 4px" style-hover="transform:scaleY(1.3) translateX(-3px); color:#168fd0;">I</span><span style="display: inline-block; transform-origin: bottom; transition: transform .3s cubic-bezier(.34,1.56,.64,1),color .3s ease; animation: ffLetter .5s cubic-bezier(.2,.8,.2,1) both; animation-delay: 1.12s; padding-top: 4px; padding-right: 4px; padding-bottom: 4px; padding-left: 4px" style-hover="transform:scaleY(1.46) translateY(-5px); color:#ff2865;">R</span><span style="display: inline-block; transform-origin: bottom; transition: transform .3s cubic-bezier(.34,1.56,.64,1),color .3s ease; animation: ffLetter .5s cubic-bezier(.2,.8,.2,1) both; animation-delay: 1.18s; padding-top: 4px; padding-right: 4px; padding-bottom: 4px; padding-left: 4px" style-hover="transform:scaleY(1.24) skewX(-6deg); color:#eaf5fb;">S</span><span style="display: inline-block; transform-origin: bottom; transition: transform .3s cubic-bezier(.34,1.56,.64,1),color .3s ease; animation: ffLetter .5s cubic-bezier(.2,.8,.2,1) both; animation-delay: 1.24s; padding-top: 4px; padding-right: 4px; padding-bottom: 4px; padding-left: 4px" style-hover="transform:scaleY(1.52) translateY(-6px); color:#ff2865;">T</span><span style="display: inline-block; transform-origin: bottom; transition: transform .3s cubic-bezier(.34,1.56,.64,1),color .3s ease; animation: ffLetter .5s cubic-bezier(.2,.8,.2,1) both; animation-delay: 1.3s; padding-top: 4px; padding-right: 4px; padding-bottom: 4px; padding-left: 4px; text-decoration-line: none" style-hover="transform:scaleY(1.3); color:#168fd0;">F</span><span style="display: inline-block; transform-origin: bottom; transition: transform .3s cubic-bezier(.34,1.56,.64,1),color .3s ease; animation: ffLetter .5s cubic-bezier(.2,.8,.2,1) both; animation-delay: 1.36s; padding-top: 4px; padding-right: 4px; padding-bottom: 4px; padding-left: 4px" style-hover="transform:scaleY(1.36) translateX(3px); color:#ff2865;">I</span><span style="display: inline-block; transform-origin: bottom; transition: transform .3s cubic-bezier(.34,1.56,.64,1),color .3s ease; animation: ffLetter .5s cubic-bezier(.2,.8,.2,1) both; animation-delay: 1.42s; padding-top: 4px; padding-right: 4px; padding-bottom: 4px; padding-left: 4px" style-hover="transform:scaleY(1.4) translateY(-4px); color:#168fd0;">N</span><span style="display: inline-block; transform-origin: bottom; transition: transform .3s cubic-bezier(.34,1.56,.64,1),color .3s ease; animation: ffLetter .5s cubic-bezier(.2,.8,.2,1) both; animation-delay: 1.48s; padding-top: 4px; padding-right: 4px; padding-bottom: 4px; padding-left: 4px" style-hover="transform:scaleY(1.5) translateY(-6px); color:#ff2865;">D</span>
+        </h1>
+
+        <p style="position: absolute; z-index: 12; top: 294px; left: 12px; width: 195px; color: rgba(255,255,255,.92); font-size: 6px; line-height: 1.45; animation: ffUp .5s ease 1.5s both">Discover Bengaluru's best thrift and second-hand stores, guided by an AI assistant that learns your style. Real stores, real reviews, real finds.</p>
+
+        <button type="button" onClick="{{ shopClick }}" ref="{{ setShop }}" style="position: absolute; z-index: 20; top: 362px; left: 16px; display: flex; align-items: center; gap: 7px; border: 0; border-radius: 20px; padding: 7px 7px 7px 11px; background: #fff; color: #111; font-size: 6px; font-weight: 700; animation: ffUp .5s ease 1.75s both; transition: transform .2s ease, background .2s ease" style-hover="transform:translateY(-1px); background:#f7f7f7;">EXPLORE STORES <span style="display:grid; place-items:center; width:17px; height:17px; border-radius:50%; background:#050505; color:#fff; font-size:8px; transition:transform .3s cubic-bezier(.34,1.56,.64,1);" style-hover="transform:rotate(45deg);">↗</span></button>
+
+        <!-- ===== GLASS REVIEW CARD ===== -->
+        
+
+        <!-- ===== DISCOVER ===== -->
+        <section style="position:absolute; left:0; right:0; top:424px; height:290px; background:var(--surface,#fff); transition:background .4s ease;">
+          <h2 style="position:absolute; top:12px; left:50%; width:300px; transform:translateX(-50%); text-align:center; color:var(--ink,#050505); font-family:'Anton',sans-serif; font-size:25px; line-height:1.1; letter-spacing:-.5px; transition:color .4s ease; animation:ffFade .5s ease 1.5s both;">DISCOVER THRIFT STORES THAT<br>DEFINE YOUR STYLE</h2>
+          <div style="position:absolute; left:-8px; bottom:8px; color:#e5e5e5; font-family:'Anton',sans-serif; font-size:73px; line-height:.8; white-space:nowrap; z-index:1;">START EXPLORING</div>
+          
+        <article ref="{{ setCard }}" onMouseMove="{{ cardMove }}" onMouseEnter="{{ cardEnter }}" onMouseLeave="{{ cardLeave }}" style="position: absolute; z-index: 25; top: 40px; width: 112px; height: 143px; padding: 10px; border-radius: 9px; background: rgba(154,154,154,.68); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,.35); box-shadow: 0 8px 22px rgba(0,0,0,.18); transform-style: preserve-3d; transition: transform .25s ease, box-shadow .25s ease; will-change: transform; animation: ffPop .6s cubic-bezier(.2,.8,.2,1) 1.3s both; left: 478px">
+          
+          <div style="display:flex; align-items:flex-end; gap:3px; color:#fff;">
+            <strong style="font-size:24px; font-weight:400; line-height:.8;">4.8</strong>
+            <span style="margin-bottom:1px; font-size:5px;">(360)</span>
+          </div><div style="margin-top:5px; color:#fff; font-size:4px; text-transform:uppercase; letter-spacing:.3px;">Avg store rating</div>
+
+          <sc-if value="{{ cardOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:5px; animation:ffFade .25s ease both;">
+              <div style="color:#ffd15c; font-size:8px; line-height:1;">★★★★★</div>
+              <div style="margin-top:4px; color:#fff; font-size:4.5px; font-weight:600;">360 verified reviews</div>
+              <div style="margin-top:2px; color:rgba(255,255,255,.8); font-size:3.6px; text-transform:uppercase; letter-spacing:.3px;">Community satisfaction</div>
+            </div>
+          </sc-if>
+
+          <div style="position:absolute; left:9px; right:9px; bottom:9px; height:68px; overflow:hidden; border-radius:4px; background:#ccc; transition:height .25s ease;" style-hover="height:40px;">
+            <img src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&amp;fit=crop&amp;w=500&amp;q=80" alt="Thrift store rack" style="display:block; width:100%; height:100%; object-fit:cover; object-position:center; filter:blur(2px);">
+            <span style="position:absolute; right:5px; bottom:5px; display:grid; place-items:center; width:17px; height:17px; border-radius:50%; background:#050505; color:#fff; font-size:7px;">↗</span>
+          </div>
+        </article></section>
+      </section><aside style="min-width: 0; background: var(--surface,#fff); transition: background .4s ease; position: relative">
+
+        <section style="position:relative; height:250px; overflow:hidden; border-bottom:1px solid var(--line,#ddd); background:var(--surface,#fff); transition:background .4s ease;">
+          <div style="position:absolute; left:50%; transform:translateX(-50%); width:100%; text-align:center; font-family:'Anton',sans-serif; font-size:34px; line-height:1; white-space:nowrap; top:30px; color:#a9a9a9; animation:ffFade .5s ease 1.4s both;">VINTAGE</div>
+          <div style="position:absolute; left:50%; transform:translateX(-50%); width:100%; text-align:center; font-family:'Anton',sans-serif; font-size:34px; line-height:1; white-space:nowrap; top:74px; color:var(--ink,#050505); transition:color .4s ease; animation:ffFade .5s ease 1.5s both;">STREET</div>
+          <div style="position:absolute; left:50%; transform:translateX(-50%); width:100%; text-align:center; font-family:'Anton',sans-serif; font-size:34px; line-height:1; white-space:nowrap; top:118px; color:#aaa; animation:ffFade .5s ease 1.6s both;">DESIGNER</div>
+          <div style="position:absolute; left:50%; transform:translateX(-50%); width:100%; text-align:center; font-family:'Anton',sans-serif; font-size:34px; line-height:1; white-space:nowrap; top:164px; color:#a8a8a8; animation:ffFade .5s ease 1.7s both;">RETRO</div>
+          <div style="position:absolute; left:8%; right:8%; height:1px; background:#dedede; top:72px;"></div>
+          <div style="position:absolute; left:8%; right:8%; height:1px; background:#dedede; top:117px;"></div>
+          <div style="position:absolute; left:8%; right:8%; height:1px; background:#dedede; top:162px;"></div>
+          <img src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&amp;fit=crop&amp;w=500&amp;q=85" alt="Streetwear fashion" style="position:absolute; z-index:5; left:50%; top:93px; width:88px; height:100px; object-fit:cover; object-position:center; transform:translateX(-50%) rotate(8deg); box-shadow:0 3px 10px rgba(0,0,0,.16); animation:ffFade .6s ease 1.5s both;">
+        </section>
+
+        <section style="position:relative; height:265px; padding:27px 18px 15px; overflow:hidden; background:linear-gradient(145deg,var(--st1,#0587ca),var(--st2,#0088c7) 65%,var(--st3,#0879bd)); transition:background .45s ease;">
+          <div style="content:''; position:absolute; left:0; top:0; width:100%; height:100%; background:linear-gradient(120deg,rgba(255,255,255,.05),transparent); pointer-events:none;"></div>
+          <h2 style="position:relative; z-index:5; color:#fff; font-family:'Anton',sans-serif; font-size:30px; line-height:1; animation:ffUp .5s ease 1.55s both;">TRUST &amp; STATS</h2>
+          <div style="position:relative; z-index:5; display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-top:36px; align-items:stretch;">
+            <article style="position:relative; height:93px; overflow:hidden; background:#fff; animation:ffPop .55s cubic-bezier(.2,.8,.2,1) 1.6s both;">
+              <img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&amp;fit=crop&amp;w=400&amp;q=85" alt="Bengaluru thrifter" style="display:block; width:100%; height:100%; object-fit:cover; object-position:center; transition:transform .3s ease;" style-hover="transform:scale(1.05);">
+              <div style="position:absolute; left:7px; right:7px; bottom:7px; padding:5px; background:rgba(255,255,255,.88); color:#111; font-size:4px; line-height:1.35;">Real reviews from Bengaluru thrifters, sentiment-scored.</div>
+            </article>
+            <article style="display:flex; flex-direction:column; justify-content:center; padding:8px; height:93px; background:#fff; animation:ffPop .55s cubic-bezier(.2,.8,.2,1) 1.72s both;">
+              <small style="color:#222; font-size:5px;">First-visit<br>match rate</small>
+              <div ref="{{ setPct }}" style="margin-top:13px; font-family:'Anton',sans-serif; font-size:28px; line-height:1;">{{ pct }}%</div>
+              <div style="margin-top:5px; color:#111; font-size:4px; line-height:1.35;">of shoppers found a store they loved on their first visit.</div>
+            </article>
+            <article style="position:relative; height:93px; overflow:hidden; background:#fff; animation:ffPop .55s cubic-bezier(.2,.8,.2,1) 1.84s both;">
+              <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&amp;fit=crop&amp;w=400&amp;q=85" alt="Thrift shopper" style="display:block; width:100%; height:100%; object-fit:cover; object-position:center; transition:transform .3s ease;" style-hover="transform:scale(1.05);">
+              <div style="position:absolute; left:7px; right:7px; bottom:7px; padding:5px; background:rgba(255,255,255,.88); color:#111; font-size:4px; line-height:1.35;">48 verified stores across 12 Bengaluru neighbourhoods.</div>
+            </article>
+          </div>
+        </section>
+      <img src="https://images.unsplash.com/photo-1485968579580-b6d095142e6e?auto=format&amp;fit=crop&amp;w=500&amp;q=85" alt="Thrift fashion model" style="position: absolute; z-index: 5; left: 206px; width: 105px; height: 140px; object-fit: cover; object-position: center top; transform: translateX(-50%) rotate(-8deg); border: 5px solid #fff; box-shadow: 0 3px 8px rgba(0,0,0,.12); animation: ffFade .6s ease 1.55s both; top: 550px"></aside>
+    </div>
+  </div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { pct: 0, saved: 0, dark: false, cardOpen: false, moonGlyph: "\u263e" };
+
+  setRoot = (el) => { this.root = el; };
+  setSaved = (el) => { this.savedEl = el; };
+  setShop = (el) => { this.shopEl = el; };
+  setCard = (el) => { this.cardEl = el; };
+  setPct = (el) => { this.pctEl = el; };
+
+  componentDidMount() {
+    setTimeout(() => this.countUp(), 1650);
+  }
+
+  countUp() {
+    const target = 95, dur = 1400;
+    let start;
+    const step = (t) => {
+      if (start === undefined) start = t;
+      const p = Math.min(1, (t - start) / dur);
+      const eased = 1 - Math.pow(1 - p, 3);
+      this.setState({ pct: Math.round(target * eased) });
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  addSaved = () => {
+    this.setState((s) => ({ saved: s.saved + 1 }));
+    const el = this.savedEl;
+    if (el) { el.style.animation = "none"; void el.offsetWidth; el.style.animation = "ffPulse .6s ease"; }
+  };
+
+  cardEnter = () => { this.setState({ cardOpen: true }); };
+  cardMove = (e) => {
+    const el = this.cardEl; if (!el) return;
+    const r = el.getBoundingClientRect();
+    const px = (e.clientX - r.left) / r.width - 0.5;
+    const py = (e.clientY - r.top) / r.height - 0.5;
+    el.style.transform = `perspective(500px) rotateY(${px * 7}deg) rotateX(${-py * 7}deg) scale(1.05)`;
+    el.style.boxShadow = "0 16px 34px rgba(0,0,0,.28)";
+  };
+  cardLeave = () => {
+    this.setState({ cardOpen: false });
+    const el = this.cardEl; if (!el) return;
+    el.style.transform = "";
+    el.style.boxShadow = "0 8px 22px rgba(0,0,0,.18)";
+  };
+
+  toggleDark = (e) => {
+    if (this._animating) return;
+    this._animating = true;
+    const dark = !this.state.dark;
+    const x = e.clientX, y = e.clientY;
+    const bg = dark ? "#0a0a0a" : "#176dcc";
+    const ov = document.createElement("div");
+    Object.assign(ov.style, {
+      position: "fixed", inset: "0", zIndex: "99999", background: bg,
+      clipPath: `circle(0px at ${x}px ${y}px)`, transition: "clip-path .6s cubic-bezier(.4,0,.2,1)", pointerEvents: "none"
+    });
+    document.body.appendChild(ov);
+    const max = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y)) + 40;
+    requestAnimationFrame(() => { ov.style.clipPath = `circle(${max}px at ${x}px ${y}px)`; });
+    setTimeout(() => {
+      this.applyTheme(dark);
+      this.setState({ dark, moonGlyph: dark ? "\u2600" : "\u263e" });
+      requestAnimationFrame(() => {
+        ov.style.transition = "opacity .3s ease";
+        ov.style.opacity = "0";
+        setTimeout(() => { ov.remove(); this._animating = false; }, 320);
+      });
+    }, 610);
+  };
+
+  applyTheme(dark) {
+    const r = this.root; if (!r) return;
+    // Dark mode only shifts the blue areas to black; white surfaces stay white.
+    const t = dark
+      ? { fr1: "#0a0a0a", fr2: "#161616", fr3: "#eaf5fb",
+          he1: "#0a0a0a", he2: "#181818", he3: "#dceff8",
+          st1: "#0a0a0a", st2: "#1a1a1a", st3: "#050505" }
+      : { fr1: "#176dcc", fr2: "#0876cc", fr3: "#eaf5fb",
+          he1: "#1469c9", he2: "#1478d1", he3: "#dceff8",
+          st1: "#0587ca", st2: "#0088c7", st3: "#0879bd" };
+    Object.entries(t).forEach(([k, v]) => r.style.setProperty("--" + k, v));
+    r.style.background = dark ? "#000000" : "#071523";
+  }
+
+  orderClick = (e) => {
+    const b = e.currentTarget, orig = b.textContent;
+    b.textContent = "OPENING\u2026"; b.disabled = true;
+    setTimeout(() => {
+      b.textContent = "READY \u2713";
+      setTimeout(() => { b.textContent = orig; b.disabled = false; }, 1000);
+    }, 700);
+  };
+
+  shopClick = (e) => {
+    const b = e.currentTarget;
+    b.innerHTML = 'FINDING STORES <span style="display:grid;place-items:center;width:17px;height:17px;border-radius:50%;background:#050505;color:#fff;font-size:8px;">\u2713</span>';
+    setTimeout(() => {
+      b.innerHTML = 'EXPLORE STORES <span style="display:grid;place-items:center;width:17px;height:17px;border-radius:50%;background:#050505;color:#fff;font-size:8px;">\u2197</span>';
+    }, 1300);
+  };
+
+  renderVals() {
+    return {
+      pct: this.state.pct,
+      saved: this.state.saved,
+      cardOpen: this.state.cardOpen,
+      moonGlyph: this.state.moonGlyph,
+      setRoot: this.setRoot, setSaved: this.setSaved, setShop: this.setShop,
+      setCard: this.setCard, setPct: this.setPct,
+      addSaved: this.addSaved, toggleDark: this.toggleDark,
+      cardEnter: this.cardEnter, cardMove: this.cardMove, cardLeave: this.cardLeave,
+      orderClick: this.orderClick, shopClick: this.shopClick
+    };
+  }
+}
+</script>
+</body>
+</html>

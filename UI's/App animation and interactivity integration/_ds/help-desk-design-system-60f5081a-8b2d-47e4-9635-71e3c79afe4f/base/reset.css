@@ -1,0 +1,18 @@
+/* ─────────────────────────────────────────────────────────────
+   RESET — Help Desk
+   Minimal, token-aware reset. App shells opt into full-height
+   lock via .hd-shell (kept off <body> so spec cards render free).
+   ───────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-sans);
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Full-viewport app shell — the live product locks the page so only
+   inner regions scroll. Opt in by putting .hd-shell on a wrapper. */
+.hd-shell { height: 100vh; overflow: hidden; }

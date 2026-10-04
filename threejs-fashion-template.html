@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fashion — Three.js Hero Template</title>
+<!--
+  ============================================================
+  LIGHTWEIGHT THREE.JS FASHION HERO TEMPLATE — "RUNWAY" EDITION
+  ============================================================
+  Single file, no build step. Double-click to open, or drop
+  #stage + the script into any page.
+
+  The scene (~9 draw calls, all Basic materials, no lights):
+    1. Wireframe tailor's dress form on a stand   (LatheGeometry)
+    2. Neon halo ring orbiting the form           (TorusGeometry)
+    3. Retro runway grid floor fading into fog    (GridHelper)
+    4. Three drifting clothes hangers             (shared Line geometry)
+    5. Wireframe tee silhouette                   (Shape → EdgesGeometry)
+    6. Two-tone thread-dust particles             (Points ×2)
+
+  Why it stays fast on all modern devices:
+    - transform-only animation (NO per-vertex updates on the CPU)
+    - devicePixelRatio capped, particle count auto-drops on touch devices
+    - no lights / shadows / postprocessing; additive blending fakes neon
+    - pauses on hidden tab; static frame for prefers-reduced-motion
+    - text fallback if WebGL is unavailable
+
+  Customize in the CONFIG block below. The marquee ticker and
+  typography are plain CSS — free to restyle or delete.
+  ============================================================
+-->
+<style>
+  :root {
+    --bg: #0c0f0d;
+    --ink: #eef2ec;
+    --dim: #9aa69c;
+    --accent: #c8f048;
+    --accent2: #f4a988;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background:
+      radial-gradient(120% 90% at 70% 20%, #131a14 0%, var(--bg) 55%);
+    color: var(--ink);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    overflow: hidden;
+  }
+  #stage { position: fixed; inset: 0; }
+  /* vignette — pure CSS, zero GPU scene cost */
+  #stage::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(80% 80% at 50% 45%, transparent 60%, rgba(0,0,0,.55) 100%);
+  }
+
+  /* --- sample overlay content: replace with your own --- */
+  .overlay {
+    position: relative; z-index: 2; height: 100%;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 0 8vw; pointer-events: none;
+  }
+  .overlay .eyebrow {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 12px; letter-spacing: .4em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 20px;
+  }
+  .overlay .eyebrow::before {
+    content: ''; width: 34px; height: 1px; background: var(--accent);
+  }
+  .overlay h1 {
+    font-size: clamp(46px, 9vw, 128px); line-height: .92;
+    font-weight: 800; letter-spacing: -.03em; text-transform: uppercase;
+  }
+  /* trendy: alternating filled / outlined display lines */
+  .overlay h1 .outline {
+    color: transparent;
+    -webkit-text-stroke: 1.5px var(--ink);
+  }
+  .overlay h1 .fill {
+    background: linear-gradient(100deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .overlay p { margin-top: 24px; color: var(--dim); max-width: 44ch; font-size: 16px; line-height: 1.65; }
+
+  /* --- fashion-brand marquee ticker (pure CSS) --- */
+  .ticker {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 3;
+    border-top: 1px solid rgba(255,255,255,.1);
+    background: rgba(12,15,13,.6); backdrop-filter: blur(8px);
+    overflow: hidden; white-space: nowrap; pointer-events: none;
+  }
+  .ticker span {
+    display: inline-block; padding: 12px 0;
+    font-size: 13px; letter-spacing: .32em; text-transform: uppercase;
+    color: var(--dim);
+    animation: scroll 28s linear infinite;
+  }
+  .ticker em { color: var(--accent); font-style: normal; padding: 0 14px; }
+  @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce) { .ticker span { animation: none; } }
+
+  #fallback {
+    position: fixed; inset: 0; display: none; place-items: center;
+    color: var(--dim); font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+<div id="stage"></div>
+<div id="fallback">This browser doesn't support WebGL — showing content without the 3D scene.</div>
+
+<!-- Sample overlay — delete or replace -->
+<div class="overlay">
+  <div class="eyebrow">Thrift / Fashion / Template</div>
+  <h1>
+    <span class="outline">Wear it</span><br>
+    <span class="fill">again.</span>
+  </h1>
+  <p>Runway-grade Three.js hero at window-shopping prices: a wireframe dress form, drifting hangers, a neon halo and a fading grid — nine draw calls, zero lights.</p>
+</div>
+
+<!-- Marquee ticker — the duplicate text makes the loop seamless -->
+<div class="ticker"><span>
+  Vintage <em>★</em> Streetwear <em>★</em> Y2K <em>★</em> Denim <em>★</em> Oversized <em>★</em> Pre-loved <em>★</em> Sustainable <em>★</em> One-of-one <em>★</em>
+  Vintage <em>★</em> Streetwear <em>★</em> Y2K <em>★</em> Denim <em>★</em> Oversized <em>★</em> Pre-loved <em>★</em> Sustainable <em>★</em> One-of-one <em>★</em>
+</span></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+  /* ================= CONFIG — tweak freely ================= */
+  const isTouch = window.matchMedia('(pointer: coarse)').matches;
+  const CONFIG = {
+    colorAccent:   0xc8f048,   // lime
+    colorSecond:   0xf4a988,   // terracotta
+    colorInk:      0xeef2ec,   // off-white (hangers / tee)
+    fogColor:      0x0c0f0d,   // match page background
+    particleCount: isTouch ? 420 : 800,
+    speed:         1.0,
+    parallax:      isTouch ? 0.25 : 0.55,
+  };
+  /* ========================================================== */
+
+  const stage = document.getElementById('stage');
+
+  try {
+    const c = document.createElement('canvas');
+    if (!(window.WebGLRenderingContext && (c.getContext('webgl') || c.getContext('experimental-webgl')))) throw 0;
+  } catch (e) {
+    document.getElementById('fallback').style.display = 'grid';
+    return;
+  }
+
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(CONFIG.fogColor, 9, 26); // depth without lights
+
+  const camera = new THREE.PerspectiveCamera(55, stage.clientWidth / stage.clientHeight, 0.1, 100);
+  camera.position.set(0, 0.6, 9.5);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'low-power' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(stage.clientWidth, stage.clientHeight);
+  stage.appendChild(renderer.domElement);
+
+  // additive blending = cheap neon glow
+  const neon = (color, opacity) => new THREE.MeshBasicMaterial({
+    color, wireframe: true, transparent: true, opacity,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  });
+  const neonLine = (color, opacity) => new THREE.LineBasicMaterial({
+    color, transparent: true, opacity,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  });
+
+  /* ---------- 1. dress form on its stand ---------- */
+  const profile = [
+    [0.00, 3.6], [0.16, 3.6], [0.19, 3.3],
+    [0.62, 3.05], [0.80, 2.75],
+    [0.92, 2.15], [0.86, 1.75],
+    [0.60, 1.05], [0.58, 0.85],
+    [0.88, 0.15], [0.94, -0.35],
+    [0.70, -1.30], [0.45, -1.60],
+  ].map(p => new THREE.Vector2(p[0], p[1]));
+
+  const formGroup = new THREE.Group();
+  const form = new THREE.Mesh(new THREE.LatheGeometry(profile, 26), neon(CONFIG.colorAccent, 0.28));
+  formGroup.add(form);
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.6, 6), neon(CONFIG.colorAccent, 0.18));
+  pole.position.y = -2.4;
+  formGroup.add(pole);
+  const base = new THREE.Mesh(new THREE.ConeGeometry(0.7, 0.35, 18, 1, true), neon(CONFIG.colorAccent, 0.18));
+  base.position.y = -3.15;
+  formGroup.add(base);
+  formGroup.position.set(3.0, -0.35, 0);
+  scene.add(formGroup);
+
+  /* ---------- 2. neon halo ring around the form ---------- */
+  const halo = new THREE.Mesh(
+    new THREE.TorusGeometry(1.7, 0.02, 6, 72),
+    new THREE.MeshBasicMaterial({
+      color: CONFIG.colorSecond, transparent: true, opacity: 0.55,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    })
+  );
+  halo.position.copy(formGroup.position);
+  halo.position.y += 1.2;
+  halo.rotation.x = Math.PI / 2.15;
+  scene.add(halo);
+
+  /* ---------- 3. runway grid floor ---------- */
+  const grid = new THREE.GridHelper(70, 56, CONFIG.colorAccent, 0x233026);
+  grid.material.transparent = true;
+  grid.material.opacity = 0.5; // fog does the fading
+  grid.position.y = -3.55;
+  scene.add(grid);
+
+  /* ---------- 4. drifting clothes hangers (one shared geometry) ---------- */
+  function hangerGeometry() {
+    const pts = [];
+    // hook: arc
+    for (let a = Math.PI * 1.15; a >= -Math.PI * 0.25; a -= 0.25) {
+      pts.push(new THREE.Vector3(Math.cos(a) * 0.17, 0.72 + Math.sin(a) * 0.17, 0));
+    }
+    pts.push(new THREE.Vector3(0, 0.5, 0));      // neck
+    pts.push(new THREE.Vector3(-1.05, 0, 0));    // left tip
+    pts.push(new THREE.Vector3(1.05, 0, 0));     // bar
+    pts.push(new THREE.Vector3(0, 0.5, 0));      // close triangle
+    return new THREE.BufferGeometry().setFromPoints(pts);
+  }
+  const hangerGeo = hangerGeometry();
+  const hangers = [
+    { pos: [-4.6, 1.9, -2.5], scale: 0.9,  phase: 0.0, color: CONFIG.colorInk,    op: 0.5  },
+    { pos: [-2.2, 3.1, -4.0], scale: 0.65, phase: 2.1, color: CONFIG.colorSecond, op: 0.55 },
+    { pos: [-5.6, -0.6, -1.5], scale: 0.75, phase: 4.2, color: CONFIG.colorAccent, op: 0.45 },
+  ].map(h => {
+    const line = new THREE.Line(hangerGeo, neonLine(h.color, h.op));
+    line.position.set(...h.pos);
+    line.scale.setScalar(h.scale);
+    line.userData.phase = h.phase;
+    scene.add(line);
+    return line;
+  });
+
+  /* ---------- 5. wireframe tee silhouette ---------- */
+  function teeShape() {
+    const s = new THREE.Shape();
+    s.moveTo(-0.40, 1.10);                      // neck left
+    s.lineTo(-0.95, 0.95);                      // shoulder
+    s.lineTo(-1.45, 0.30);                      // sleeve outer
+    s.lineTo(-1.12, 0.00);                      // sleeve hem
+    s.lineTo(-0.70, 0.38);                      // armpit
+    s.lineTo(-0.70, -1.15);                     // side seam
+    s.lineTo(0.70, -1.15);                      // bottom hem
+    s.lineTo(0.70, 0.38);
+    s.lineTo(1.12, 0.00);
+    s.lineTo(1.45, 0.30);
+    s.lineTo(0.95, 0.95);
+    s.lineTo(0.40, 1.10);
+    s.quadraticCurveTo(0, 0.78, -0.40, 1.10);   // collar
+    return s;
+  }
+  const tee = new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.ExtrudeGeometry(teeShape(), { depth: 0.16, bevelEnabled: false })),
+    neonLine(CONFIG.colorSecond, 0.6)
+  );
+  tee.position.set(-3.4, 0.9, -0.8);
+  tee.rotation.y = 0.35;
+  scene.add(tee);
+
+  /* ---------- 6. thread-dust particles ---------- */
+  const N = CONFIG.particleCount;
+  const pts = new Float32Array(N * 3);
+  for (let i = 0; i < N; i++) {
+    pts[i * 3]     = (Math.random() - 0.5) * 28;
+    pts[i * 3 + 1] = (Math.random() - 0.5) * 16;
+    pts[i * 3 + 2] = (Math.random() - 0.5) * 12 - 2;
+  }
+  const dustGeo = new THREE.BufferGeometry();
+  dustGeo.setAttribute('position', new THREE.BufferAttribute(pts, 3));
+  const dustMat = (color, size, opacity) => new THREE.PointsMaterial({
+    color, size, transparent: true, opacity,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  });
+  const dust = new THREE.Points(dustGeo, dustMat(CONFIG.colorAccent, 0.045, 0.55));
+  scene.add(dust);
+  const dust2 = new THREE.Points(dustGeo.clone(), dustMat(CONFIG.colorSecond, 0.035, 0.4));
+  dust2.rotation.z = 1.7;
+  scene.add(dust2);
+
+  /* ---------- input: mouse parallax / touch ---------- */
+  let mx = 0, my = 0;
+  function onPointer(x, y) {
+    mx = (x / window.innerWidth - 0.5) * 2;
+    my = (y / window.innerHeight - 0.5) * 2;
+  }
+  window.addEventListener('mousemove', e => onPointer(e.clientX, e.clientY), { passive: true });
+  window.addEventListener('touchmove', e => {
+    if (e.touches[0]) onPointer(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+
+  window.addEventListener('resize', () => {
+    camera.aspect = stage.clientWidth / stage.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(stage.clientWidth, stage.clientHeight);
+  });
+
+  /* ---------- animation loop (transforms only — no vertex math) ---------- */
+  const clock = new THREE.Clock();
+  let raf = null;
+
+  function frame() {
+    const t = clock.getElapsedTime() * CONFIG.speed;
+
+    formGroup.rotation.y = t * 0.28;
+    formGroup.position.y = -0.35 + Math.sin(t * 0.8) * 0.06;   // subtle float
+
+    halo.rotation.z = t * 0.4;
+    halo.position.y = formGroup.position.y + 1.2 + Math.sin(t * 0.8 + 1) * 0.05;
+    halo.material.opacity = 0.45 + Math.sin(t * 1.6) * 0.15;   // neon pulse
+
+    hangers.forEach(h => {
+      const p = h.userData.phase;
+      h.rotation.z = Math.sin(t * 0.9 + p) * 0.14;              // sway like on a rail
+      h.position.y += Math.sin(t * 0.6 + p) * 0.0016;
+    });
+
+    tee.rotation.y = 0.35 + Math.sin(t * 0.5) * 0.22;
+    tee.position.y = 0.9 + Math.sin(t * 0.7 + 2) * 0.08;
+
+    grid.position.z = (t * 0.6) % 1.25;                         // runway crawl
+    dust.rotation.y = t * 0.016;
+    dust2.rotation.y = -t * 0.011;
+
+    camera.position.x += (mx * CONFIG.parallax - camera.position.x) * 0.04;
+    camera.position.y += (0.6 - my * CONFIG.parallax * 0.6 - camera.position.y) * 0.04;
+    camera.lookAt(0.4, 0.1, 0);
+
+    renderer.render(scene, camera);
+    raf = requestAnimationFrame(frame);
+  }
+
+  if (reduced) {
+    renderer.render(scene, camera); // static frame, no motion
+  } else {
+    frame();
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) { cancelAnimationFrame(raf); raf = null; }
+      else if (!raf) { clock.getDelta(); frame(); }
+    });
+  }
+})();
+</script>
+</body>
+</html>

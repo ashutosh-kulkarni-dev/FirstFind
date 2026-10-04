@@ -1,0 +1,4 @@
+# Deps for maintenance scripts (not backend runtime).
+openpyxl>=3.1     # ingest_stores.py — read Thrift Stores.xlsx
+requests>=2.31    # refresh_metro.py
+truststore>=0.9   # refresh_metro.py — corporate/AV SSL interception
