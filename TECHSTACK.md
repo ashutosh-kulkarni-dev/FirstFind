@@ -1,10 +1,10 @@
 # Tech Stack
 
-A quick tour of what powers FirstFind and why each piece is there.
+A quick tour of what powers FirstFind and why we are using each part.
 
 ## Frontend
 
-| Tech | What it does here |
+| Tech | What it does here  |
 |---|---|
 | **React 18** | Component model for the whole UI. |
 | **Vite** | Dev server + build. Fast HMR; `VITE_*` env vars baked at build time. |
