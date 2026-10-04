@@ -278,7 +278,9 @@ def _summary():
         for n, m in failed:
             print(f"  - {n}: {m}")
     else:
-        print("ALL FUNCTIONALITY VERIFIED ✓")
+        # ASCII only — the Windows default console encoding (cp1252) can't encode a
+        # tick mark and crashes with UnicodeEncodeError at process-exit print.
+        print("ALL FUNCTIONALITY VERIFIED [OK]")
     print("=" * 60)
 
 

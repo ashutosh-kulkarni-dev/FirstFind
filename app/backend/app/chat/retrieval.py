@@ -327,10 +327,15 @@ def rank_stores(db: Session, *, area: Optional[str] = None,
     q = db.query(Store).filter(*STORE_HAS_COORDS)
 
     if geo_store_ids is not None:
-        # Pillar 1 path: geo engine already filtered; we just rank + soft-filter
+        # Pillar 1 path: geo engine already filtered; we just rank + soft-filter.
+        # If the user explicitly named an area, intersect — a radius query around
+        # one area's centroid otherwise spills into neighboring areas (e.g. a
+        # Koramangala search returning S G Palya because its stores sit inside
+        # Koramangala's search radius).
         id_set = set(geo_store_ids)
         stores = [s for s in q.all()
-                  if s.id in id_set and not _soft_excluded(s, category, price_max)]
+                  if s.id in id_set and not _soft_excluded(s, category, price_max)
+                  and (not area or s.area == area)]
     elif area:
         stores = [s for s in q.filter(Store.area == area).all()
                   if not _soft_excluded(s, category, price_max)]
