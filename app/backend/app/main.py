@@ -4,10 +4,12 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
 
 from .config import CORS_ORIGINS, ENVIRONMENT, GROQ_API_KEY, JWT_SECRET
 from .database import Base, SessionLocal, engine, ensure_schema
-from .middleware import RateLimitMiddleware, TimingMiddleware
+from .middleware import (AuthRateLimitMiddleware, RateLimitMiddleware,
+                         SecurityHeadersMiddleware, TimingMiddleware)
 from .ml.tasks import build_recommender
 from .models import Store, Zone
 from .routers import auth_routes, clusters, conversations, lists, metro, misc, stores
@@ -78,8 +80,11 @@ def _db_empty() -> bool:
 
 app = FastAPI(title="FirstFind API", version="0.2.0", lifespan=lifespan)
 
+# Middleware runs in reverse order of registration (last added = first to see
+# the request). Target execution order per request:
+#   HTTPS redirect → security headers → auth throttle → global throttle →
+#   CORS → timing → route handler.
 app.add_middleware(TimingMiddleware)
-app.add_middleware(RateLimitMiddleware, max_requests=120, window_seconds=60)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
@@ -87,6 +92,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(RateLimitMiddleware, max_requests=120, window_seconds=60)
+app.add_middleware(AuthRateLimitMiddleware, max_requests=10, window_seconds=60)
+app.add_middleware(SecurityHeadersMiddleware)
+if ENVIRONMENT == "production":
+    # Render terminates TLS and sets X-Forwarded-Proto; Starlette honors it when
+    # ProxyHeadersMiddleware is active (uvicorn's --proxy-headers, on by default).
+    app.add_middleware(HTTPSRedirectMiddleware)
 
 app.include_router(auth_routes.router)
 app.include_router(stores.router)

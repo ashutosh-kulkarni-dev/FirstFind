@@ -99,7 +99,7 @@ def main():
     args = parser.parse_args()
     base = args.base.rstrip("/")
 
-    print(f"\n=== ThriftFind search verification — {base} ===\n")
+    print(f"\n=== FirstFind search verification — {base} ===\n")
 
     all_results = []
 

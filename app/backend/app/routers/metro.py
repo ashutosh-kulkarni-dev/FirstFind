@@ -8,7 +8,6 @@ GET /api/metro/nearest?lat&lng   — nearest station + haversine distance for a 
 """
 import json
 from functools import lru_cache
-from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 

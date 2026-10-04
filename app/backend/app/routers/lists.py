@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import Session
 
 from ..auth import get_current_user

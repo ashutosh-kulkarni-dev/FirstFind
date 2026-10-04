@@ -6,10 +6,7 @@ these dataclasses rather than importing each other's internals.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Optional
-
-if TYPE_CHECKING:
-    from .places import PlaceHit
+from typing import Optional
 
 
 @dataclass(frozen=True)

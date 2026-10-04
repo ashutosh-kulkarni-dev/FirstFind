@@ -108,7 +108,7 @@ out center tags;
 
 # Overpass rejects the default python-requests UA with HTTP 406; identify ourselves.
 HEADERS = {
-    "User-Agent": "ThriftFind-metro-refresh/1.0 (+https://github.com/; contact ashutosh.bhas@gmail.com)",
+    "User-Agent": "FirstFind-metro-refresh/1.0 (+https://github.com/; contact ashutosh.bhas@gmail.com)",
     "Accept": "application/json",
 }
 

@@ -7,7 +7,6 @@ Imports: contracts only.
 """
 from __future__ import annotations
 
-import re
 from typing import Optional
 
 from .contracts import Entities, GeoResult, Prefs, Trip

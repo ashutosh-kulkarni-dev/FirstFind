@@ -13,20 +13,51 @@ from .database import get_db
 from .models import User
 
 
-def hash_password(password: str, salt: Optional[bytes] = None) -> str:
+# OWASP 2024 minimum for PBKDF2-SHA256. Older rows were hashed at 120k; they
+# verify with the stored iter count and are transparently rehashed on next login
+# (see needs_rehash + router usage).
+PBKDF2_ITERS = 600_000
+
+
+def hash_password(password: str, salt: Optional[bytes] = None,
+                  iters: int = PBKDF2_ITERS) -> str:
     salt = salt or os.urandom(16)
-    dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 120_000)
-    return salt.hex() + ":" + dk.hex()
+    dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, iters)
+    return f"{iters}:{salt.hex()}:{dk.hex()}"
+
+
+def _parse_stored(stored: str) -> Optional[tuple[int, bytes, str]]:
+    """Return (iters, salt, dk_hex) or None if the stored value is malformed.
+
+    Supports both the new 3-part format (`iters:salt:dk`) and the legacy
+    2-part format (`salt:dk` — implicitly 120_000 iters) so existing accounts
+    keep working. A legacy row is upgraded by the login path.
+    """
+    parts = stored.split(":")
+    try:
+        if len(parts) == 3:
+            iters = int(parts[0])
+            return iters, bytes.fromhex(parts[1]), parts[2]
+        if len(parts) == 2:
+            return 120_000, bytes.fromhex(parts[0]), parts[1]
+    except ValueError:
+        return None
+    return None
 
 
 def verify_password(password: str, stored: str) -> bool:
-    try:
-        salt_hex, dk_hex = stored.split(":")
-    except ValueError:
+    parsed = _parse_stored(stored)
+    if not parsed:
         return False
-    salt = bytes.fromhex(salt_hex)
-    dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 120_000)
+    iters, salt, dk_hex = parsed
+    dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, iters)
     return dk.hex() == dk_hex
+
+
+def needs_rehash(stored: str) -> bool:
+    """True if `stored` was hashed with fewer iterations than the current target."""
+    parsed = _parse_stored(stored)
+    return parsed is None or parsed[0] < PBKDF2_ITERS
 
 
 def create_token(user: User) -> str:

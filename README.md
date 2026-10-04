@@ -3,8 +3,7 @@
 AI-powered thrift store discovery for Bengaluru — search by area, budget, or vibe, chat with a style assistant, and see live sentiment on real stores.
 
 🔗 **Live demo:** _coming soon — add your Vercel URL here after deploy_
-📘 **Architecture:** [FirstFind_Architecture.md](FirstFind_Architecture.md)
-🧪 **Run locally:** [app/README.md](app/README.md)
+🧰 **Tech stack:** [TECHSTACK.md](TECHSTACK.md)
 
 ---
 

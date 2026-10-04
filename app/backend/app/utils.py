@@ -20,7 +20,7 @@ def has_coords(store: Store) -> bool:
     """In-Python equivalent of STORE_HAS_COORDS for already-loaded objects."""
     return store is not None and store.lat is not None and store.lng is not None
 
-# ThriftFind is Bengaluru-only; opening hours are always evaluated in IST
+# FirstFind is Bengaluru-only; opening hours are always evaluated in IST
 # so "open now" is correct regardless of the server's local timezone.
 IST = dt.timezone(dt.timedelta(hours=5, minutes=30))
 

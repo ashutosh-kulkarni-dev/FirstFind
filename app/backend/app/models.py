@@ -52,7 +52,7 @@ class Store(Base):
     # ML-derived
     experience_score = Column(Float, nullable=True)   # 0-5 blended score
     review_count = Column(Integer, default=0)
-    zone_id = Column(Integer, nullable=True)
+    zone_id = Column(Integer, nullable=True, index=True)
 
     reviews = relationship("Review", back_populates="store")
 
@@ -60,8 +60,8 @@ class Store(Base):
 class Review(Base):
     __tablename__ = "reviews"
     id = Column(Integer, primary_key=True)
-    store_id = Column(String(20), ForeignKey("stores.id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    store_id = Column(String(20), ForeignKey("stores.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     rating = Column(Integer, nullable=False)  # 1-5
     text = Column(Text, default="")
     created_at = Column(DateTime, default=dt.datetime.utcnow)
@@ -83,8 +83,8 @@ class Review(Base):
 class Interaction(Base):
     __tablename__ = "interactions"
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    store_id = Column(String(20), ForeignKey("stores.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    store_id = Column(String(20), ForeignKey("stores.id"), nullable=False, index=True)
     kind = Column(String(20), nullable=False)  # view / save / like
     created_at = Column(DateTime, default=dt.datetime.utcnow)
     user = relationship("User", back_populates="interactions")

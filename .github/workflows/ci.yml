@@ -25,6 +25,9 @@ jobs:
           pip install -r requirements.txt pyflakes
       - name: Lint (pyflakes)
         run: python -m pyflakes app/ _verify.py _audit.py
+      - name: Pytest (unit + API)
+        # Isolated SQLite + offline fallbacks: no HF/Groq secrets required.
+        run: python -m pytest -q
       - name: Smoke tests (SQLite, no external services)
         # Both harnesses spin up the app on a throwaway SQLite DB. With no
         # HUGGINGFACE_TOKEN / GROQ_API_KEY they exercise the VADER + rule-based

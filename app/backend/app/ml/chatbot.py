@@ -1,4 +1,4 @@
-"""Conversational retrieval engine — the primary interface of ThriftFind.
+"""Conversational retrieval engine — the primary interface of FirstFind.
 
 Token-free retrieval, LLM only for phrasing. Three deterministic stages feed a
 rich, grounded context to the LLM (see CHATBOT_RETRIEVAL_PLAN.md):
@@ -398,7 +398,7 @@ def respond(msg: str, db: Session, user: Optional[User] = None) -> dict:
     if GREETING_RE.match(msg) and len(msg.split()) <= 3:
         name = f" {user.name.split()[0]}" if user else ""
         return {
-            "reply": f"Hey{name}! I'm the ThriftFind assistant. Ask me anything about "
+            "reply": f"Hey{name}! I'm the FirstFind assistant. Ask me anything about"
                      "thrift shopping in Bengaluru — stores by area, category, budget, "
                      "what's open now, or where the best thrift zones are.",
             "intent": "general_assistance", "stores": [],

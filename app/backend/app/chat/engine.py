@@ -49,7 +49,7 @@ def respond(msg: str, db: Session, user: Optional[User] = None,
     if GREETING_RE.match(msg) and len(msg.split()) <= 3:
         name = f" {user.name.split()[0]}" if user else ""
         return _serialize(ChatResult(
-            reply=(f"Hey{name}! I'm the ThriftFind assistant. Ask me anything about "
+            reply=(f"Hey{name}! I'm the FirstFind assistant. Ask me anything about"
                    "thrift shopping in Bengaluru — stores by area, category, budget, "
                    "what's open now, or where the best thrift zones are."),
             intent="general_assistance",
@@ -81,7 +81,7 @@ def respond(msg: str, db: Session, user: Optional[User] = None,
 
     # ── Handle shopping_advice without retrieval ──────────────────────────────
     if entities.intent == "shopping_advice" and CHAT_ADVICE:
-        from .advice import lookup, category_tip
+        from .advice import lookup
         tip = lookup(msg)
         result = ChatResult(
             reply=tip,

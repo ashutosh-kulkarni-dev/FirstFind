@@ -17,7 +17,7 @@ router = APIRouter(prefix="/api", tags=["misc"])
 
 @router.get("/health")
 def health():
-    return {"status": "ok", "service": "thriftfind-api"}
+    return {"status": "ok", "service": "firstfind-api"}
 
 
 @router.get("/zones")

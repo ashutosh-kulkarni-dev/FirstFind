@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from ..auth import create_token, get_current_user, hash_password, verify_password
+from ..auth import (create_token, get_current_user, hash_password,
+                    needs_rehash, verify_password)
 from ..auth_google import verify_google_token
 from ..config import GOOGLE_CLIENT_ID
 from ..database import get_db
@@ -46,6 +47,11 @@ def login(body: LoginIn, db: Session = Depends(get_db)):
                  f"Continue with {user.auth_provider.title()} instead.")
     if not user or not verify_password(body.password, user.password_hash or ""):
         raise HTTPException(401, "Invalid email or password")
+    # Transparent upgrade: rows hashed at the old iteration count get bumped on
+    # the next successful login — no password reset required.
+    if needs_rehash(user.password_hash or ""):
+        user.password_hash = hash_password(body.password)
+        db.commit()
     return _token_out(user)
 
 

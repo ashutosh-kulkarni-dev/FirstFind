@@ -15,8 +15,7 @@ from typing import TYPE_CHECKING, Optional
 from sqlalchemy.orm import Session
 
 from ..models import Review, Store, Zone
-from ..utils import (STORE_HAS_COORDS, has_coords, is_open_now, now_ist,
-                     sentiment_summary, store_to_dict)
+from ..utils import STORE_HAS_COORDS, is_open_now, sentiment_summary
 from .contracts import Entities
 
 if TYPE_CHECKING:

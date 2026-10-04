@@ -217,8 +217,6 @@ def ingest_from_google(db, bot: User, limit: int | None = None) -> dict:
         import httpx
         session = httpx.Client(timeout=10)
     except ImportError:
-        import urllib.request as _ur
-        session = None  # fallback: httpx should already be installed (in requirements)
         log.error("httpx not available for Google Places calls")
         return {"source": "google_api", "new": 0, "skipped": 0, "no_place_id": 0}
 

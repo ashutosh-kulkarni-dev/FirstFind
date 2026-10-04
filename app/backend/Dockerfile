@@ -1,4 +1,11 @@
-# ThriftFind backend — production image for Railway / Render (any Docker host).
+# FirstFind backend — production image for Railway / Render (any Docker host).
+#
+# IMPORTANT: run as a SINGLE process. The rate-limit buckets, chat session
+# store, and recommender cache all live in in-process memory, so multiple
+# workers would see split state (users jumping between conversations, rate
+# limits not enforced, etc.). Scale with vertical sizing first; when you must
+# scale horizontally, move those stores to Redis before raising the worker
+# count. uvicorn's default is 1 worker, which is what we want here.
 # Build context is this directory (app/backend).
 FROM python:3.12-slim
 

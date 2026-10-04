@@ -20,6 +20,9 @@ venv/
 *.sqlite
 *.sqlite3
 
+# ---- Logs ----
+*.log
+
 # ---- Node / frontend ----
 node_modules/
 dist/

@@ -14,7 +14,6 @@ import json
 import logging
 from collections import namedtuple
 from functools import lru_cache
-from pathlib import Path
 from typing import Optional
 
 from ..config import REPO_ROOT
