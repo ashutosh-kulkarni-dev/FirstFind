@@ -1,6 +1,6 @@
 {
   "_note": "Namma Metro — auto-refreshed from OpenStreetMap Overpass API",
-  "_reviewed": "2026-08",
+  "_reviewed": "2026-10",
   "_source": "OpenStreetMap contributors (ODbL)",
   "lines": [
     {
@@ -332,8 +332,8 @@
         },
         {
           "name": "Rashtreeya Vidyalaya Road",
-          "lat": 12.921332,
-          "lng": 77.580248,
+          "lat": 12.921994,
+          "lng": 77.580239,
           "order": 9,
           "phase": "operational"
         },
@@ -506,114 +506,114 @@
       "color": "#FFC400",
       "stations": [
         {
-          "name": "Delta Electronics Bommasandra",
-          "lat": 12.819755,
-          "lng": 77.687996,
+          "name": "Rashtreeya Vidyalaya Road",
+          "lat": 12.92096,
+          "lng": 77.580095,
           "order": 1,
           "phase": "operational"
         },
         {
-          "name": "Biocon Hebbagodi",
-          "lat": 12.829444,
-          "lng": 77.68123,
+          "name": "Ragigudda",
+          "lat": 12.917089,
+          "lng": 77.588698,
           "order": 2,
           "phase": "operational"
         },
         {
-          "name": "Huskur Road",
-          "lat": 12.839432,
-          "lng": 77.677136,
+          "name": "Jayadeva Hospital",
+          "lat": 12.916764,
+          "lng": 77.600442,
           "order": 3,
           "phase": "operational"
         },
         {
-          "name": "Infosys Foundation Konappana Agrahara",
-          "lat": 12.846799,
-          "lng": 77.670918,
+          "name": "BTM Layout",
+          "lat": 12.916598,
+          "lng": 77.608622,
           "order": 4,
           "phase": "operational"
         },
         {
-          "name": "Electronic City",
-          "lat": 12.856798,
-          "lng": 77.663238,
+          "name": "Central Silk Board",
+          "lat": 12.916734,
+          "lng": 77.621026,
           "order": 5,
           "phase": "operational"
         },
         {
-          "name": "Beratena Agrahara",
-          "lat": 12.864229,
-          "lng": 77.657583,
+          "name": "Bommanahalli",
+          "lat": 12.910304,
+          "lng": 77.626704,
           "order": 6,
           "phase": "operational"
         },
         {
-          "name": "Hosa Road",
-          "lat": 12.871085,
-          "lng": 77.652147,
+          "name": "Hongasandra",
+          "lat": 12.901332,
+          "lng": 77.632242,
           "order": 7,
           "phase": "operational"
         },
         {
-          "name": "Singasandra",
-          "lat": 12.881179,
-          "lng": 77.644613,
+          "name": "Kudlu Gate",
+          "lat": 12.889561,
+          "lng": 77.63947,
           "order": 8,
           "phase": "operational"
         },
         {
-          "name": "Kudlu Gate",
-          "lat": 12.890318,
-          "lng": 77.638948,
+          "name": "Singasandra",
+          "lat": 12.880432,
+          "lng": 77.645107,
           "order": 9,
           "phase": "operational"
         },
         {
-          "name": "Hongasandra",
-          "lat": 12.902124,
-          "lng": 77.631698,
+          "name": "Hosa Road",
+          "lat": 12.8704,
+          "lng": 77.652746,
           "order": 10,
           "phase": "operational"
         },
         {
-          "name": "Bommanahalli",
-          "lat": 12.911195,
-          "lng": 77.626126,
+          "name": "Beratena Agrahara",
+          "lat": 12.863566,
+          "lng": 77.658196,
           "order": 11,
           "phase": "operational"
         },
         {
-          "name": "Central Silk Board",
-          "lat": 12.916403,
-          "lng": 77.620117,
+          "name": "Electronic City",
+          "lat": 12.856279,
+          "lng": 77.663735,
           "order": 12,
           "phase": "operational"
         },
         {
-          "name": "BTM Layout",
-          "lat": 12.916573,
-          "lng": 77.607633,
+          "name": "Infosys Foundation Konappana Agrahara",
+          "lat": 12.846089,
+          "lng": 77.671452,
           "order": 13,
           "phase": "operational"
         },
         {
-          "name": "Jayadeva Hospital",
-          "lat": 12.916728,
-          "lng": 77.59973,
+          "name": "Huskur Road",
+          "lat": 12.838717,
+          "lng": 77.677734,
           "order": 14,
           "phase": "operational"
         },
         {
-          "name": "Ragigudda",
-          "lat": 12.917075,
-          "lng": 77.587784,
+          "name": "Biocon Hebbagodi",
+          "lat": 12.828587,
+          "lng": 77.68155,
           "order": 15,
           "phase": "operational"
         },
         {
-          "name": "Rashtreeya Vidyalaya Road",
-          "lat": 12.92186,
-          "lng": 77.580048,
+          "name": "Delta Electronics Bommasandra",
+          "lat": 12.819088,
+          "lng": 77.688657,
           "order": 16,
           "phase": "operational"
         }
