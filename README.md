@@ -2,7 +2,7 @@
 
 AI-powered store discovery for Bengaluru — search by area, budget, or vibe, chat with a style assistant, and see live sentiment on real stores.
 
-🔗 **Live demo:** https://first-find-5zaq4odhz-mythos8.vercel.app/
+🔗 **Live demo:** https://first-find.vercel.app
 🧰 **Tech stack:** [TECHSTACK.md](TECHSTACK.md)
 
 ---
