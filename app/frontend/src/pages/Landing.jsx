@@ -127,10 +127,10 @@ export default function Landing() {
 
             <article className="lp-stat-num">
               <small>Stores in<br />Bengaluru</small>
-              <div className="anton" style={{ fontSize: 46, lineHeight: 1, marginTop: 10, color: 'var(--ink)' }}>
+              <div className="anton" style={{ fontSize: 46, lineHeight: 1, marginTop: 10, color: '#0f1a2b' }}>
                 {stats?.stores ?? '—'}
               </div>
-              <div style={{ marginTop: 6, color: 'var(--ink)', fontSize: 11.5, lineHeight: 1.35 }}>
+              <div style={{ marginTop: 6, color: '#334', fontSize: 11.5, lineHeight: 1.35 }}>
                 verified thrift stores, updated as new ones join.
               </div>
             </article>
