@@ -90,9 +90,15 @@ class Review(Base):
     # Source tracking for external reviews (Google Maps, future providers).
     source = Column(String(20), default="app")          # "app" | "google"
     external_id = Column(String(128), nullable=True)    # provider review id / stable hash
+    # Display name of the person who wrote an external review (the row itself
+    # is owned by the reviews-bot user). NULL for reviews written in the app.
+    author_name = Column(String(120), nullable=True)
     # ML-derived
     sentiment = Column(String(20), nullable=True)        # positive/neutral/negative
     sentiment_score = Column(Float, nullable=True)   # compound in [-1, 1]
+    # Which engine produced the sentiment: "local" | "hf" | "vader". Lets the
+    # daily job re-score anything that only got the English-only fallback.
+    sentiment_engine = Column(String(12), nullable=True)
     store = relationship("Store", back_populates="reviews")
     user = relationship("User", back_populates="reviews")
 

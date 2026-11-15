@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api'
 import { useAuth } from '../auth/AuthContext'
 import { useRequireAuth } from '../auth/RequireAuth'
@@ -17,6 +17,8 @@ function sentBadge(s) {
 
 export default function StoreDetail() {
   const { id } = useParams()
+  const navigate = useNavigate()
+  const location = useLocation()
   const [store, setStore] = useState(null)
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
@@ -64,6 +66,11 @@ export default function StoreDetail() {
   if (!store) return <div className="store-wrap" style={{ display: 'grid', placeItems: 'center', minHeight: 300 }}><span className="muted">Loading…</span></div>
 
   const ss = store.sentiment_summary || { positive: 0, neutral: 0, negative: 0, total: 0 }
+  // The API sends COUNTS. Percentages are taken over the reviews that have
+  // been analysed; ones still waiting are reported separately.
+  const scored = ss.positive + ss.neutral + ss.negative
+  const unscored = ss.unscored ?? Math.max(0, ss.total - scored)
+  const pct = n => (scored ? Math.round((n / scored) * 100) : 0)
   const cats = Array.isArray(store.categories)
     ? store.categories
     : String(store.categories || '').split(',').map(s => s.trim()).filter(Boolean)
@@ -86,7 +93,17 @@ export default function StoreDetail() {
 
   return (
     <div className="store-wrap">
-      <Link to="/explore" className="muted" style={{ display: 'inline-block', marginBottom: 14, fontSize: 12.5, fontWeight: 600 }}>← Back to explore</Link>
+      {/* Go back to wherever the visitor came from (home, assistant, explore,
+          another store). `key === 'default'` means this page was opened
+          directly (shared link / refresh), so there is nothing to go back to. */}
+      {location.key !== 'default' ? (
+        <button onClick={() => navigate(-1)} className="muted"
+          style={{ display: 'inline-block', marginBottom: 14, padding: 0, border: 0, background: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 600 }}>
+          ← Back
+        </button>
+      ) : (
+        <Link to="/explore" className="muted" style={{ display: 'inline-block', marginBottom: 14, fontSize: 12.5, fontWeight: 600 }}>← Explore stores</Link>
+      )}
 
       {/* HEADER CARD */}
       <div className="card store-header">
@@ -124,7 +141,7 @@ export default function StoreDetail() {
           </div>
         </div>
         <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, width: 150 }}>
-          <ScoreRing score={store.experience_score} />
+          <ScoreRing score={store.experience_score} googleRating={store.google_rating} />
           <button onClick={onSave} className="save-btn">
             {saved ? '✓ Saved' : '♡ Save store'}
           </button>
@@ -140,7 +157,10 @@ export default function StoreDetail() {
             <span className="muted" style={{ fontSize: 12, fontWeight: 600 }}>{(store.reviews || []).length + (pendingReview ? 1 : 0)} reviews</span>
           </div>
 
-          {ss.total > 0 && (
+          {ss.total > 0 && scored === 0 && (
+            <p className="muted" style={{ marginTop: 12, fontSize: 12 }}>Sentiment for these reviews is still being analysed.</p>
+          )}
+          {scored > 0 && (
             <div style={{ marginTop: 14 }}>
               <div style={{ display: 'flex', height: 10, borderRadius: 6, overflow: 'hidden' }}>
                 <span style={{ flex: ss.positive || .01, background: 'var(--score-green)' }} />
@@ -148,9 +168,10 @@ export default function StoreDetail() {
                 <span style={{ flex: ss.negative || .01, background: 'var(--score-red)' }} />
               </div>
               <div style={{ display: 'flex', gap: 16, marginTop: 8, fontSize: 11.5, color: 'var(--muted)' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--score-green)' }} /> {ss.positive}% positive</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--muted-2)' }} /> {ss.neutral}% neutral</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--score-red)' }} /> {ss.negative}% negative</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--score-green)' }} /> {pct(ss.positive)}% positive</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--muted-2)' }} /> {pct(ss.neutral)}% neutral</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--score-red)' }} /> {pct(ss.negative)}% negative</span>
+                {unscored > 0 && <span>· {unscored} still being analysed</span>}
               </div>
             </div>
           )}

@@ -1,11 +1,15 @@
 import { scoreHex } from '../lib/score'
 
-// Circular AI-score gauge for the store header (from FirstFind Store mockup).
-export default function ScoreRing({ score, size = 120 }) {
+// Circular score gauge for the store header (from FirstFind Store mockup).
+// AI score when available; otherwise the Google rating, labelled as such.
+export default function ScoreRing({ score, googleRating, size = 120 }) {
+  const hasAi = score != null
+  const shown = hasAi ? score : googleRating
   const r = 52, C = 2 * Math.PI * r
-  const pct = score == null ? 0 : Math.max(0, Math.min(1, score / 5))
+  const pct = shown == null ? 0 : Math.max(0, Math.min(1, shown / 5))
   const offset = C * (1 - pct)
-  const c = scoreHex(score)
+  const c = scoreHex(shown)
+  const label = hasAi ? 'AI SCORE' : shown != null ? 'GOOGLE RATING' : 'NO RATING YET'
   return (
     <div style={{ position: 'relative', width: size, height: size }}>
       <svg viewBox="0 0 120 120" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
@@ -16,9 +20,9 @@ export default function ScoreRing({ score, size = 120 }) {
       </svg>
       <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         <div className="anton" style={{ fontSize: 30, color: 'var(--ink)', lineHeight: 1 }}>
-          {score == null ? '—' : Number(score).toFixed(1)}
+          {shown == null ? '—' : Number(shown).toFixed(1)}
         </div>
-        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.5px', color: 'var(--muted-2)' }}>AI SCORE</div>
+        <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.5px', color: 'var(--muted-2)' }}>{label}</div>
       </div>
     </div>
   )

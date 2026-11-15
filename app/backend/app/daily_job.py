@@ -91,8 +91,25 @@ def run(use_google: bool = True, budget: int = GOOGLE_DAILY_BUDGET) -> dict:
     left = (client.max_calls - client.calls) if client else 0
     summary["reviews"] = ingest_all(use_google=left > 0, google_client=client)
     summary["google_calls_used"] = client.calls if client else 0
-    summary["pipeline"] = run_pipeline()
+    summary["pipeline"] = _with_retries(run_pipeline)
     return summary
+
+
+def _with_retries(fn, attempts: int = 3):
+    """Re-run an idempotent step if the database reports a deadlock or lock
+    timeout — the live web app writes to the same tables while this job runs."""
+    import time
+
+    from sqlalchemy.exc import OperationalError
+    for n in range(1, attempts + 1):
+        try:
+            return fn()
+        except OperationalError as e:
+            if n == attempts:
+                raise
+            log.warning("Database contention (%s) — retry %d/%d in 20s",
+                        str(e).splitlines()[0][:120], n, attempts - 1)
+            time.sleep(20)
 
 
 def main() -> None:

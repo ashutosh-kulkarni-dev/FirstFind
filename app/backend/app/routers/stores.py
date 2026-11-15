@@ -181,7 +181,11 @@ def store_detail(store_id: str, background_tasks: BackgroundTasks,
 
     d = store_to_dict(store)
     d["reviews"] = [{
-        "id": r.id, "user_name": r.user.name, "rating": r.rating, "text": r.text,
+        # External reviews are stored under the reviews-bot account; show the
+        # person who actually wrote them.
+        "id": r.id, "user_name": r.author_name or r.user.name,
+        "source": r.source or "app",
+        "rating": r.rating, "text": r.text,
         "sentiment": r.sentiment,
         "created_at": r.created_at.strftime("%d %b %Y"),
     } for r in reviews]

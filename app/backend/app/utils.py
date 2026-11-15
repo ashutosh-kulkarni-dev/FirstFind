@@ -41,8 +41,11 @@ def sentiment_summary(reviews: list) -> dict:
     """
     pos = sum(1 for r in reviews if r.sentiment == "positive")
     neg = sum(1 for r in reviews if r.sentiment == "negative")
-    return {"positive": pos, "neutral": len(reviews) - pos - neg,
-            "negative": neg, "total": len(reviews)}
+    neu = sum(1 for r in reviews if r.sentiment == "neutral")
+    # Counts, not percentages. `unscored` = sentiment not computed yet; it used
+    # to be folded into `neutral`, which made a store look 100% neutral.
+    return {"positive": pos, "neutral": neu, "negative": neg,
+            "unscored": len(reviews) - pos - neg - neu, "total": len(reviews)}
 
 
 def haversine_km(lat1, lng1, lat2, lng2) -> float:

@@ -1,15 +1,13 @@
 """Sentiment analysis on reviews — classifier models only, no LLM.
 
-Engine: a small ENSEMBLE of multilingual sentiment classifiers called through
-the HuggingFace Inference API (models listed in config.HF_SENTIMENT_MODELS):
+Model: cardiffnlp/twitter-xlm-roberta-base-sentiment — XLM-R tuned on tweets
+in 8 languages incl. Hindi and English; good on short, informal text. On our
+labelled set it beat every alternative and every two- or three-model vote we
+tried (see config._DEFAULT_SENTIMENT_MODELS for the numbers).
 
-  * cardiffnlp/twitter-xlm-roberta-base-sentiment — XLM-R tuned on tweets in 8
-    languages incl. Hindi and English; good on short, informal text.
-  * tabularisai/multilingual-sentiment-analysis — 23 languages incl. Hindi,
-    Bengali and Telugu.
-
-Each model returns class probabilities; they are mapped to
-negative / neutral / positive and averaged (soft vote). Reviews here are often
+More than one model can be listed in config.HF_SENTIMENT_MODELS; their class
+probabilities are then mapped to negative / neutral / positive and averaged
+(soft vote). Reviews here are often
 code-mixed (Hinglish, Kanglish), which no hosted classifier is trained on
 specifically, so two safeguards apply:
 
@@ -18,16 +16,26 @@ specifically, so two safeguards apply:
     added as one more voter. The stars are the reviewer's own verdict.
   * VADER fallback — with no token, or if every model call fails.
 
-The models are NOT loaded into this process (no torch on the server): one
-HTTP call per model per review, off the request path.
+Where the models run (engine, recorded per review in sentiment_engine):
+  local  inside this process via `transformers` — used by the daily GitHub job
+         (SENTIMENT_LOCAL=true). Free, and not limited to hosted models.
+  hf     the HuggingFace Inference API, one HTTP call per model. Needs a token
+         WITH inference credits; a "402 Payment Required" switches it off for
+         the rest of the run.
+  vader  offline English lexicon — the last resort (and what the web server
+         uses for a just-posted review when no credits are available). The
+         daily job re-scores those with the real models.
 
 Whether this is good enough per language is a number, not an assumption:
     python -m app.ml.eval_sentiment
 
 Public interface:
     analyze(text, rating=None) -> (label, compound score in [-1, 1])
+    analyze_detail(text, rating=None) -> (label, compound, engine)
+    best_engine() -> the engine analyze would use right now
     experience_score(reviews, prior_mean=None) -> float | None
 """
+import importlib.util
 import logging
 import re
 
@@ -35,6 +43,7 @@ import httpx
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 from app.config import (HF_API_BASE, HF_SENTIMENT_MODELS, HF_TIMEOUT,
+                        LOCAL_SENTIMENT_MODELS, SENTIMENT_LOCAL,
                         SENTIMENT_MIN_CONFIDENCE, hf_token)
 
 log = logging.getLogger(__name__)
@@ -45,6 +54,8 @@ _vader = SentimentIntensityAnalyzer()
 
 _client: httpx.Client | None = None
 _warned_no_token = False
+_hf_disabled = False            # set after a 402: no inference credits on this token
+_local_pipes: dict = {}         # model id -> loaded transformers pipeline
 
 
 def _get_client() -> httpx.Client:
@@ -61,7 +72,7 @@ def warmup() -> None:
 
     Any failure is ignored — this is purely an optimization.
     """
-    if not hf_token:
+    if not hf_token or local_available():
         return
     for model in HF_SENTIMENT_MODELS:
         try:
@@ -140,12 +151,45 @@ def _average(votes: list[dict[str, float]]) -> dict[str, float]:
     return {c: sum(v[c] for v in votes) / len(votes) for c in CLASSES}
 
 
-def ensemble_probs(text: str, models: list[str] | None = None) -> dict[str, float] | None:
+def local_available() -> bool:
+    """True when the models can run in this process (flag on + libraries present)."""
+    return bool(SENTIMENT_LOCAL
+                and importlib.util.find_spec("transformers")
+                and importlib.util.find_spec("torch"))
+
+
+def _local_probs(model: str, text: str) -> dict[str, float]:
+    """One model run in-process -> 3-class probabilities. Raises on failure."""
+    pipe = _local_pipes.get(model)
+    if pipe is None:
+        from transformers import pipeline          # heavy import: only when used
+        log.info("Sentiment: loading %s locally (first use)", model)
+        pipe = _local_pipes[model] = pipeline("text-classification", model=model, device=-1)
+    scores = pipe(text[:2000], top_k=None, truncation=True, max_length=256)
+    if scores and isinstance(scores[0], list):     # batch-shaped output
+        scores = scores[0]
+    return to_three_class(scores)
+
+
+def ensemble_probs(text: str, models: list[str] | None = None,
+                   engine: str = "hf") -> dict[str, float] | None:
     """Soft vote of every model that answers; None if none did."""
+    global _hf_disabled
+    run = _local_probs if engine == "local" else _hf_probs
+    default = LOCAL_SENTIMENT_MODELS if engine == "local" else HF_SENTIMENT_MODELS
     votes = []
-    for model in (models or HF_SENTIMENT_MODELS):
+    for model in (models or default):
         try:
-            votes.append(_hf_probs(model, text))
+            votes.append(run(model, text))
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 402 and not _hf_disabled:
+                _hf_disabled = True
+                log.error("Sentiment: HuggingFace returned 402 Payment Required — this token "
+                          "has no inference credits. Hosted models are off for this run.")
+            else:
+                log.warning("Sentiment: %s failed (%s)", model, e)
+            if _hf_disabled:
+                break
         except Exception as e:
             log.warning("Sentiment: %s failed (%s)", model, e)
     return _average(votes) if votes else None
@@ -157,28 +201,48 @@ def _decide(probs: dict[str, float]) -> tuple[str, float]:
     return label, round(probs["positive"] - probs["negative"], 4)
 
 
-def analyze(text: str, rating: int | None = None) -> tuple[str, float]:
-    """Returns (label, compound score in [-1, 1]). Never raises.
+def best_engine() -> str:
+    """The engine analyze_detail() would try first right now."""
+    if local_available():
+        return "local"
+    if hf_token and not _hf_disabled:
+        return "hf"
+    return "vader"
+
+
+def analyze_detail(text: str, rating: int | None = None) -> tuple[str, float, str]:
+    """Returns (label, compound score in [-1, 1], engine). Never raises.
 
     `rating` (1-5 stars) is optional; it is only consulted when the models
     are unsure about the text.
     """
     global _warned_no_token
     if not text or not text.strip():
-        return "neutral", 0.0
-    if not hf_token:
-        if not _warned_no_token:
-            log.warning("Sentiment: no HUGGINGFACE_TOKEN set; using VADER fallback")
-            _warned_no_token = True
-        return _vader_analyze(text)
+        return "neutral", 0.0, "none"
 
-    probs = ensemble_probs(text)
-    if probs is None:
-        log.warning("Sentiment: every HF model failed; VADER fallback")
-        return _vader_analyze(text)
-    if rating is not None and max(probs.values()) < SENTIMENT_MIN_CONFIDENCE:
-        probs = _average([probs, rating_probs(rating)])
-    return _decide(probs)
+    for engine in ("local", "hf"):
+        if engine == "local" and not local_available():
+            continue
+        if engine == "hf" and (not hf_token or _hf_disabled):
+            continue
+        probs = ensemble_probs(text, engine=engine)
+        if probs is None:
+            continue
+        if rating is not None and max(probs.values()) < SENTIMENT_MIN_CONFIDENCE:
+            probs = _average([probs, rating_probs(rating)])
+        return (*_decide(probs), engine)
+
+    if not _warned_no_token:
+        log.warning("Sentiment: no model engine available (no local models, no usable "
+                    "HUGGINGFACE_TOKEN); using the English-only VADER fallback")
+        _warned_no_token = True
+    return (*_vader_analyze(text), "vader")
+
+
+def analyze(text: str, rating: int | None = None) -> tuple[str, float]:
+    """Returns (label, compound score in [-1, 1]). Never raises."""
+    label, score, _engine = analyze_detail(text, rating)
+    return label, score
 
 
 # ---------------------------------------------------------------------------

@@ -65,8 +65,9 @@ def score_review(review_id: int) -> None:
         review = db.get(Review, review_id)
         if review is None:
             return
-        label, score = sentiment_ml.analyze(review.text or "", rating=review.rating)
+        label, score, engine = sentiment_ml.analyze_detail(review.text or "", rating=review.rating)
         review.sentiment, review.sentiment_score = label, score
+        review.sentiment_engine = engine
         # Recompute the store's experience_score + review_count over all its reviews.
         store = review.store
         scored = [sentiment_ml.review_tuple(r) for r in
