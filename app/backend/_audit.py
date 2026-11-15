@@ -248,7 +248,7 @@ def _detail_shape(d):
     for key in ("reviews", "similar", "sentiment_summary", "experience_score", "is_open_now"):
         assert key in d, f"missing key {key}"
     ss = d["sentiment_summary"]
-    assert set(ss) == {"positive", "neutral", "negative", "total"}, ss
+    assert set(ss) == {"positive", "neutral", "negative", "unscored", "total"}, ss
 
 def _zones_ok(zs):
     assert zs, "no zones"
