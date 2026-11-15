@@ -1,0 +1,107 @@
+text,label,lang
+"Amazing collection, found a vintage Levi's jacket for 400 rupees.",positive,en
+"Staff was rude and nothing was priced properly.",negative,en
+"Decent store, nothing special. Went once.",neutral,en
+"Loved the vibe, will definitely come back.",positive,en
+"Clothes had stains and smelled musty. Waste of time.",negative,en
+"It is on the second floor above the bakery.",neutral,en
+"Great prices and the owner helped me pick sizes.",positive,en
+"Overpriced for second hand stuff. Not worth it.",negative,en
+"Average collection, some good and some bad pieces.",neutral,en
+"Best thrift store in Koramangala, hands down.",positive,en
+"They refused to exchange a torn shirt. Never again.",negative,en
+"Open till 9 pm on weekdays.",neutral,en
+"Super friendly staff and a trial room that actually works.",positive,en
+"Tiny shop, very limited sizes, left empty handed.",negative,en
+"Okay for basics. Parking is on the street.",neutral,en
+"Such a gem! Curated pieces and fair pricing.",positive,en
+"Quality is terrible, the zip broke the same day.",negative,en
+"Visited on a Sunday, it was moderately crowded.",neutral,en
+"Not bad at all, got two kurtas under 500.",positive,en
+"Nothing great, but not terrible either.",neutral,en
+"I wanted to like this place but the clothes are all damaged.",negative,en
+"Highly recommend for denim lovers.",positive,en
+"Billing took forty minutes and they only take cash.",negative,en
+"They mostly sell menswear.",neutral,en
+"Fabric quality surprised me, feels brand new.",positive,en
+"Scam. They sell fakes as branded.",negative,en
+"Collection changes every week I am told.",neutral,en
+"Worth every rupee, great finds if you dig.",positive,en
+"Could not find anything in my size, disappointing.",negative,en
+"The shop is near the metro station.",neutral,en
+"Bahut accha collection hai, prices bhi sahi hain.",positive,hinglish
+"Ekdum bakwaas shop, paisa barbaad.",negative,hinglish
+"Theek thaak hai, kuch khaas nahi.",neutral,hinglish
+"Mast jackets milte hain yahan, paisa vasool.",positive,hinglish
+"Staff ka behaviour bahut kharab tha, dobara nahi jaunga.",negative,hinglish
+"Shop metro ke paas hai, 10 baje khulti hai.",neutral,hinglish
+"Kya zabardast collection hai bhai, full paisa vasool.",positive,hinglish
+"Kapde purane aur gande the, bilkul pasand nahi aaya.",negative,hinglish
+"Thoda mehnga hai but quality acchi hai.",positive,hinglish
+"Quality bekaar hai, ek wash mein colour nikal gaya.",negative,hinglish
+"Sasta aur badhiya, students ke liye best.",positive,hinglish
+"Bohot bheed thi, trial room bhi nahi tha. Bekar experience.",negative,hinglish
+"Collection accha hai, staff bhi helpful hai.",positive,hinglish
+"Itna mehenga kyun hai yaar, second hand ke liye too much.",negative,hinglish
+"Normal dukaan hai, jaisa socha tha waisa hi.",neutral,hinglish
+"Yaar kya finds mile aaj, dil khush ho gaya.",positive,hinglish
+"Owner ne galat size de diya aur return bhi nahi liya.",negative,hinglish
+"Kabhi kabhi accha maal milta hai, kabhi nahi.",neutral,hinglish
+"Ghatiya quality, branded bolke fake bech rahe hain.",negative,hinglish
+"Kaafi accha experience tha, prices reasonable hain.",positive,hinglish
+"Bilkul time waste, kuch bhi dhang ka nahi mila.",negative,hinglish
+"Sunday ko band rehta hai shayad.",neutral,hinglish
+"Denim ka collection ekdum mast hai.",positive,hinglish
+"Paise zyada lete hain aur bargaining bhi nahi karte.",negative,hinglish
+"Dost ke saath gaya tha, usne ek shirt li.",neutral,hinglish
+"Sahi jagah hai budget shopping ke liye.",positive,hinglish
+"Service slow hai aur staff ko kuch pata nahi.",negative,hinglish
+"Achha hai, par aur variety ho sakti thi.",neutral,hinglish
+"Maza aa gaya, itne saste mein itna accha maal.",positive,hinglish
+"Bura nahi hai, ek baar ja sakte ho.",neutral,hinglish
+"Bahut hi kharab experience, kapdon mein chhed the.",negative,hinglish
+"Paisa vasool shopping, definitely recommend karunga.",positive,hinglish
+"Mehnga nahi hai, quality bhi theek hai.",positive,hinglish
+"Accha nahi laga, collection bahut purana hai.",negative,hinglish
+"Yahan sirf ladkon ke kapde milte hain.",neutral,hinglish
+"बहुत अच्छा कलेक्शन है, दाम भी ठीक हैं।",positive,hi
+"बिल्कुल बेकार दुकान, पैसे बर्बाद।",negative,hi
+"ठीक-ठाक है, कुछ खास नहीं।",neutral,hi
+"स्टाफ बहुत मददगार था, मज़ा आ गया।",positive,hi
+"कपड़े गंदे और फटे हुए थे।",negative,hi
+"दुकान मेट्रो स्टेशन के पास है।",neutral,hi
+"सस्ता और बढ़िया, ज़रूर जाइए।",positive,hi
+"बहुत महंगा है और क्वालिटी खराब है।",negative,hi
+"कभी-कभी अच्छा माल मिल जाता है।",neutral,hi
+"यहाँ की जैकेट्स कमाल की हैं।",positive,hi
+"Tumba chennagide, collection super and rates kammi.",positive,kanglish
+"Chennagilla, quality tumba kettadagide.",negative,kanglish
+"Parvagilla, ond sala hogbahudu.",neutral,kanglish
+"Sakkath collection guru, bejaan options ide.",positive,kanglish
+"Staff sari illa, rate jaasti, waste of time.",negative,kanglish
+"Shop metro hattira ide.",neutral,kanglish
+"Olle quality, kammi bele. Tumba ishta aaytu.",positive,kanglish
+"Batte ella haleyadu, duddu waste aaytu.",negative,kanglish
+"Sumaar ide, vishesha enu illa.",neutral,kanglish
+"Tumba olle angadi, staff kooda chennagi maatadtare.",positive,kanglish
+"ತುಂಬಾ ಚೆನ್ನಾಗಿದೆ, ಬೆಲೆ ಕೂಡ ಕಡಿಮೆ.",positive,kn
+"ಗುಣಮಟ್ಟ ತುಂಬಾ ಕೆಟ್ಟದಾಗಿದೆ, ಹಣ ವ್ಯರ್ಥ.",negative,kn
+"ಪರವಾಗಿಲ್ಲ, ಒಮ್ಮೆ ಹೋಗಬಹುದು.",neutral,kn
+"ಸಿಬ್ಬಂದಿ ತುಂಬಾ ಸಹಾಯ ಮಾಡಿದರು, ಒಳ್ಳೆಯ ಅಂಗಡಿ.",positive,kn
+"ಬಟ್ಟೆಗಳು ಹಳೆಯದು ಮತ್ತು ಹರಿದಿವೆ.",negative,kn
+"Romba nalla collection, price um kammi.",positive,tanglish
+"Mosam quality, kaasu waste.",negative,tanglish
+"Paravala, oru thadava pogalam.",neutral,tanglish
+"Semma shop, staff romba help pannanga.",positive,tanglish
+"Dress ellam pazhasu, vela romba jaasthi. Pidikala.",negative,tanglish
+"மிகவும் நல்ல கடை, விலையும் குறைவு.",positive,ta
+"தரம் மிகவும் மோசம், பணம் வீண்.",negative,ta
+"பரவாயில்லை, ஒரு முறை போகலாம்.",neutral,ta
+"Chala bagundi, rates kuda takkuva.",positive,tenglish
+"Quality assalu baledu, dabbu waste.",negative,tenglish
+"Parledu, okasari vellochu.",neutral,tenglish
+"చాలా బాగుంది, ధరలు కూడా తక్కువ.",positive,te
+"నాణ్యత అస్సలు బాలేదు, డబ్బు వృధా.",negative,te
+"Adipoli collection, vila kuravanu.",positive,manglish
+"Valare mosham quality, paisa poyi.",negative,manglish
+"Kuzhappamilla, oru thavana pokam.",neutral,manglish

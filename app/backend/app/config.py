@@ -111,8 +111,8 @@ CHAT_ADVICE = os.environ.get("CHAT_ADVICE", "true").lower() == "true"
 # Without this key the ingester runs in CSV-only mode (loads the local archive).
 GOOGLE_PLACES_API_KEY = os.environ.get("GOOGLE_PLACES_API_KEY", "")
 # Hard cap on Places API calls per ingest run (Find Place + Details).
-# Prevents a bug from looping into the paid tier. Default covers 131×2 first run.
-INGEST_MAX_CALLS = int(os.environ.get("INGEST_MAX_CALLS", "300"))
+# Prevents a bug from looping into the paid tier. Default fits a 100-calls/day key.
+INGEST_MAX_CALLS = int(os.environ.get("INGEST_MAX_CALLS", "90"))
 # Minimum milliseconds between successive Places API calls (QPS guard).
 INGEST_MIN_INTERVAL_MS = int(os.environ.get("INGEST_MIN_INTERVAL_MS", "150"))
 
@@ -121,12 +121,34 @@ INGEST_MIN_INTERVAL_MS = int(os.environ.get("INGEST_MIN_INTERVAL_MS", "150"))
 # with this token, keeping the image light (no torch/transformers). Without a token
 # the app falls back to VADER so it never hard-fails.
 hf_token = os.environ.get("HUGGINGFACE_TOKEN")
-HF_SENTIMENT_MODEL = os.environ.get(
-    "HF_SENTIMENT_MODEL", "cardiffnlp/twitter-xlm-roberta-base-sentiment")
+# One or more hosted sentiment classifiers, comma-separated. Their class
+# probabilities are averaged (soft vote) — see ml/sentiment.py. Compare
+# candidates with `python -m app.ml.eval_sentiment --models a,b` before changing.
+# HF_SENTIMENT_MODEL (singular) is still honoured for older .env files.
+_DEFAULT_SENTIMENT_MODELS = ("cardiffnlp/twitter-xlm-roberta-base-sentiment,"
+                             "tabularisai/multilingual-sentiment-analysis")
+HF_SENTIMENT_MODELS = [m.strip() for m in os.environ.get(
+    "HF_SENTIMENT_MODELS",
+    os.environ.get("HF_SENTIMENT_MODEL", _DEFAULT_SENTIMENT_MODELS)).split(",") if m.strip()]
 # HuggingFace retired the classic api-inference.huggingface.co serverless host in
-# favour of the Inference Providers router. hf-inference is the first-party provider
-# and mirrors the old request/response shape.
-HF_API_URL = os.environ.get(
-    "HF_API_URL",
-    f"https://router.huggingface.co/hf-inference/models/{HF_SENTIMENT_MODEL}")
+# favour of the Inference Providers router. hf-inference is the first-party provider.
+HF_API_BASE = os.environ.get(
+    "HF_API_BASE", "https://router.huggingface.co/hf-inference/models").rstrip("/")
 HF_TIMEOUT = float(os.environ.get("HF_TIMEOUT", "10"))
+# Below this top-class probability the model vote is treated as unsure, and the
+# review's own star rating is added as a tie-breaking voter.
+SENTIMENT_MIN_CONFIDENCE = float(os.environ.get("SENTIMENT_MIN_CONFIDENCE", "0.6"))
+
+# ---- Store descriptions ----
+# Stores without a Google description get a two-sentence AI summary written by
+# the Groq LLM from their categories and review text (labelled as AI in the UI).
+# Needs GROQ_API_KEY; capped per pipeline run to respect the free rate limit.
+DESCRIPTION_BATCH = int(os.environ.get("DESCRIPTION_BATCH", "40"))
+DESCRIPTION_MIN_REVIEWS = int(os.environ.get("DESCRIPTION_MIN_REVIEWS", "2"))
+
+# ---- Google Places free-tier guard ----
+# Review-bearing Place Details calls are in Google's most expensive tier, which
+# has the smallest free allowance. The defaults fit a key limited to 100 calls
+# per day (10 spare for manual checks): the job runs daily and each run stops
+# at INGEST_MAX_CALLS total calls. Raise both if your key allows more.
+INGEST_MAX_DETAILS = int(os.environ.get("INGEST_MAX_DETAILS", "90"))

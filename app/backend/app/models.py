@@ -1,7 +1,7 @@
 import datetime as dt
 
-from sqlalchemy import (Column, DateTime, Float, ForeignKey, Integer, String,
-                        Text, UniqueConstraint)
+from sqlalchemy import (Boolean, Column, DateTime, Float, ForeignKey, Integer,
+                        String, Text, UniqueConstraint)
 from sqlalchemy.orm import relationship
 
 from .database import Base
@@ -18,6 +18,8 @@ class User(Base):
     auth_provider = Column(String(20), default="local", nullable=False)  # "local" | "google"
     google_sub = Column(String(64), unique=True, nullable=True, index=True)
     avatar_url = Column(String(300), nullable=True)
+    # Admin accounts may edit stores/reviews through /api/admin (Phase 3).
+    is_admin = Column(Boolean, default=False, nullable=True)
     created_at = Column(DateTime, default=dt.datetime.utcnow)
     reviews = relationship("Review", back_populates="user")
     interactions = relationship("Interaction", back_populates="user")
@@ -49,6 +51,26 @@ class Store(Base):
     geocode_precision = Column(String(20), nullable=True)
     # Cached from Google Places API so subsequent runs skip the Find Place call.
     google_place_id = Column(String(120), nullable=True)
+    # When the Google review fetch last visited this store — the weekly job
+    # works oldest-first so every store gets its turn under the call cap.
+    reviews_fetched_at = Column(DateTime, nullable=True)
+    # "thrift" | "retail_fashion" | "branded" — lets the UI filter store kinds.
+    store_type = Column(String(20), default="thrift", nullable=True)
+    address = Column(String(300), nullable=True)       # full street address when known
+    # One or two sentences on what the store offers (Google editorial line,
+    # or an AI summary built from its reviews).
+    description = Column(Text, nullable=True)
+    # "google" | "ai" | "admin" — the UI labels AI-written text as such.
+    description_source = Column(String(10), nullable=True)
+    # Google Maps listing aggregates (source data, not our own reviews).
+    google_rating = Column(Float, nullable=True)
+    google_review_count = Column(Integer, nullable=True)
+    # True when price_min/max are a generic band for the store type, not a
+    # per-store figure — the UI must label these as estimates.
+    price_estimated = Column(Boolean, default=False, nullable=True)
+    # False hides a store everywhere (permanently closed / removed by an admin)
+    # without deleting rows that reviews and saved lists point at.
+    is_active = Column(Boolean, default=True, nullable=True)
     # ML-derived
     experience_score = Column(Float, nullable=True)   # 0-5 blended score
     review_count = Column(Integer, default=0)

@@ -104,10 +104,21 @@ export default function StoreDetail() {
               {cats.map(c => <span key={c} className="tag-chip">{c}</span>)}
             </div>
           )}
+          {store.description && (
+            <p style={{ marginTop: 14, color: 'var(--ink)', fontSize: 14, lineHeight: 1.6, maxWidth: 560 }}>
+              {store.description}
+              {store.description_source === 'ai' && (
+                <span title="Written by AI from this store's categories and customer reviews"
+                  style={{ marginLeft: 8, padding: '2px 7px', borderRadius: 10, background: 'var(--line-2)', color: 'var(--muted)', fontSize: 10.5, fontWeight: 700, letterSpacing: '.3px', whiteSpace: 'nowrap' }}>
+                  AI SUMMARY
+                </span>
+              )}
+            </p>
+          )}
           {store.notes && <p style={{ marginTop: 14, color: 'var(--muted)', fontSize: 13.5, lineHeight: 1.6, maxWidth: 560 }}>{store.notes}</p>}
           <div className="store-meta-grid">
             {store.open_time && <div className="store-meta-item"><span className="section-eyebrow">Hours</span>{store.open_time}–{store.close_time || '?'}</div>}
-            {store.price_min != null && <div className="store-meta-item"><span className="section-eyebrow">Price range</span>₹{store.price_min}–{store.price_max}</div>}
+            {store.price_min != null && <div className="store-meta-item"><span className="section-eyebrow">{store.price_estimated ? 'Typical price (estimate)' : 'Price range'}</span>₹{store.price_min}–{store.price_max}</div>}
             {store.phone && <div className="store-meta-item"><span className="section-eyebrow">Phone</span>{store.phone}</div>}
             {store.instagram && <div className="store-meta-item"><span className="section-eyebrow">Instagram</span><a href={`https://instagram.com/${store.instagram.replace(/^@/, '')}`} target="_blank" rel="noreferrer noopener">{store.instagram}</a></div>}
           </div>

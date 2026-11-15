@@ -33,7 +33,7 @@ def score_pending_sentiment(db) -> int:
     """Stage 1: score reviews whose sentiment hasn't been computed yet."""
     pending = db.query(Review).filter(Review.sentiment.is_(None)).all()
     for r in pending:
-        label, score = sentiment_ml.analyze(r.text or "")
+        label, score = sentiment_ml.analyze(r.text or "", rating=r.rating)
         r.sentiment, r.sentiment_score = label, score
     db.flush()
     return len(pending)
@@ -44,10 +44,10 @@ def recompute_store_scores(db) -> int:
     stores = db.query(Store).all()
     by_store: dict[str, list] = {}
     for r in db.query(Review).all():
-        by_store.setdefault(r.store_id, []).append((r.rating, r.sentiment_score or 0.0))
+        by_store.setdefault(r.store_id, []).append(sentiment_ml.review_tuple(r))
     for s in stores:
         scored = by_store.get(s.id, [])
-        s.experience_score = sentiment_ml.experience_score(scored)
+        s.experience_score = sentiment_ml.experience_score(scored, sentiment_ml.score_prior(s))
         s.review_count = len(scored)
     db.flush()
     return len(stores)
@@ -86,9 +86,12 @@ def run_pipeline(db=None) -> dict:
         scored = score_pending_sentiment(db)
         stores = recompute_store_scores(db)
         n_zones = recompute_zones(db)          # before recommender: zone_id feeds content features
+        from .descriptions import generate_descriptions
+        described = generate_descriptions(db)  # AI summaries; no-op without GROQ_API_KEY
         recommender.build(db)
         db.commit()
-        summary = {"reviews_scored": scored, "stores_rescored": stores, "zones": n_zones}
+        summary = {"reviews_scored": scored, "stores_rescored": stores, "zones": n_zones,
+                   "descriptions_written": described}
         log.info("Pipeline complete: %s", summary)
         return summary
     except Exception:
