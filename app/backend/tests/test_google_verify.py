@@ -304,3 +304,13 @@ def test_daily_job_shares_one_google_budget(db, tmp_path, monkeypatch):
         db.query(Store).filter(Store.id == sid).delete(synchronize_session=False)
     db.query(Store).filter(Store.google_place_id.in_(["d0", "d1"])).delete(synchronize_session=False)
     db.commit()
+
+
+def test_verify_survives_a_google_error():
+    """A quota/HTTP error must not crash the daily job or mark the row checked."""
+    class Broken(FakePlaces):
+        def search_text(self, *a, **k):
+            raise RuntimeError("429 quota exceeded")
+    cands = [cand("node/1", "Peter England")]
+    assert sum(V.verify(Broken(), cands, limit=5).values()) == 0
+    assert cands[0]["verified"] == ""

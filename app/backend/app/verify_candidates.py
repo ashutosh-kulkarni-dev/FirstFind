@@ -31,6 +31,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import logging
 import re
 from collections import Counter
 from datetime import date
@@ -39,6 +40,8 @@ from pathlib import Path
 
 from .config import CITY_CENTER, REPO_ROOT
 from .utils import haversine_km
+
+log = logging.getLogger(__name__)
 
 IMPORT_DIR = REPO_ROOT / "data" / "import"
 CANDIDATES_CSV = IMPORT_DIR / "candidates_osm.csv"
@@ -247,6 +250,12 @@ def verify(client, rows: list[dict], limit: int, on_progress=None,
             places = client.search_text(query, lat, lng, fields=SEARCH_FIELDS,
                                         radius_m=radius, page_size=5)
         except PlacesBudgetExceeded:
+            break
+        except Exception as e:
+            # Quota used up for the day, key problem, network: leave this row
+            # unchecked for the next run instead of failing the whole job.
+            log.warning("Google check failed for %r (%s) — stopping verification for this run",
+                        row["name"], e)
             break
         status, place, km, miss = pick_match(row, places)
         row["verified"] = status
