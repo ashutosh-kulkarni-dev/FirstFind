@@ -49,7 +49,8 @@ class Recommender:
         # must never appear in a similar-store or recommendation list; excluding
         # them here keeps them out of both the matrix and the persisted tables.
         stores = db.query(Store).filter(Store.lat.isnot(None),
-                                        Store.lng.isnot(None)).all()
+                                        Store.lng.isnot(None),
+                                        Store.is_active.isnot(False)).all()
         interactions = [(i.user_id, i.store_id, i.kind)
                         for i in db.query(Interaction).all()]
         store_ids = [s.id for s in stores]

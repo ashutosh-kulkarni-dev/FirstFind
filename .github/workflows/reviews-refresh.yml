@@ -1,16 +1,22 @@
-name: Refresh Store Reviews & AI Score
+name: Daily Data Job (stores, reviews, AI score)
 
 on:
   schedule:
-    # Mondays 04:00 UTC — runs after metro-refresh (03:00), quiet time
-    - cron: '0 4 * * 1'
+    # Daily 04:00 UTC. Daily (not weekly) because the Google key allows only
+    # ~100 calls per day: each run fetches reviews for the stores checked
+    # longest ago and stops at INGEST_MAX_CALLS (default 90).
+    - cron: '0 4 * * *'
   workflow_dispatch:   # manual trigger from GitHub Actions UI
 
 permissions:
-  contents: read       # no repo writes needed — writes go straight to prod DB
+  contents: write      # commits the updated candidate / store CSVs back to the repo
+
+concurrency:
+  group: daily-data-job
+  cancel-in-progress: false
 
 jobs:
-  ingest:
+  daily:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,14 +28,42 @@ jobs:
       - name: Install backend dependencies
         run: pip install -r app/backend/requirements.txt
 
-      - name: Ingest reviews + recompute AI scores
+      - name: Check required secrets
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        # Without this the job silently falls back to a local MySQL URL and
+        # dies with a confusing "can't connect to localhost" error.
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::DATABASE_URL secret is not set (Settings > Secrets and variables > Actions)."
+            exit 1
+          fi
+
+      - name: Daily data job
         env:
           DATABASE_URL:          ${{ secrets.DATABASE_URL }}
           HUGGINGFACE_TOKEN:     ${{ secrets.HUGGINGFACE_TOKEN }}
-          GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
+          GROQ_API_KEY:          ${{ secrets.GROQ_API_KEY }}            # optional: writes AI store descriptions
+          GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}   # optional: verifies new stores
+          GOOGLE_DAILY_BUDGET:   '90'                                    # the key allows 100 calls/day
           ENVIRONMENT:           production
         working-directory: app/backend
-        # CSV source is always loaded (zero API calls for the local archive).
-        # --google activates the Places API fetch for new reviews since last run.
-        # --run-pipeline scores all pending sentiment and recomputes experience_score.
-        run: python -m app.ml.ingest_reviews --google --run-pipeline
+        # verify candidates -> promote -> import stores -> ingest reviews ->
+        # sentiment / AI scores / zones / recommendations / descriptions.
+        # See app/backend/app/daily_job.py.
+        run: python -m app.daily_job
+
+      - name: Commit updated data files
+        # The CSVs record which candidates were checked and which stores were
+        # added, so they must be saved even if a later step failed.
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/import
+          if git diff --cached --quiet; then
+            echo "No data changes to commit."
+          else
+            git commit -m "data: daily store verification [skip ci] [skip render]"
+            git push
+          fi

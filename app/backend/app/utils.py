@@ -13,12 +13,16 @@ DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sun
 # store listing until lat/lng are filled in. Spread these expressions into a
 # query with `query.filter(*STORE_HAS_COORDS)`; adding coords un-hides a store
 # automatically (no flag to flip).
-STORE_HAS_COORDS = (Store.lat.isnot(None), Store.lng.isnot(None))
+# `is_active IS NOT FALSE` (rather than `IS TRUE`) so rows that predate the
+# column — where it may be NULL — stay visible.
+STORE_HAS_COORDS = (Store.lat.isnot(None), Store.lng.isnot(None),
+                    Store.is_active.isnot(False))
 
 
 def has_coords(store: Store) -> bool:
     """In-Python equivalent of STORE_HAS_COORDS for already-loaded objects."""
-    return store is not None and store.lat is not None and store.lng is not None
+    return (store is not None and store.lat is not None
+            and store.lng is not None and store.is_active is not False)
 
 # FirstFind is Bengaluru-only; opening hours are always evaluated in IST
 # so "open now" is correct regardless of the server's local timezone.
@@ -69,6 +73,8 @@ def is_open_now(store: Store, now: Optional[dt.datetime] = None) -> Optional[boo
 
 
 def store_to_dict(store: Store, user_lat=None, user_lng=None) -> dict:
+    from .ml.descriptions import describe   # local: keeps utils import-light
+    description, description_source = describe(store)
     d = {
         "id": store.id,
         "name": store.name,
@@ -89,6 +95,14 @@ def store_to_dict(store: Store, user_lat=None, user_lng=None) -> dict:
         "review_count": store.review_count or 0,
         "zone_id": store.zone_id,
         "is_open_now": is_open_now(store),
+        "store_type": store.store_type or "thrift",
+        "address": store.address,
+        "description": description,
+        # "google" | "ai" | "admin" | "auto" (plain line built from category + area)
+        "description_source": description_source,
+        "google_rating": store.google_rating,
+        "google_review_count": store.google_review_count,
+        "price_estimated": bool(store.price_estimated),
     }
     if user_lat is not None and user_lng is not None and store.lat and store.lng:
         d["distance_km"] = round(haversine_km(user_lat, user_lng, store.lat, store.lng), 2)

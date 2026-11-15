@@ -65,13 +65,13 @@ def score_review(review_id: int) -> None:
         review = db.get(Review, review_id)
         if review is None:
             return
-        label, score = sentiment_ml.analyze(review.text or "")
+        label, score = sentiment_ml.analyze(review.text or "", rating=review.rating)
         review.sentiment, review.sentiment_score = label, score
         # Recompute the store's experience_score + review_count over all its reviews.
         store = review.store
-        scored = [(r.rating, r.sentiment_score or 0.0) for r in
+        scored = [sentiment_ml.review_tuple(r) for r in
                   db.query(Review).filter(Review.store_id == review.store_id).all()]
-        store.experience_score = sentiment_ml.experience_score(scored)
+        store.experience_score = sentiment_ml.experience_score(scored, sentiment_ml.score_prior(store))
         store.review_count = len(scored)
         db.commit()
     except Exception as e:

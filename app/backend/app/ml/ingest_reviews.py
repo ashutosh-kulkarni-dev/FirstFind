@@ -4,15 +4,18 @@ Loads reviews from external sources into the `reviews` table so the existing
 sentiment + score pipeline (`pipeline.py`) can process them.
 
 Sources (in priority order):
-  1. Local CSV archive  — `data/_archive/googlemaps_reviews.csv`
-                          178 real Google Maps reviews, zero API calls.
-  2. Google Places API  — weekly live fetch keyed by `Store.google_place_id`;
+  1. Local CSV          — `data/import/reviews.csv` (keyed by store id);
+                          falls back to the older name-keyed archive
+                          `data/_archive/googlemaps_reviews.csv`. Zero API calls.
+  2. Google Places API (New) — weekly live fetch keyed by `Store.google_place_id`;
                           requires GOOGLE_PLACES_API_KEY in env. Enabled by
                           `--google` flag; skipped when no key is set.
 
 Responsible by design:
-  - Idempotent: reviews are deduplicated by (store_id, source, external_id).
-    Re-running an unchanged source = 0 new rows.
+  - Idempotent: reviews are deduplicated by (store_id, source, external_id),
+    where external_id hashes store + author + review text. It deliberately
+    ignores the date: Google only gives relative dates ("2 weeks ago") that
+    change every week, which would re-insert the same review on each run.
   - Bot attribution: all external reviews are attributed to the system user
     `reviews-bot@thriftfind.local` (seeded by seed.py).
   - Quota-safe: Places calls are throttled, capped by INGEST_MAX_CALLS, and
@@ -30,12 +33,10 @@ import csv
 import hashlib
 import logging
 import re
-import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from ..config import (GOOGLE_PLACES_API_KEY, INGEST_MAX_CALLS,
-                      INGEST_MIN_INTERVAL_MS)
+from ..config import GOOGLE_PLACES_API_KEY, INGEST_MAX_DETAILS
 from ..database import SessionLocal
 from ..models import Review, Store, User
 from ..seed import BOT_EMAIL
@@ -43,11 +44,12 @@ from ..seed import BOT_EMAIL
 log = logging.getLogger(__name__)
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-REVIEWS_CSV = REPO_ROOT / "data" / "_archive" / "googlemaps_reviews.csv"
+REVIEWS_CSV = REPO_ROOT / "data" / "import" / "reviews.csv"
+LEGACY_REVIEWS_CSV = REPO_ROOT / "data" / "_archive" / "googlemaps_reviews.csv"
 
-# Reference date for relative-date parsing ("2 weeks ago"). The CSV was
-# collected around 2024-07-24 (file mtime in the archive).
-_CSV_REF_DATE = datetime(2024, 7, 24)
+# Reference date for relative-date parsing ("2 weeks ago") — when the CSV was
+# collected. Override with --ref-date YYYY-MM-DD when importing a newer scrape.
+_CSV_REF_DATE = datetime(2026, 11, 3)
 
 
 # ---------------------------------------------------------------------------
@@ -58,33 +60,35 @@ def _squash(s: str) -> str:
     return re.sub(r"[^a-z0-9]", "", s.lower())
 
 
-def _external_id(store_id: str, reviewer: str, rating: str, date: str) -> str:
-    """Stable sha1 hash used as a dedup key."""
-    payload = f"{store_id}|{reviewer}|{rating}|{date}"
-    return hashlib.sha1(payload.encode()).hexdigest()[:40]
+def _review_key(store_id: str, author: str, text: str) -> str:
+    """Stable dedup key: store + author + normalised review text (no date)."""
+    norm = re.sub(r"\s+", " ", (text or "").strip().lower())[:300]
+    payload = f"{store_id}|{(author or '').strip().lower()}|{norm}"
+    return hashlib.sha1(payload.encode("utf-8")).hexdigest()[:40]
+
+
+_REL_DATE_RE = re.compile(r"(an?|\d+)\s*(minute|hour|day|week|month|year)s?\s+ago")
+_REL_UNIT_DAYS = {"minute": 0, "hour": 0, "day": 1, "week": 7, "month": 30, "year": 365}
 
 
 def _parse_relative_date(text: str, ref: datetime = _CSV_REF_DATE) -> datetime:
-    """Convert "2 weeks ago", "a month ago", "a year ago" to a datetime."""
-    t = text.lower().strip()
-    if t in ("a week ago", "1 week ago"):
-        return ref - timedelta(weeks=1)
-    if t in ("a month ago", "1 month ago"):
-        return ref - timedelta(days=30)
-    if t in ("a year ago", "1 year ago"):
-        return ref - timedelta(days=365)
-    m = re.match(r"(\d+)\s*(week|month|year|day)s?\s+ago", t)
-    if m:
-        n, unit = int(m.group(1)), m.group(2)
-        if unit == "week":
-            return ref - timedelta(weeks=n)
-        if unit == "month":
-            return ref - timedelta(days=30 * n)
-        if unit == "year":
-            return ref - timedelta(days=365 * n)
-        if unit == "day":
-            return ref - timedelta(days=n)
-    return ref  # fallback: reference date
+    """Convert "2 weeks ago", "a month ago", "Edited a year ago" to a datetime.
+    An absolute ISO date ("2026-10-21...") is used as-is."""
+    iso = re.match(r"\d{4}-\d{2}-\d{2}", (text or "").strip())
+    if iso:
+        return datetime.strptime(iso.group(0), "%Y-%m-%d")
+    m = _REL_DATE_RE.search((text or "").lower())
+    if not m:
+        return ref  # fallback: reference date
+    n = 1 if m.group(1) in ("a", "an") else int(m.group(1))
+    return ref - timedelta(days=n * _REL_UNIT_DAYS[m.group(2)])
+
+
+def _existing_keys(db) -> set[tuple[str, str]]:
+    """(store_id, external_id) for every external review already stored."""
+    return {(sid, ext) for sid, ext in
+            db.query(Review.store_id, Review.external_id)
+            .filter(Review.source == "google", Review.external_id.isnot(None))}
 
 
 def _get_or_create_bot(db) -> User:
@@ -108,177 +112,177 @@ def _build_store_index(db) -> dict[str, str]:
 # Source 1: local CSV archive
 # ---------------------------------------------------------------------------
 
-def ingest_from_csv(db, bot: User, store_index: dict[str, str]) -> dict:
-    """Load googlemaps_reviews.csv into the reviews table, deduped."""
-    if not REVIEWS_CSV.exists():
-        log.warning("CSV not found: %s — skipping", REVIEWS_CSV)
-        return {"source": "csv", "new": 0, "skipped": 0, "unmatched": 0}
+def ingest_from_csv(db, bot: User, store_index: dict[str, str],
+                    seen: set[tuple[str, str]] | None = None,
+                    csv_path: Path | None = None,
+                    ref_date: datetime = _CSV_REF_DATE) -> dict:
+    """Load a reviews CSV into the reviews table, deduped.
 
-    rows = list(csv.DictReader(open(REVIEWS_CSV, encoding="utf-8")))
-    new_count = skipped = unmatched = 0
+    Accepts both layouts: the current one (`store_id, author, ...`) and the
+    legacy archive (`store_name, reviewer_name, ...`, matched by name).
+    `seen` carries the dedup keys across sources within one run — needed
+    because rows added in this session are not yet visible to a DB query.
+    """
+    if csv_path is None:
+        csv_path = REVIEWS_CSV if REVIEWS_CSV.exists() else LEGACY_REVIEWS_CSV
+    if not csv_path.exists():
+        log.warning("CSV not found: %s — skipping", csv_path)
+        return {"source": "csv", "new": 0, "skipped": 0, "unmatched": 0}
+    if seen is None:
+        seen = _existing_keys(db)
+
+    with open(csv_path, encoding="utf-8-sig", newline="") as f:
+        rows = list(csv.DictReader(f))
+    valid_ids = set(store_index.values())
+    new_count = skipped = unmatched = bad = 0
 
     for row in rows:
-        store_id = store_index.get(_squash(row["store_name"]))
+        store_id = (row.get("store_id") or "").strip()
+        if store_id not in valid_ids:
+            store_id = store_index.get(_squash(row.get("store_name") or ""))
         if store_id is None:
-            log.debug("No store match for %r", row["store_name"])
+            log.debug("No store match for %r", row.get("store_name"))
             unmatched += 1
             continue
 
         try:
             rating = int(float(row["rating"]))
-        except (ValueError, TypeError):
+        except (KeyError, ValueError, TypeError):
+            bad += 1
             continue
 
-        ext_id = _external_id(
-            store_id, row.get("reviewer_name", ""),
-            row["rating"], row.get("date", ""))
-
-        # Dedup: skip if this external review is already in the DB.
-        exists = (db.query(Review.id)
-                  .filter(Review.store_id == store_id,
-                          Review.source == "google",
-                          Review.external_id == ext_id)
-                  .first())
-        if exists:
+        author = row.get("author") or row.get("reviewer_name") or ""
+        text = row.get("review_text") or ""
+        key = (store_id, _review_key(store_id, author, text))
+        if key in seen:
             skipped += 1
             continue
+        seen.add(key)
 
-        created_at = _parse_relative_date(row.get("date", ""))
-        rev = Review(
+        db.add(Review(
             store_id=store_id,
             user_id=bot.id,
             rating=max(1, min(5, rating)),
-            text=row.get("review_text", ""),
+            text=text,
             source="google",
-            external_id=ext_id,
-            created_at=created_at,
-        )
-        db.add(rev)
+            external_id=key[1],
+            created_at=_parse_relative_date(row.get("date", ""), ref_date),
+        ))
         new_count += 1
 
     db.flush()
-    result = {"source": "csv", "new": new_count,
-              "skipped": skipped, "unmatched": unmatched}
+    result = {"source": "csv", "file": csv_path.name, "new": new_count,
+              "skipped": skipped, "unmatched": unmatched, "bad_rows": bad}
     log.info("CSV ingest: %s", result)
     return result
 
 
 # ---------------------------------------------------------------------------
-# Source 2: Google Places API (weekly live refresh)
+# Source 2: Google Places API (New) — weekly live refresh
 # ---------------------------------------------------------------------------
 
-def _places_get(session, url: str, params: dict, call_counter: list) -> dict | None:
-    """Make one Places API call; return None on error or budget exceeded."""
-    if call_counter[0] >= INGEST_MAX_CALLS:
-        log.warning("Places API call cap (%d) reached — aborting further calls",
-                    INGEST_MAX_CALLS)
-        return None
-    call_counter[0] += 1
-    try:
-        resp = session.get(url, params=params, timeout=10)
-        resp.raise_for_status()
-        return resp.json()
-    except Exception as e:
-        log.warning("Places API error: %s", e)
-        return None
-
-
-def _resolve_place_id(session, store: Store, call_counter: list) -> str | None:
-    """Find Place From Text → cache google_place_id on the Store row."""
+def _resolve_place_id(client, store: Store) -> str | None:
+    """Text Search (ids only) -> cache google_place_id on the Store row."""
     if store.google_place_id:
         return store.google_place_id
-    if not store.lat or not store.lng:
+    places = client.search_text(
+        f"{store.name} {store.locality_raw or store.area} {store.city or 'Bengaluru'}",
+        store.lat, store.lng, fields="places.id", radius_m=200, page_size=1)
+    if not places:
         return None
-    data = _places_get(session,
-        "https://maps.googleapis.com/maps/api/place/findplacefromtext/json",
-        {
-            "input": f"{store.name} {store.locality_raw or store.area} {store.city}",
-            "inputtype": "textquery",
-            "locationbias": f"circle:200@{store.lat},{store.lng}",
-            "fields": "place_id",
-            "key": GOOGLE_PLACES_API_KEY,
-        }, call_counter)
-    candidates = (data or {}).get("candidates", [])
-    if not candidates:
-        return None
-    place_id = candidates[0].get("place_id")
-    if place_id:
-        store.google_place_id = place_id
-    return place_id
+    store.google_place_id = places[0].get("id")
+    return store.google_place_id
 
 
-def ingest_from_google(db, bot: User, limit: int | None = None) -> dict:
-    """Fetch current reviews for each store from the Google Places API."""
-    if not GOOGLE_PLACES_API_KEY:
-        log.info("No GOOGLE_PLACES_API_KEY set — skipping Google Places ingest")
-        return {"source": "google_api", "new": 0, "skipped": 0, "no_place_id": 0}
+def ingest_from_google(db, bot: User, limit: int | None = None,
+                       seen: set[tuple[str, str]] | None = None,
+                       client=None) -> dict:
+    """Fetch current reviews for each store from the Google Places API (New)."""
+    from .google_places import PlacesBudgetExceeded, PlacesClient, parse_reviews
 
-    try:
-        import httpx
-        session = httpx.Client(timeout=10)
-    except ImportError:
-        log.error("httpx not available for Google Places calls")
-        return {"source": "google_api", "new": 0, "skipped": 0, "no_place_id": 0}
+    if client is None:
+        if not GOOGLE_PLACES_API_KEY:
+            log.info("No GOOGLE_PLACES_API_KEY set — skipping Google Places ingest")
+            return {"source": "google_api", "new": 0, "skipped": 0, "no_place_id": 0}
+        client = PlacesClient()
+    if seen is None:
+        seen = _existing_keys(db)
 
-    stores = db.query(Store).all()
+    # Rotate: never-fetched stores first, then the ones fetched longest ago.
+    # The per-run call cap (INGEST_MAX_CALLS) covers only part of the catalogue,
+    # so a fixed order would refresh the same stores every week and never
+    # reach the rest. Hidden stores (no pin / inactive) are skipped.
+    stores = [s for s in db.query(Store).all()
+              if s.lat is not None and s.lng is not None and s.is_active is not False]
+    stores.sort(key=lambda s: (s.reviews_fetched_at is not None,
+                               s.reviews_fetched_at or datetime.min, s.id))
     if limit:
         stores = stores[:limit]
 
-    call_counter = [0]
-    new_count = skipped = no_place = 0
-    interval_s = INGEST_MIN_INTERVAL_MS / 1000
-
+    new_count = skipped = no_place = errors = visited = 0
+    reviewed_places = 0          # visited stores Google says have reviews
+    reviews_unavailable = False
     for store in stores:
-        if call_counter[0] >= INGEST_MAX_CALLS:
+        # Some keys (e.g. the Maps demo key) return ratings but never review
+        # text. Detect that early and stop, rather than spend the day's quota.
+        if reviewed_places >= 5 and new_count + skipped == 0:
+            log.warning("This Google key returns no review text (5 reviewed stores, 0 reviews) "
+                        "— stopping the review fetch for this run")
+            reviews_unavailable = True
             break
-        place_id = _resolve_place_id(session, store, call_counter)
-        if not place_id:
-            no_place += 1
+        if visited >= INGEST_MAX_DETAILS:
+            log.info("Details cap (%d) reached — the rest wait for the next run",
+                     INGEST_MAX_DETAILS)
+            break
+        try:
+            place_id = _resolve_place_id(client, store)
+            if not place_id:
+                no_place += 1
+                store.reviews_fetched_at = datetime.utcnow()   # don't retry every week
+                continue
+            place = client.details(place_id, "rating,userRatingCount,businessStatus,reviews")
+        except PlacesBudgetExceeded:
+            log.info("Places call cap reached after %d stores — the rest wait for the next run",
+                     visited)
+            break
+        except Exception as e:
+            log.warning("Places API error for %s: %s", store.id, e)
+            errors += 1
+            if errors >= 5 and visited == 0:
+                log.error("Places API failing on every call — aborting the Google ingest")
+                break
             continue
 
-        time.sleep(interval_s)
-        data = _places_get(session,
-            "https://maps.googleapis.com/maps/api/place/details/json",
-            {
-                "place_id": place_id,
-                "fields": "reviews,rating,user_ratings_total",
-                "key": GOOGLE_PLACES_API_KEY,
-            }, call_counter)
+        visited += 1
+        store.reviews_fetched_at = datetime.utcnow()
+        # Keep the Google aggregates fresh while we are here (same API call).
+        if place.get("rating") is not None:
+            store.google_rating = float(place["rating"])
+        if place.get("userRatingCount") is not None:
+            store.google_review_count = int(place["userRatingCount"])
+        if (place.get("userRatingCount") or 0) > 0:
+            reviewed_places += 1
+        if place.get("businessStatus") == "CLOSED_PERMANENTLY":
+            store.is_active = False
 
-        reviews_raw = (data or {}).get("result", {}).get("reviews", [])
-        for r in reviews_raw:
-            rating = max(1, min(5, int(r.get("rating", 3))))
-            reviewer = r.get("author_name", "")
-            date_str = r.get("relative_time_description", "")
-            ext_id = _external_id(store.id, reviewer, str(rating), date_str)
-
-            exists = (db.query(Review.id)
-                      .filter(Review.store_id == store.id,
-                              Review.source == "google",
-                              Review.external_id == ext_id)
-                      .first())
-            if exists:
+        for r in parse_reviews(place):
+            key = (store.id, _review_key(store.id, r["author"], r["text"]))
+            if key in seen:
                 skipped += 1
                 continue
-
-            rev = Review(
-                store_id=store.id,
-                user_id=bot.id,
-                rating=rating,
-                text=r.get("text", ""),
-                source="google",
-                external_id=ext_id,
-                created_at=datetime.utcnow(),
-            )
-            db.add(rev)
+            seen.add(key)
+            db.add(Review(
+                store_id=store.id, user_id=bot.id, rating=r["rating"],
+                text=r["text"], source="google", external_id=key[1],
+                created_at=r["created_at"] or datetime.utcnow(),
+            ))
             new_count += 1
 
-        time.sleep(interval_s)
-
     db.flush()
-    result = {"source": "google_api", "new": new_count,
-              "skipped": skipped, "no_place_id": no_place,
-              "api_calls": call_counter[0]}
+    result = {"source": "google_api", "new": new_count, "skipped": skipped,
+              "no_place_id": no_place, "stores_visited": visited,
+              "errors": errors, "api_calls": client.calls,
+              "reviews_unavailable": reviews_unavailable}
     log.info("Google Places ingest: %s", result)
     return result
 
@@ -288,24 +292,34 @@ def ingest_from_google(db, bot: User, limit: int | None = None) -> dict:
 # ---------------------------------------------------------------------------
 
 def ingest_all(db=None, use_google: bool = False,
-               google_limit: int | None = None) -> dict:
-    """Run all enabled ingestion sources. Returns combined summary."""
+               google_limit: int | None = None,
+               csv_path: Path | None = None,
+               ref_date: datetime = _CSV_REF_DATE,
+               google_client=None) -> dict:
+    """Run all enabled ingestion sources. Returns combined summary.
+
+    `google_client` lets the daily job pass a client that has already spent
+    part of the day's call budget on candidate verification."""
     own = db is None
     db = db or SessionLocal()
     try:
         bot = _get_or_create_bot(db)
         store_index = _build_store_index(db)
 
+        seen = _existing_keys(db)
         results = []
-        results.append(ingest_from_csv(db, bot, store_index))
+        results.append(ingest_from_csv(db, bot, store_index, seen,
+                                       csv_path=csv_path, ref_date=ref_date))
         if use_google:
-            results.append(ingest_from_google(db, bot, limit=google_limit))
+            results.append(ingest_from_google(db, bot, limit=google_limit, seen=seen,
+                                              client=google_client))
 
         db.commit()
         total_new = sum(r.get("new", 0) for r in results)
         log.info("Ingest complete — %d new reviews across %d sources",
                  total_new, len(results))
-        return {"sources": results, "total_new": total_new}
+        return {"sources": results, "total_new": total_new,
+                "total_in_db": db.query(Review).count()}
     except Exception:
         db.rollback()
         raise
@@ -327,13 +341,24 @@ if __name__ == "__main__":
                     help="limit Google Places to N stores (testing)")
     ap.add_argument("--run-pipeline", action="store_true",
                     help="run the full ML pipeline after ingestion")
+    ap.add_argument("--csv", type=Path, default=None,
+                    help="reviews CSV (default: data/import/reviews.csv)")
+    ap.add_argument("--ref-date", type=lambda v: datetime.strptime(v, "%Y-%m-%d"),
+                    default=_CSV_REF_DATE,
+                    help="date the CSV was collected, for '2 weeks ago' dates")
     args = ap.parse_args()
 
-    summary = ingest_all(use_google=args.google, google_limit=args.google_limit)
+    summary = ingest_all(use_google=args.google, google_limit=args.google_limit,
+                         csv_path=args.csv, ref_date=args.ref_date)
     for r in summary["sources"]:
         print(f"  [{r['source']}] new={r.get('new',0)}  "
-              f"skipped={r.get('skipped',0)}")
-    print(f"Total new reviews: {summary['total_new']}")
+              f"skipped={r.get('skipped',0)}  unmatched={r.get('unmatched',0)}")
+    print(f"Total new reviews: {summary['total_new']}  "
+          f"(reviews in DB: {summary['total_in_db']})")
+    if summary["total_in_db"] == 0:
+        # Fail the scheduled job loudly rather than "succeed" with an empty app.
+        raise SystemExit("ERROR: no reviews in the database after ingest — "
+                         "check the CSV path and that stores are imported.")
 
     if args.run_pipeline:
         from .pipeline import run_pipeline
