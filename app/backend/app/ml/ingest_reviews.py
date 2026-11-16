@@ -134,7 +134,11 @@ def ingest_from_csv(db, bot: User, store_index: dict[str, str],
     with open(csv_path, encoding="utf-8-sig", newline="") as f:
         rows = list(csv.DictReader(f))
     valid_ids = set(store_index.values())
-    new_count = skipped = unmatched = bad = 0
+    new_count = skipped = unmatched = bad = named = 0
+    # Reviews ingested before author names were stored: fill the name in.
+    nameless = {(r.store_id, r.external_id): r for r in
+                db.query(Review).filter(Review.source == "google",
+                                        Review.author_name.is_(None)).all()}
 
     for row in rows:
         store_id = (row.get("store_id") or "").strip()
@@ -155,6 +159,10 @@ def ingest_from_csv(db, bot: User, store_index: dict[str, str],
         text = row.get("review_text") or ""
         key = (store_id, _review_key(store_id, author, text))
         if key in seen:
+            old = nameless.pop(key, None)
+            if old is not None and author.strip():
+                old.author_name = author.strip()[:120]
+                named += 1
             skipped += 1
             continue
         seen.add(key)
@@ -162,6 +170,7 @@ def ingest_from_csv(db, bot: User, store_index: dict[str, str],
         db.add(Review(
             store_id=store_id,
             user_id=bot.id,
+            author_name=author.strip()[:120] or None,
             rating=max(1, min(5, rating)),
             text=text,
             source="google",
@@ -172,7 +181,8 @@ def ingest_from_csv(db, bot: User, store_index: dict[str, str],
 
     db.flush()
     result = {"source": "csv", "file": csv_path.name, "new": new_count,
-              "skipped": skipped, "unmatched": unmatched, "bad_rows": bad}
+              "skipped": skipped, "unmatched": unmatched, "bad_rows": bad,
+              "names_filled": named}
     log.info("CSV ingest: %s", result)
     return result
 
@@ -273,6 +283,7 @@ def ingest_from_google(db, bot: User, limit: int | None = None,
             seen.add(key)
             db.add(Review(
                 store_id=store.id, user_id=bot.id, rating=r["rating"],
+                author_name=(r["author"] or "").strip()[:120] or None,
                 text=r["text"], source="google", external_id=key[1],
                 created_at=r["created_at"] or datetime.utcnow(),
             ))

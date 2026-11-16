@@ -24,9 +24,25 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: pip
+          cache-dependency-path: app/backend/requirements.txt
 
       - name: Install backend dependencies
         run: pip install -r app/backend/requirements.txt
+
+      - name: Install sentiment model libraries (CPU)
+        # The sentiment models run inside this job: free, and it needs no
+        # HuggingFace inference credits. Not installed on the web server.
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install transformers sentencepiece protobuf
+
+      - name: Cache downloaded models
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-models-${{ hashFiles('app/backend/app/config.py') }}
+          restore-keys: hf-models-
 
       - name: Check required secrets
         env:
@@ -42,7 +58,8 @@ jobs:
       - name: Daily data job
         env:
           DATABASE_URL:          ${{ secrets.DATABASE_URL }}
-          HUGGINGFACE_TOKEN:     ${{ secrets.HUGGINGFACE_TOKEN }}
+          SENTIMENT_LOCAL:       'true'                                  # run the sentiment models in this job
+          HUGGINGFACE_TOKEN:     ${{ secrets.HUGGINGFACE_TOKEN }}       # optional fallback (needs paid credits)
           GROQ_API_KEY:          ${{ secrets.GROQ_API_KEY }}            # optional: writes AI store descriptions
           GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}   # optional: verifies new stores
           GOOGLE_DAILY_BUDGET:   '90'                                    # the key allows 100 calls/day

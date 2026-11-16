@@ -29,14 +29,36 @@ from .recommender import recommender
 log = logging.getLogger(__name__)
 
 
+SENTIMENT_COMMIT_EVERY = 25
+
+
 def score_pending_sentiment(db) -> int:
-    """Stage 1: score reviews whose sentiment hasn't been computed yet."""
-    pending = db.query(Review).filter(Review.sentiment.is_(None)).all()
-    for r in pending:
-        label, score = sentiment_ml.analyze(r.text or "", rating=r.rating)
-        r.sentiment, r.sentiment_score = label, score
-    db.flush()
-    return len(pending)
+    """Stage 1: score reviews that have no sentiment yet, and re-score ones
+    that only got the English-only VADER fallback when a real model engine is
+    available now.
+
+    Commits every SENTIMENT_COMMIT_EVERY reviews: model calls are slow, and
+    holding one transaction open across all of them blocked (and deadlocked
+    with) the live web app.
+    """
+    from sqlalchemy import or_
+    cond = Review.sentiment.is_(None)
+    if sentiment_ml.best_engine() != "vader":
+        cond = or_(cond, Review.sentiment_engine == "vader")
+    ids = [rid for (rid,) in db.query(Review.id).filter(cond).all()]
+    db.commit()                                   # release the read before the slow part
+    done = 0
+    for rid in ids:
+        r = db.get(Review, rid)
+        if r is None:
+            continue
+        label, score, engine = sentiment_ml.analyze_detail(r.text or "", rating=r.rating)
+        r.sentiment, r.sentiment_score, r.sentiment_engine = label, score, engine
+        done += 1
+        if done % SENTIMENT_COMMIT_EVERY == 0:
+            db.commit()
+    db.commit()
+    return done
 
 
 def recompute_store_scores(db) -> int:
@@ -79,15 +101,20 @@ def recompute_zones(db) -> int:
 
 
 def run_pipeline(db=None) -> dict:
-    """Run all stages in one transaction. Returns a summary dict."""
+    """Run all stages, committing after each one so no stage holds locks
+    while a later, slower one runs. Every stage is idempotent, so a run that
+    dies part-way is simply continued by the next run. Returns a summary dict."""
     own = db is None
     db = db or SessionLocal()
     try:
-        scored = score_pending_sentiment(db)
+        scored = score_pending_sentiment(db)   # commits in batches
         stores = recompute_store_scores(db)
+        db.commit()
         n_zones = recompute_zones(db)          # before recommender: zone_id feeds content features
+        db.commit()
         from .descriptions import generate_descriptions
         described = generate_descriptions(db)  # AI summaries; no-op without GROQ_API_KEY
+        db.commit()
         recommender.build(db)
         db.commit()
         summary = {"reviews_scored": scored, "stores_rescored": stores, "zones": n_zones,

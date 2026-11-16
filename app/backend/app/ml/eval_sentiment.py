@@ -9,7 +9,9 @@ English, Hinglish, Hindi, Kannada, Tamil, Telugu and their romanised forms.
 
 Columns in the report:
   vader      offline English lexicon (the no-token fallback)
-  <model>    each hosted HuggingFace model on its own   (needs HUGGINGFACE_TOKEN)
+  <model>    each model on its own — run locally with SENTIMENT_LOCAL=true
+             (needs torch + transformers), else via the hosted API
+             (needs a HUGGINGFACE_TOKEN with inference credits)
   ensemble   what production uses: the soft vote of HF_SENTIMENT_MODELS
 
 Run from app/backend:
@@ -37,17 +39,24 @@ def _label(probs: dict) -> str:
 
 
 def build_engines(models: list[str]) -> dict:
+    """vader + each model on its own + their vote, on the best engine available
+    (in-process models when SENTIMENT_LOCAL=true, else the hosted API)."""
     eng = {"vader": lambda t: S._vader_analyze(t)[0]}
-    if hf_token:
-        for m in models:
-            eng[m.split("/")[-1][:28]] = lambda t, m=m: _label(S._hf_probs(m, t))
-        if len(models) > 1:
-            def vote(t):
-                probs = S.ensemble_probs(t, models)
-                if probs is None:
-                    raise RuntimeError("all models failed")
-                return _label(probs)
-            eng["ensemble"] = vote
+    if S.local_available():
+        engine, probs = "local", S._local_probs
+    elif hf_token:
+        engine, probs = "hf", S._hf_probs
+    else:
+        return eng
+    for m in models:
+        eng[m.split("/")[-1][:28]] = lambda t, m=m: _label(probs(m, t))
+    if len(models) > 1:
+        def vote(t):
+            out = S.ensemble_probs(t, models, engine=engine)
+            if out is None:
+                raise RuntimeError("all models failed")
+            return _label(out)
+        eng["ensemble"] = vote
     return eng
 
 
@@ -91,8 +100,13 @@ def main() -> None:
     engines = build_engines(models)
     langs = sorted({r["lang"] for r in rows}) + ["ALL"]
     print(f"{len(rows)} labelled reviews")
-    if not hf_token:
-        print("HUGGINGFACE_TOKEN is not set — only the offline VADER fallback can be measured.")
+    if S.local_available():
+        print("Engine: models run locally (SENTIMENT_LOCAL=true)")
+    elif hf_token:
+        print("Engine: HuggingFace Inference API")
+    else:
+        print("No model engine: set SENTIMENT_LOCAL=true (with torch + transformers installed) "
+              "or HUGGINGFACE_TOKEN. Only the offline VADER fallback can be measured.")
 
     results = {name: evaluate(fn, rows, 0.0 if name == "vader" else args.pause)
                for name, fn in engines.items()}

@@ -239,7 +239,7 @@ export default function Explore() {
             <div className="anton" style={{ fontSize: 19, color: 'var(--ink)' }}>{selected.name}</div>
             <div className="muted" style={{ marginTop: 2, fontSize: 12 }}>{[selected.area, selected.cat].filter(Boolean).join(' · ')}</div>
             <div style={{ marginTop: 7, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <ScorePill score={selected.score} />
+              <ScorePill score={selected.score} googleRating={selected.googleRating} />
               {selected.open != null && (
                 <span style={{ fontSize: 11.5, fontWeight: 600, color: selected.open ? 'var(--sent-pos)' : 'var(--muted-2)' }}>
                   {selected.open ? 'Open now' : 'Closed'}

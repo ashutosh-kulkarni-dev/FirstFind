@@ -16,7 +16,7 @@ export default function StoreCard({ store, match }) {
         {store.area}{cats[0] ? ` · ${cats[0]}` : ''}
       </div>
       <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-        <ScorePill score={store.experience_score} />
+        <ScorePill score={store.experience_score} googleRating={store.google_rating} />
         {store.price_min != null && (
           <span style={{ color: 'var(--muted)', fontSize: 11, fontWeight: 600 }}>
             {'₹'.repeat(Math.max(1, Math.min(3, Math.ceil((store.price_max || 500) / 800))))}

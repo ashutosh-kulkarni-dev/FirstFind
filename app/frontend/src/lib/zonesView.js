@@ -37,6 +37,7 @@ export function normalizeStore(store) {
     lng: store.lng ?? null,
     cat: cats[0] ?? '',
     score: store.experience_score ?? null,   // drives marker colour + legend (mockup)
+    googleRating: store.google_rating ?? null, // shown when there is no AI score yet
     open: store.is_open_now ?? null,          // drives "Open now" filter + pulse
     distKm: store.distance_km ?? null,
   }

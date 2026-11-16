@@ -125,8 +125,11 @@ hf_token = os.environ.get("HUGGINGFACE_TOKEN")
 # probabilities are averaged (soft vote) — see ml/sentiment.py. Compare
 # candidates with `python -m app.ml.eval_sentiment --models a,b` before changing.
 # HF_SENTIMENT_MODEL (singular) is still honoured for older .env files.
-_DEFAULT_SENTIMENT_MODELS = ("cardiffnlp/twitter-xlm-roberta-base-sentiment,"
-                             "tabularisai/multilingual-sentiment-analysis")
+# Measured on data/sentiment_eval.csv (106 labelled reviews, Nov 2026):
+#   XLM-R alone            75% overall | 93% English | 82% Hindi+Hinglish | 48% South Indian
+#   + tabularisai (vote)   68% overall | 90% English | 60% Hindi+Hinglish | 58% South Indian
+# Reviews here are mostly English and Hinglish, so the single model is the default.
+_DEFAULT_SENTIMENT_MODELS = "cardiffnlp/twitter-xlm-roberta-base-sentiment"
 HF_SENTIMENT_MODELS = [m.strip() for m in os.environ.get(
     "HF_SENTIMENT_MODELS",
     os.environ.get("HF_SENTIMENT_MODEL", _DEFAULT_SENTIMENT_MODELS)).split(",") if m.strip()]
@@ -135,6 +138,13 @@ HF_SENTIMENT_MODELS = [m.strip() for m in os.environ.get(
 HF_API_BASE = os.environ.get(
     "HF_API_BASE", "https://router.huggingface.co/hf-inference/models").rstrip("/")
 HF_TIMEOUT = float(os.environ.get("HF_TIMEOUT", "10"))
+# Run the sentiment models inside this process (needs `torch` + `transformers`
+# installed) instead of calling the HF Inference API. The daily GitHub job sets
+# this: it has the memory for it and it costs nothing, whereas the hosted API
+# needs paid inference credits. The web server leaves it off (no torch there).
+SENTIMENT_LOCAL = os.environ.get("SENTIMENT_LOCAL", "false").lower() == "true"
+LOCAL_SENTIMENT_MODELS = [m.strip() for m in os.environ.get(
+    "LOCAL_SENTIMENT_MODELS", ",".join(HF_SENTIMENT_MODELS)).split(",") if m.strip()]
 # Below this top-class probability the model vote is treated as unsure, and the
 # review's own star rating is added as a tie-breaking voter.
 SENTIMENT_MIN_CONFIDENCE = float(os.environ.get("SENTIMENT_MIN_CONFIDENCE", "0.6"))
