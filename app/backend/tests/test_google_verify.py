@@ -288,14 +288,14 @@ def test_daily_job_shares_one_google_budget(db, tmp_path, monkeypatch):
     import app.ml.google_places as GP
     monkeypatch.setattr(GP, "PlacesClient", lambda max_calls: setattr(client, "max_calls", max_calls) or client)
 
-    # Budget 2: both calls go to verification; nothing is left for the review fetch.
+    # Budget 2: both calls go to the candidates; nothing is left for store checks.
     out = daily_job.run(budget=2, add_candidates=True)
     assert out["candidates"]["checked"] == {"verified": 2} and out["candidates"]["backlog"] == 1
     assert out["candidates"]["stores_added"] == 2 and out["google_calls_used"] == 2
-    assert [s["source"] for s in out["reviews"]["sources"]] == ["csv"]
+    assert out["reviews_csv"]["source"] == "csv" and "verification" not in out
     new_ids = [r["id"] for r in V.read_csv(stores_csv)[0]]
     assert new_ids == ["gg-900", "blr-0001", "blr-0002"]
-    assert out["reviews"]["total_in_db"] >= 1
+    assert out["reviews_in_db"] >= 1
 
     # cleanup rows this test created
     db.rollback()
@@ -314,3 +314,56 @@ def test_verify_survives_a_google_error():
     cands = [cand("node/1", "Peter England")]
     assert sum(V.verify(Broken(), cands, limit=5).values()) == 0
     assert cands[0]["verified"] == ""
+
+
+def test_store_verification_checks_own_stores_and_adds_none(db):
+    """Daily check: confirm, refresh rating, hide closed, report not-found."""
+    from app.store_check import verify_stores
+    for st in db.query(Store).all():                       # everything else: checked just now
+        st.reviews_fetched_at = datetime.utcnow()
+    db.add_all([
+        Store(id="gg-v1", name="Verify Open Shop", area="Indiranagar", lat=12.97, lng=77.64),
+        Store(id="gg-v2", name="Verify Shut Shop", area="Indiranagar", lat=12.97, lng=77.64),
+        Store(id="gg-v3", name="Verify Ghost Shop", area="Indiranagar", lat=12.97, lng=77.64),
+        Store(id="gg-v4", name="Verify Known Shop", area="Indiranagar", lat=12.97, lng=77.64,
+              google_place_id="known"),
+        Store(id="gg-v5", name="Verify Later Shop", area="Indiranagar", lat=12.97, lng=77.64),
+    ])
+    db.commit()
+    before = db.query(Store).count()
+    client = FakePlaces(
+        search={"Verify Open Shop": [place("p1", "Verify Open Shop", 12.97, 77.64, rating=4.1, count=33)],
+                "Verify Shut Shop": [place("p2", "Verify Shut Shop", 12.97, 77.64,
+                                           status="CLOSED_PERMANENTLY")],
+                # Google returns a different business: must NOT be taken as a match.
+                "Verify Ghost Shop": [place("p3", "Royal Biryani House", 12.97, 77.64)]},
+        details={"known": place("known", "Verify Known Shop", 12.97, 77.64, rating=3.2, count=9)},
+        max_calls=4)
+    try:
+        out = verify_stores(db, client)
+        db.expire_all()
+        g = lambda i: db.get(Store, i)
+        assert (out["checked"], out["confirmed"], client.calls) == (4, 3, 4)   # one call per store
+        assert (g("gg-v1").google_rating, g("gg-v1").google_review_count) == (4.1, 33)
+        assert g("gg-v1").google_place_id == "p1" and g("gg-v1").is_active is not False
+        assert g("gg-v2").is_active is False and out["closed_and_hidden"] == ["gg-v2 Verify Shut Shop"]
+        assert g("gg-v3").google_place_id is None and g("gg-v3").is_active is not False
+        assert out["not_found_on_google"] == ["gg-v3 Verify Ghost Shop"]
+        assert g("gg-v4").google_rating == 3.2
+        assert g("gg-v5").reviews_fetched_at is None        # budget ran out: waits for tomorrow
+        assert db.query(Store).count() == before            # never adds, never deletes
+    finally:
+        db.rollback()
+        db.query(Store).filter(Store.id.like("gg-v%")).delete(synchronize_session=False)
+        db.commit()
+
+
+def test_daily_run_does_not_import_csv_unless_asked(monkeypatch, tmp_path):
+    from app import daily_job, importer
+    called = []
+    monkeypatch.setattr(importer, "import_stores", lambda *a, **k: called.append("import"))
+    monkeypatch.setattr(daily_job, "GOOGLE_PLACES_API_KEY", "")
+    import app.ml.pipeline as P
+    monkeypatch.setattr(P, "run_pipeline", lambda: {"ok": True})
+    out = daily_job.run(import_csv=False, prune=False, add_candidates=False)
+    assert called == [] and out["pipeline"] == {"ok": True} and "stores" not in out

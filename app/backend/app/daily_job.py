@@ -1,31 +1,27 @@
 """The one scheduled job. Run daily by .github/workflows/reviews-refresh.yml.
 
-Steps, in order — each is idempotent, so a failed or repeated run is harmless:
+Every day:
 
-  (Steps 1-2 are OFF unless ADD_VERIFIED_CANDIDATES=true: the store list is
-   the owner's CSV only.)
-  1. VERIFY   up to GOOGLE_DAILY_BUDGET unchecked candidate stores with Google
-              (hand-added candidates first), until the backlog is empty.
-  2. PROMOTE  the verified ones into data/import/stores.csv (+ their reviews,
-              when the key returns any, into data/import/reviews.csv).
-  3. IMPORT   stores.csv into the database (fill-only upsert, never deletes).
-  4. REVIEWS  load reviews.csv, then spend whatever is LEFT of today's Google
-              budget fetching reviews / fresh ratings for the stores checked
-              longest ago.
-  5. PIPELINE sentiment for new reviews, AI scores, zones, recommendations,
+  1. VERIFY   the stores we list against Google (app/store_check.py): about
+              GOOGLE_DAILY_BUDGET stores a day, the ones checked longest ago
+              first. Permanently closed stores are hidden; Google ratings are
+              refreshed. Adds no stores. Skipped without GOOGLE_PLACES_API_KEY.
+  2. SCORE    sentiment for new reviews, AI scores, zones, recommendations,
               store descriptions.
 
-Google budget: steps 1 and 4 share GOOGLE_DAILY_BUDGET calls (default 90, for
-a key limited to 100/day). Verification has priority; once the candidate
-backlog is cleared the whole budget goes to step 4. Without
-GOOGLE_PLACES_API_KEY steps 1, 2 and the Google half of 4 are skipped.
+Only on a manual run (workflow inputs / environment variables):
 
-The CSV files it updates must be committed back to the repo by the workflow —
-they are the record of which candidates have been checked.
+  IMPORT_CSV=true     load data/import/stores.csv, hidden_stores.csv and
+                      reviews.csv into the database first (fill-only upsert).
+  PRUNE_STORES=true   also delete stores that are not in stores.csv.
+  ADD_VERIFIED_CANDIDATES=true
+                      verify OpenStreetMap candidates and ADD the matches as
+                      new stores. Off: the store list is the owner's CSV only.
 
 Run from app/backend:
     python -m app.daily_job
-    python -m app.daily_job --no-google      # CSV import + pipeline only
+    python -m app.daily_job --no-google      # scoring only
+    python -m app.daily_job --import-csv     # after editing the CSV files
 """
 from __future__ import annotations
 
@@ -41,17 +37,13 @@ log = logging.getLogger(__name__)
 
 GOOGLE_DAILY_BUDGET = int(os.environ.get("GOOGLE_DAILY_BUDGET", "90"))
 _ON = ("1", "true", "yes")
-# Steps 1-2 (verify OpenStreetMap candidates and ADD the matches as stores)
-# are OFF: the store list is the owner's own CSV only. Set to "true" to let
-# the job add verified stores again.
-ADD_VERIFIED_CANDIDATES = os.environ.get("ADD_VERIFIED_CANDIDATES", "").lower() in _ON
-# One-off clean-up: delete stores that are in the database but not in
-# stores.csv. Only from a manual run of the workflow with "prune" ticked.
+IMPORT_CSV = os.environ.get("IMPORT_CSV", "").lower() in _ON
 PRUNE_STORES = os.environ.get("PRUNE_STORES", "").lower() in _ON
+ADD_VERIFIED_CANDIDATES = os.environ.get("ADD_VERIFIED_CANDIDATES", "").lower() in _ON
 
 
 def verify_and_promote(client, budget: int) -> dict:
-    """Steps 1 + 2. Returns a summary; saves progress after every candidate."""
+    """Optional: check candidate stores and add the matches to stores.csv."""
     cands, fields = V.load_candidates()
     sidecar = V.load_reviews_sidecar()
     todo = V.unchecked(cands)
@@ -69,12 +61,17 @@ def verify_and_promote(client, budget: int) -> dict:
 
 
 def run(use_google: bool = True, budget: int = GOOGLE_DAILY_BUDGET,
-        add_candidates: bool | None = None, prune: bool | None = None) -> dict:
+        add_candidates: bool | None = None, prune: bool | None = None,
+        import_csv: bool | None = None) -> dict:
     from .importer import import_stores, prune_stores
-    add_candidates = ADD_VERIFIED_CANDIDATES if add_candidates is None else add_candidates
-    prune = PRUNE_STORES if prune is None else prune
     from .ml.ingest_reviews import ingest_all
     from .ml.pipeline import run_pipeline
+    from .models import Review
+    from .store_check import verify_stores
+    add_candidates = ADD_VERIFIED_CANDIDATES if add_candidates is None else add_candidates
+    prune = PRUNE_STORES if prune is None else prune
+    import_csv = IMPORT_CSV if import_csv is None else import_csv
+    import_csv = import_csv or prune or add_candidates   # both need the CSV loaded
 
     Base.metadata.create_all(engine)
     ensure_schema()
@@ -86,29 +83,30 @@ def run(use_google: bool = True, budget: int = GOOGLE_DAILY_BUDGET,
         client = PlacesClient(max_calls=budget)
         if add_candidates:
             summary["candidates"] = verify_and_promote(client, budget)
-        else:
-            log.info("Adding new stores is off — Google budget goes to existing stores")
     else:
-        log.info("Google steps skipped (%s)",
-                 "--no-google" if not use_google else "no GOOGLE_PLACES_API_KEY")
+        log.warning("Store verification skipped (%s)",
+                    "--no-google" if not use_google else "no GOOGLE_PLACES_API_KEY")
 
     db = SessionLocal()
     try:
-        report = import_stores(db)
-        if prune:
-            summary["pruned"] = prune_stores(db)
-            report["total_in_db"] -= summary["pruned"]["stores_removed"]
-        db.commit()
-        summary["stores"] = {k: report[k] for k in ("created", "updated", "total_in_db")}
-        summary["stores"]["hidden_no_pin"] = len(report["no_coords"])
+        if import_csv:
+            report = import_stores(db)
+            if prune:
+                summary["pruned"] = prune_stores(db)
+                report["total_in_db"] -= summary["pruned"]["stores_removed"]
+            db.commit()
+            summary["stores"] = {k: report[k] for k in ("created", "updated", "total_in_db")}
+            summary["stores"]["hidden_no_pin"] = len(report["no_coords"])
+            summary["reviews_csv"] = ingest_all(db)["sources"][0]
+        if client is not None and client.calls < client.max_calls:
+            summary["verification"] = verify_stores(db, client)
+        summary["reviews_in_db"] = db.query(Review).count()
     except Exception:
         db.rollback()
         raise
     finally:
         db.close()
 
-    left = (client.max_calls - client.calls) if client else 0
-    summary["reviews"] = ingest_all(use_google=left > 0, google_client=client)
     summary["google_calls_used"] = client.calls if client else 0
     summary["pipeline"] = _with_retries(run_pipeline)
     return summary
@@ -133,20 +131,19 @@ def _with_retries(fn, attempts: int = 3):
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    ap = argparse.ArgumentParser(description="FirstFind daily data job")
+    ap = argparse.ArgumentParser(description="FirstFind daily store verification job")
     ap.add_argument("--no-google", action="store_true", help="skip every Google call")
     ap.add_argument("--budget", type=int, default=GOOGLE_DAILY_BUDGET,
                     help="max Google calls this run")
+    ap.add_argument("--import-csv", action="store_true",
+                    help="load data/import/*.csv into the database first")
     args = ap.parse_args()
 
-    summary = run(use_google=not args.no_google, budget=args.budget)
+    summary = run(use_google=not args.no_google, budget=args.budget,
+                  import_csv=True if args.import_csv else None)
     print("\n=== Daily job summary ===")
     for key, value in summary.items():
         print(f"{key}: {value}")
-    if summary["reviews"]["total_in_db"] == 0:
-        # Fail loudly rather than "succeed" with an empty app.
-        raise SystemExit("ERROR: no reviews in the database after the run — "
-                         "check data/import/reviews.csv and that stores were imported.")
 
 
 if __name__ == "__main__":
