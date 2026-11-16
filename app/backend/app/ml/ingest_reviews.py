@@ -41,6 +41,8 @@ from ..database import SessionLocal
 from ..models import Review, Store, User
 from ..seed import BOT_EMAIL
 
+from ..utils import alias_for  # noqa: E402
+
 log = logging.getLogger(__name__)
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -135,10 +137,15 @@ def ingest_from_csv(db, bot: User, store_index: dict[str, str],
         rows = list(csv.DictReader(f))
     valid_ids = set(store_index.values())
     new_count = skipped = unmatched = bad = named = 0
-    # Reviews ingested before author names were stored: fill the name in.
-    nameless = {(r.store_id, r.external_id): r for r in
-                db.query(Review).filter(Review.source == "google",
-                                        Review.author_name.is_(None)).all()}
+    # The real reviewer's name is never kept: every imported review is stored
+    # under a random alias. Rows saved earlier (no name, or a real one) are
+    # switched to their alias here.
+    for old in db.query(Review).filter(Review.source == "google",
+                                       Review.external_id.isnot(None)).all():
+        alias = alias_for(old.store_id, old.external_id)
+        if old.author_name != alias:
+            old.author_name = alias
+            named += 1
 
     for row in rows:
         store_id = (row.get("store_id") or "").strip()
@@ -159,10 +166,6 @@ def ingest_from_csv(db, bot: User, store_index: dict[str, str],
         text = row.get("review_text") or ""
         key = (store_id, _review_key(store_id, author, text))
         if key in seen:
-            old = nameless.pop(key, None)
-            if old is not None and author.strip():
-                old.author_name = author.strip()[:120]
-                named += 1
             skipped += 1
             continue
         seen.add(key)
@@ -170,7 +173,7 @@ def ingest_from_csv(db, bot: User, store_index: dict[str, str],
         db.add(Review(
             store_id=store_id,
             user_id=bot.id,
-            author_name=author.strip()[:120] or None,
+            author_name=alias_for(store_id, key[1]),
             rating=max(1, min(5, rating)),
             text=text,
             source="google",
@@ -283,7 +286,7 @@ def ingest_from_google(db, bot: User, limit: int | None = None,
             seen.add(key)
             db.add(Review(
                 store_id=store.id, user_id=bot.id, rating=r["rating"],
-                author_name=(r["author"] or "").strip()[:120] or None,
+                author_name=alias_for(store.id, key[1]),
                 text=r["text"], source="google", external_id=key[1],
                 created_at=r["created_at"] or datetime.utcnow(),
             ))

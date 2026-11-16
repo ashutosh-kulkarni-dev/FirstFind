@@ -65,22 +65,23 @@ def test_reviewer_names_are_stored_served_and_backfilled(db, tmp_path, client):
                        "review_text": "Great finds", "date": "a week ago"}])
     ingest_reviews.ingest_all(db, csv_path=rp)
     r = db.query(Review).filter(Review.store_id == "fx-1").one()
-    assert r.author_name == "Asha Rao"
+    alias = r.author_name
+    assert alias and alias != "Asha Rao"       # the real name is never stored
 
     shown = client.get("/api/stores/fx-1").json()["reviews"][0]
     # The page shows a random alias: never the real name, never the bot, and
     # the same alias every time.
     assert shown["source"] == "google"
-    assert shown["user_name"] not in ("Asha Rao", "Reviews Bot")
+    assert shown["user_name"] == alias
     assert client.get("/api/stores/fx-1").json()["reviews"][0]["user_name"] == shown["user_name"]
 
-    # A row ingested before names were kept gets its name on the next run.
-    r.author_name = None
+    # A row saved earlier under the real name is switched to its alias.
+    r.author_name = "Asha Rao"
     db.commit()
     out = ingest_reviews.ingest_all(db, csv_path=rp)["sources"][0]
     assert (out["new"], out["names_filled"]) == (0, 1)
     db.expire_all()
-    assert db.query(Review).filter(Review.store_id == "fx-1").one().author_name == "Asha Rao"
+    assert db.query(Review).filter(Review.store_id == "fx-1").one().author_name == alias
 
 
 def test_sentiment_summary_separates_unscored():
@@ -167,3 +168,56 @@ def test_importer_path_is_resolved_at_call_time(monkeypatch, tmp_path, db):
                     "lat": "12.97", "lng": "77.64"})
     monkeypatch.setattr(importer, "STORES_CSV", p)
     assert importer.import_stores(db)["rows"] == 1
+
+
+def test_hidden_stores_file_switches_a_store_off(tmp_path, db):
+    p = tmp_path / "stores.csv"
+    with open(p, "w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=["id", "name", "locality_raw", "lat", "lng"])
+        w.writeheader()
+        for i in ("fx-8", "fx-9"):
+            w.writerow({"id": i, "name": "Shop " + i, "locality_raw": "Indiranagar",
+                        "lat": "12.97", "lng": "77.64"})
+    importer.import_stores(db, p)
+    db.commit()
+    assert db.get(Store, "fx-9").is_active is not False
+
+    (tmp_path / "hidden_stores.csv").write_text(
+        "id,name,reason\nfx-9,Shop fx-9,not a clothing store\n", encoding="utf-8")
+    importer.import_stores(db, p)
+    db.commit()
+    db.expire_all()
+    assert db.get(Store, "fx-9").is_active is False
+    assert db.get(Store, "fx-8").is_active is not False
+
+
+def test_prune_removes_only_stores_missing_from_the_csv(tmp_path, db):
+    import pytest as _pt
+    p = tmp_path / "stores.csv"
+    real = [sid for (sid,) in db.query(Store.id) if not sid.startswith("fx-")]
+
+    def write(ids):
+        with open(p, "w", encoding="utf-8", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=["id", "name", "locality_raw", "lat", "lng"])
+            w.writeheader()
+            for i in ids:
+                w.writerow({"id": i, "name": "Shop " + i, "locality_raw": "Indiranagar",
+                            "lat": "12.97", "lng": "77.64"})
+    extra = ["fx-p%d" % n for n in range(6)]
+    write(real + extra)
+    importer.import_stores(db, p)
+    bot = ingest_reviews._get_or_create_bot(db)
+    db.add(Review(store_id="fx-p5", user_id=bot.id, rating=5, text="bye"))
+    db.commit()
+
+    write(real + extra[:5])                       # fx-p5 is no longer in the CSV
+    out = importer.prune_stores(db, p)
+    db.commit()
+    assert out["ids"] == ["fx-p5"] and out["reviews_removed"] == 1
+    assert db.get(Store, "fx-p5") is None and db.get(Store, "fx-p4") is not None
+    assert db.query(Review).filter(Review.store_id == "fx-p5").count() == 0
+
+    write(extra[:1])                              # a broken CSV must not wipe the DB
+    with _pt.raises(RuntimeError):
+        importer.prune_stores(db, p)
+    db.rollback()

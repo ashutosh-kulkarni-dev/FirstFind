@@ -143,12 +143,16 @@ _ALIAS_FIRST = ["Aarav", "Aditi", "Akash", "Ananya", "Arjun", "Bhavna", "Chetan"
 _ALIAS_LAST = "ABCDGHJKMNPRSTV"
 
 
-def reviewer_alias(review) -> str:
-    seed = f"{review.store_id}|{review.external_id or review.id}"
+def alias_for(store_id, key) -> str:
+    seed = f"{store_id}|{key}"
     h = int(hashlib.sha1(seed.encode("utf-8")).hexdigest(), 16)
     first = _ALIAS_FIRST[h % len(_ALIAS_FIRST)]
     last = _ALIAS_LAST[(h // len(_ALIAS_FIRST)) % len(_ALIAS_LAST)]
     return f"{first} {last}."
+
+
+def reviewer_alias(review) -> str:
+    return alias_for(review.store_id, review.external_id or review.id)
 
 
 def review_display_name(review) -> str:

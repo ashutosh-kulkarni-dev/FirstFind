@@ -7,6 +7,11 @@ on:
     # longest ago and stops at INGEST_MAX_CALLS (default 90).
     - cron: '0 4 * * *'
   workflow_dispatch:   # manual trigger from GitHub Actions UI
+    inputs:
+      prune:
+        description: 'Delete stores that are in the database but not in data/import/stores.csv'
+        type: boolean
+        default: false
 
 permissions:
   contents: write      # commits the updated candidate / store CSVs back to the repo
@@ -61,11 +66,12 @@ jobs:
           SENTIMENT_LOCAL:       'true'                                  # run the sentiment models in this job
           HUGGINGFACE_TOKEN:     ${{ secrets.HUGGINGFACE_TOKEN }}       # optional fallback (needs paid credits)
           GROQ_API_KEY:          ${{ secrets.GROQ_API_KEY }}            # optional: writes AI store descriptions
-          GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}   # optional: verifies new stores
+          GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}   # optional: refreshes Google ratings/reviews
           GOOGLE_DAILY_BUDGET:   '90'                                    # the key allows 100 calls/day
+          PRUNE_STORES:          ${{ inputs.prune || 'false' }}          # manual clean-up only
           ENVIRONMENT:           production
         working-directory: app/backend
-        # verify candidates -> promote -> import stores -> ingest reviews ->
+        # import stores -> ingest reviews (+ Google ratings when a key is set) ->
         # sentiment / AI scores / zones / recommendations / descriptions.
         # See app/backend/app/daily_job.py.
         run: python -m app.daily_job
