@@ -87,15 +87,11 @@ CORS_ORIGINS = _env_cors or _DEFAULT_CORS
 CITY_CENTER = (12.9716, 77.5946)  # Bengaluru
 N_ZONES = 4
 SEED = 42
-LOCATION_RADIUS_KM = float(os.environ.get("LOCATION_RADIUS_KM", "2.0"))
 
 # Zonal feature constants (Phase 1+)
-WALKABLE_KM = 1.2           # threshold below which a zone feels walkable
 MAX_RADIUS_KM = 10.0        # hard cap on any zone radius
 DEFAULT_MIN_SHOPS = 3       # Mode B: minimum shops for a useful cluster
 DEFAULT_MAX_SHOPS = 8       # Mode B: cap before suggesting a split
-POCKET_FLOOR = 3            # minimum stores to form a named pocket zone
-QUERY_GEOCODE_ONLINE = os.environ.get("QUERY_GEOCODE_ONLINE", "false").lower() == "true"
 
 # ---- Chat pillar feature flags ----
 # Each flag defaults ON so the best experience is out-of-the-box.

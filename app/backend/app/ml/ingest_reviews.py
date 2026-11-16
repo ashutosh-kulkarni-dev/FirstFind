@@ -4,9 +4,8 @@ Loads reviews from external sources into the `reviews` table so the existing
 sentiment + score pipeline (`pipeline.py`) can process them.
 
 Sources (in priority order):
-  1. Local CSV          — `data/import/reviews.csv` (keyed by store id);
-                          falls back to the older name-keyed archive
-                          `data/_archive/googlemaps_reviews.csv`. Zero API calls.
+  1. Local CSV          — `data/import/reviews.csv` (keyed by store id).
+                          Zero API calls.
   2. Google Places API (New) — weekly live fetch keyed by `Store.google_place_id`;
                           requires GOOGLE_PLACES_API_KEY in env. Enabled by
                           `--google` flag; skipped when no key is set.
@@ -47,7 +46,6 @@ log = logging.getLogger(__name__)
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 REVIEWS_CSV = REPO_ROOT / "data" / "import" / "reviews.csv"
-LEGACY_REVIEWS_CSV = REPO_ROOT / "data" / "_archive" / "googlemaps_reviews.csv"
 
 # Reference date for relative-date parsing ("2 weeks ago") — when the CSV was
 # collected. Override with --ref-date YYYY-MM-DD when importing a newer scrape.
@@ -126,7 +124,7 @@ def ingest_from_csv(db, bot: User, store_index: dict[str, str],
     because rows added in this session are not yet visible to a DB query.
     """
     if csv_path is None:
-        csv_path = REVIEWS_CSV if REVIEWS_CSV.exists() else LEGACY_REVIEWS_CSV
+        csv_path = REVIEWS_CSV
     if not csv_path.exists():
         log.warning("CSV not found: %s — skipping", csv_path)
         return {"source": "csv", "new": 0, "skipped": 0, "unmatched": 0}

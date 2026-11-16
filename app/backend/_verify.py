@@ -113,14 +113,14 @@ def main():
         # Pick an area that round-trips through NL extraction (so the message
         # unambiguously resolves to it), then assert zero out-of-area leakage.
         from app.database import SessionLocal as _SLa
-        from app.ml import chatbot as _cb0
+        from app.chat import retrieval as _cb0
         _dba = _SLa()
         try:
             vis_areas = _cb0._known_areas(_dba)
             target_area = next(
                 (a for a in vis_areas
                  if _cb0._extract_area(_cb0._normalize(f"thrift stores in {a}"), vis_areas) == a
-                 and _cb0._rank(_dba, area=a)),
+                 and _cb0.rank_stores(_dba, area=a)),
                 None)
         finally:
             _dba.close()
@@ -168,7 +168,7 @@ def main():
     from app.database import SessionLocal as _SLb
     from app.models import Store as _Sb
     from sqlalchemy import func as _f2
-    from app.ml import chatbot as cb
+    from app.chat import retrieval as cb
     _db = _SLb()
     try:
         areas = cb._known_areas(_db)
@@ -176,15 +176,15 @@ def main():
               .group_by(_Sb.area).order_by(_f2.count().desc()).first()[0])
 
         # area is a hard filter; bogus area yields nothing (no substitution)
-        got = cb._rank(_db, area=ta, limit=100)
+        got = cb.rank_stores(_db, area=ta, limit=100)
         assert got and all(s.area == ta for s in got), "area filter leaked"
-        assert cb._rank(_db, area="__no_such_area__") == [], "empty set was substituted"
+        assert cb.rank_stores(_db, area="__no_such_area__") == [], "empty set was substituted"
         ok += 1
         print(f"hard-filter: area={ta!r} -> {len(got)} in-area; bogus area -> 0 (no leak)")
 
         # open-now is SOFT: it reorders but never shrinks the eligible set
-        base = cb._rank(_db, area=ta, limit=100)
-        opened = cb._rank(_db, area=ta, open_now=True, limit=100)
+        base = cb.rank_stores(_db, area=ta, limit=100)
+        opened = cb.rank_stores(_db, area=ta, open_now=True, limit=100)
         assert len(opened) == len(base), "open_now dropped stores (must be soft)"
         ok += 1
         print(f"open-now soft: area={ta} set size {len(base)} unchanged with open_now ranking")
@@ -217,7 +217,7 @@ def main():
         b_s.price_min, b_s.price_max = 900, 1500            # over budget  -> exclude
         c_s.price_min = c_s.price_max = None                # unknown      -> keep
         _db.flush()
-        ids = {s.id for s in cb._rank(_db, area=common, price_max=500, limit=100)}
+        ids = {s.id for s in cb.rank_stores(_db, area=common, price_max=500, limit=100)}
         assert a_s.id in ids, "cheap store wrongly excluded"
         assert c_s.id in ids, "unknown-price store excluded (must be soft-included)"
         assert b_s.id not in ids, "over-budget store included (must be excluded)"
@@ -227,7 +227,7 @@ def main():
         a_s.categories, b_s.categories, c_s.categories = "vintage,denim", "formal", ""
         b_s.price_min = None                                # clear price so only category decides
         _db.flush()
-        ids = {s.id for s in cb._rank(_db, area=common, category="vintage", limit=100)}
+        ids = {s.id for s in cb.rank_stores(_db, area=common, category="vintage", limit=100)}
         assert a_s.id in ids, "known-match category excluded"
         assert c_s.id in ids, "unknown-category store excluded (must be soft-included)"
         assert b_s.id not in ids, "known-mismatch category included (must be excluded)"
