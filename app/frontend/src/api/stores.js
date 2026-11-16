@@ -6,6 +6,7 @@ export const storesApi = {
     return req(`/api/stores?${qs}`, opts)
   },
   areas: () => req('/api/stores/areas'),
+  facets: () => req('/api/stores/facets'),
   store: (id) => req(`/api/stores/${id}`),
   addReview: (id, rating, text) => post(`/api/stores/${id}/reviews`, { rating, text }),
   saveStore: (id) => post(`/api/stores/${id}/save`),

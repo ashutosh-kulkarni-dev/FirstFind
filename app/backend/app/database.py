@@ -50,6 +50,8 @@ _ADDED_COLUMNS = {
         ("address", "VARCHAR(300)"),
         ("description", "TEXT"),
         ("description_source", "VARCHAR(10)"),
+        ("tags", "VARCHAR(200)"),
+        ("tags_source", "VARCHAR(10)"),
         ("google_rating", "FLOAT"),
         ("google_review_count", "INTEGER"),
         ("price_estimated", "BOOLEAN DEFAULT FALSE"),

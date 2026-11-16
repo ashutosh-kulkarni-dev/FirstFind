@@ -112,13 +112,16 @@ def run_pipeline(db=None) -> dict:
         db.commit()
         n_zones = recompute_zones(db)          # before recommender: zone_id feeds content features
         db.commit()
+        from ..data.tags import assign_tags
+        tagged = assign_tags(db)               # keyword rules over names, types and reviews
+        db.commit()
         from ..ml.descriptions import generate_descriptions
         described = generate_descriptions(db)  # AI summaries; no-op without GROQ_API_KEY
         db.commit()
         recommender.build(db)
         db.commit()
         summary = {"reviews_scored": scored, "stores_rescored": stores, "zones": n_zones,
-                   "descriptions_written": described}
+                   "descriptions_written": described, "stores_retagged": tagged}
         log.info("Pipeline complete: %s", summary)
         return summary
     except Exception:

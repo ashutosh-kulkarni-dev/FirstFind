@@ -43,13 +43,14 @@ export default function MapExplorer({
     // Keep Leaflet's tile grid in sync with container size. Without this, any
     // layout change (fullscreen toggle, side-panel open, window resize) leaves
     // half the viewport blank or misaligned until the next pan.
-    requestAnimationFrame(() => map.invalidateSize())
+    const firstFrame = requestAnimationFrame(() => map.invalidateSize())
     const ro = new ResizeObserver(() => map.invalidateSize())
     ro.observe(elRef.current)
     const onWinResize = () => map.invalidateSize()
     window.addEventListener('resize', onWinResize)
 
     return () => {
+      cancelAnimationFrame(firstFrame)   // the map may be gone before the frame runs
       ro.disconnect()
       window.removeEventListener('resize', onWinResize)
       map.remove()
