@@ -80,7 +80,7 @@ export default function StoreDetail() {
   async function onSave() {
     const nowSaved = toggleSaved(store.id)
     setSaved(nowSaved)
-    if (nowSaved && user) { try { await api.saveStore(store.id) } catch {} }
+    if (nowSaved && user) { try { await api.saveStore(store.id) } catch { /* saved locally; the server copy is best-effort */ } }
   }
 
   function submitReview() {
