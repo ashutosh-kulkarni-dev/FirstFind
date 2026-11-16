@@ -289,7 +289,7 @@ def test_daily_job_shares_one_google_budget(db, tmp_path, monkeypatch):
     monkeypatch.setattr(GP, "PlacesClient", lambda max_calls: setattr(client, "max_calls", max_calls) or client)
 
     # Budget 2: both calls go to verification; nothing is left for the review fetch.
-    out = daily_job.run(budget=2)
+    out = daily_job.run(budget=2, add_candidates=True)
     assert out["candidates"]["checked"] == {"verified": 2} and out["candidates"]["backlog"] == 1
     assert out["candidates"]["stores_added"] == 2 and out["google_calls_used"] == 2
     assert [s["source"] for s in out["reviews"]["sources"]] == ["csv"]

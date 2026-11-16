@@ -2,6 +2,8 @@
 
 Steps, in order — each is idempotent, so a failed or repeated run is harmless:
 
+  (Steps 1-2 are OFF unless ADD_VERIFIED_CANDIDATES=true: the store list is
+   the owner's CSV only.)
   1. VERIFY   up to GOOGLE_DAILY_BUDGET unchecked candidate stores with Google
               (hand-added candidates first), until the backlog is empty.
   2. PROMOTE  the verified ones into data/import/stores.csv (+ their reviews,
@@ -38,6 +40,14 @@ from .database import Base, SessionLocal, engine, ensure_schema
 log = logging.getLogger(__name__)
 
 GOOGLE_DAILY_BUDGET = int(os.environ.get("GOOGLE_DAILY_BUDGET", "90"))
+_ON = ("1", "true", "yes")
+# Steps 1-2 (verify OpenStreetMap candidates and ADD the matches as stores)
+# are OFF: the store list is the owner's own CSV only. Set to "true" to let
+# the job add verified stores again.
+ADD_VERIFIED_CANDIDATES = os.environ.get("ADD_VERIFIED_CANDIDATES", "").lower() in _ON
+# One-off clean-up: delete stores that are in the database but not in
+# stores.csv. Only from a manual run of the workflow with "prune" ticked.
+PRUNE_STORES = os.environ.get("PRUNE_STORES", "").lower() in _ON
 
 
 def verify_and_promote(client, budget: int) -> dict:
@@ -58,8 +68,11 @@ def verify_and_promote(client, budget: int) -> dict:
             "backlog": len(V.unchecked(cands))}
 
 
-def run(use_google: bool = True, budget: int = GOOGLE_DAILY_BUDGET) -> dict:
-    from .importer import import_stores
+def run(use_google: bool = True, budget: int = GOOGLE_DAILY_BUDGET,
+        add_candidates: bool | None = None, prune: bool | None = None) -> dict:
+    from .importer import import_stores, prune_stores
+    add_candidates = ADD_VERIFIED_CANDIDATES if add_candidates is None else add_candidates
+    prune = PRUNE_STORES if prune is None else prune
     from .ml.ingest_reviews import ingest_all
     from .ml.pipeline import run_pipeline
 
@@ -71,7 +84,10 @@ def run(use_google: bool = True, budget: int = GOOGLE_DAILY_BUDGET) -> dict:
     if use_google and GOOGLE_PLACES_API_KEY:
         from .ml.google_places import PlacesClient
         client = PlacesClient(max_calls=budget)
-        summary["candidates"] = verify_and_promote(client, budget)
+        if add_candidates:
+            summary["candidates"] = verify_and_promote(client, budget)
+        else:
+            log.info("Adding new stores is off — Google budget goes to existing stores")
     else:
         log.info("Google steps skipped (%s)",
                  "--no-google" if not use_google else "no GOOGLE_PLACES_API_KEY")
@@ -79,6 +95,9 @@ def run(use_google: bool = True, budget: int = GOOGLE_DAILY_BUDGET) -> dict:
     db = SessionLocal()
     try:
         report = import_stores(db)
+        if prune:
+            summary["pruned"] = prune_stores(db)
+            report["total_in_db"] -= summary["pruned"]["stores_removed"]
         db.commit()
         summary["stores"] = {k: report[k] for k in ("created", "updated", "total_in_db")}
         summary["stores"]["hidden_no_pin"] = len(report["no_coords"])

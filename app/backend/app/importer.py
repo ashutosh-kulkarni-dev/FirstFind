@@ -36,6 +36,7 @@ from .utils import haversine_km
 log = logging.getLogger(__name__)
 
 STORES_CSV = REPO_ROOT / "data" / "import" / "stores.csv"
+HIDDEN_NAME = "hidden_stores.csv"
 
 STORE_TYPES = {"thrift", "retail_fashion", "branded"}
 
@@ -345,11 +346,23 @@ def _is_empty(v) -> bool:
     return v is None or v == ""
 
 
+def load_hidden(stores_csv: Path) -> set[str]:
+    """Ids listed in hidden_stores.csv (next to the stores file): places that
+    turned out not to be clothing stores. They stay in the data but are
+    switched off, so they never show on the site."""
+    path = Path(stores_csv).parent / HIDDEN_NAME
+    if not path.exists():
+        return set()
+    with open(path, encoding="utf-8-sig", newline="") as f:
+        return {(r.get("id") or "").strip() for r in csv.DictReader(f)} - {""}
+
+
 def import_stores(db, csv_path: Path | None = None, overwrite: bool = False) -> dict:
     """Upsert every row of csv_path. Flushes but does not commit."""
     csv_path = csv_path or STORES_CSV   # resolved at call time, not import time
     with open(csv_path, encoding="utf-8-sig", newline="") as f:
         rows = list(csv.DictReader(f))
+    hidden = load_hidden(csv_path)
 
     existing = {s.id: s for s in db.query(Store).all()}
     created = updated = unchanged = 0
@@ -363,6 +376,8 @@ def import_stores(db, csv_path: Path | None = None, overwrite: bool = False) -> 
             continue
         vals = clean_row(row)
         sid = vals["id"]
+        if sid in hidden:
+            vals["is_active"] = False
         if sid in seen_ids:
             log.warning("Duplicate id %s in CSV — later row ignored", sid)
             continue
@@ -417,6 +432,38 @@ def import_stores(db, csv_path: Path | None = None, overwrite: bool = False) -> 
         "no_coords": no_coords, "inactive": inactive,
         "total_in_db": db.query(Store).count(),
     }
+
+
+def prune_stores(db, csv_path: Path | None = None, max_share: float = 0.25) -> dict:
+    """Delete every store that is NOT in the stores CSV, with everything that
+    hangs off it (reviews, saves, views, recommendations). Flushes, no commit.
+
+    Deliberate, destructive and never part of a normal run. Refuses to act if
+    it would remove more than max_share of the stores — that means the CSV is
+    wrong, not the database."""
+    from .models import (Interaction, Review, SavedListItem, StoreSimilarity,
+                         UserRecommendation)
+    csv_path = csv_path or STORES_CSV
+    with open(csv_path, encoding="utf-8-sig", newline="") as f:
+        keep = {(r.get("id") or "").strip() for r in csv.DictReader(f)} - {""}
+    all_ids = [sid for (sid,) in db.query(Store.id)]
+    gone = sorted(set(all_ids) - keep)
+    if not gone:
+        return {"stores_removed": 0, "reviews_removed": 0, "ids": []}
+    if not keep or len(gone) > max_share * len(all_ids):
+        raise RuntimeError(f"Refusing to prune {len(gone)} of {len(all_ids)} stores "
+                           f"(CSV has {len(keep)} ids) — check {csv_path}")
+    reviews = db.query(Review).filter(Review.store_id.in_(gone)).delete(synchronize_session=False)
+    for model, cols in ((Interaction, ("store_id",)), (SavedListItem, ("store_id",)),
+                        (UserRecommendation, ("store_id",)),
+                        (StoreSimilarity, ("store_id", "similar_id"))):
+        for col in cols:
+            db.query(model).filter(getattr(model, col).in_(gone)).delete(synchronize_session=False)
+    db.query(Store).filter(Store.id.in_(gone)).delete(synchronize_session=False)
+    db.flush()
+    log.info("Pruned %d stores not in %s (and %d of their reviews)",
+             len(gone), csv_path.name, reviews)
+    return {"stores_removed": len(gone), "reviews_removed": reviews, "ids": gone}
 
 
 def print_report(r: dict, wrote: bool) -> None:
