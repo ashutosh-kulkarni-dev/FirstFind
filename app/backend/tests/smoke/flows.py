@@ -1,15 +1,17 @@
-"""Temporary verification harness (SQLite) — not shipped.
+"""End-to-end smoke run of the main user flows (SQLite) — not shipped.
 
 Seeds a throwaway SQLite DB and smoke-tests the app end to end so each
 architecture change can be checked without a running MySQL. Sentiment goes
 through the HF Inference API if HUGGINGFACE_TOKEN is set, else VADER.
-Run: python _verify.py
+Run by pytest (tests/test_smoke.py), or directly from app/backend:
+    PYTHONPATH=. python tests/smoke/flows.py
 """
 import os
 import pathlib
+import tempfile
 
 # Force a throwaway SQLite DB BEFORE importing the app, so config picks it up.
-_DB = pathlib.Path(__file__).parent / "_verify.db"
+_DB = pathlib.Path(tempfile.mkdtemp(prefix="firstfind_smoke_")) / "flows.db"
 if _DB.exists():
     _DB.unlink()
 os.environ["DATABASE_URL"] = f"sqlite:///{_DB.as_posix()}"

@@ -9,11 +9,10 @@
 import csv
 
 import httpx
-import pytest
 from sqlalchemy import event
 
 from app.data import importer
-from app.database import SessionLocal, engine, ensure_schema
+from app.database import engine, ensure_schema
 from app.data import reviews as ingest_reviews
 from app.jobs import pipeline
 from app.ml import sentiment as S
@@ -33,18 +32,6 @@ def test_ensure_schema_issues_no_alter_when_up_to_date():
     finally:
         event.remove(engine, "before_cursor_execute", record)
     assert not [s for s in statements if "ALTER" in s.upper()]
-
-
-@pytest.fixture()
-def db():
-    ensure_schema()
-    s = SessionLocal()
-    yield s
-    s.rollback()
-    s.query(Review).filter(Review.store_id.like("fx-%")).delete(synchronize_session=False)
-    s.query(Store).filter(Store.id.like("fx-%")).delete(synchronize_session=False)
-    s.commit()
-    s.close()
 
 
 RF = ["review_id", "store_id", "store_name", "author", "rating", "review_text", "date", "source"]
@@ -235,3 +222,16 @@ def test_runtime_assets_ship_inside_the_package(client):
         json.loads((ASSETS_DIR / name).read_text(encoding="utf-8"))
     lines = client.get("/api/metro/stations").json()["lines"]
     assert {"Purple Line", "Green Line"} <= {ln["name"] for ln in lines}
+
+
+def test_abandoned_chat_sessions_are_removed(monkeypatch):
+    """Sessions nobody reads again used to stay in server memory forever."""
+    from app.chat import state
+    clock = [1000.0]
+    monkeypatch.setattr(state.time, "monotonic", lambda: clock[0])
+    store = state.InMemoryStore(ttl=30)
+    store.put("old-1", object())
+    store.put("old-2", object())
+    clock[0] += 120                       # both expire; a minute has passed since the last sweep
+    store.put("new", object())
+    assert set(store._store) == {"new"}

@@ -56,11 +56,11 @@ A quick tour of what powers FirstFind and why we are using each part.
 | **Vercel** | Frontend static build (`app/frontend`), served from CDN. |
 | **Render** | Backend as a Docker web service (`app/backend/Dockerfile`), auto-deploy on `main`. |
 | **Supabase** | Managed PostgreSQL, region near Bengaluru. |
-| **GitHub Actions** | CI: pyflakes lint + smoke tests on every push. |
+| **GitHub Actions** | CI: ruff, unused-code check, tests and frontend lint + build on every push. |
 
 ## Dev tooling
 
 - **Python 3.12**, **Node 18+**
-- **pyflakes** for lint (CI gate)
+- **ruff** and **vulture** for lint and unused code (CI gate)
 - **PowerShell** scripts for one-off ops (`scripts/`)
 - **Docker** for the backend's reproducible build

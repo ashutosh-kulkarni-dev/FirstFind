@@ -138,7 +138,7 @@ def _extract_locality_phrase(norm: str, db: Session) -> Optional[str]:
         # Case 1: full phrase is a substring — strongest signal, keep as-is
         if raw_l in norm:
             return raw
-        raw_tokens = set(t for t in re.split(r"\W+", raw_l) if len(t) > 2)
+        raw_tokens = {t for t in re.split(r"\W+", raw_l) if len(t) > 2}
         overlap = len(raw_tokens & norm_tokens)
         if overlap > best_score:
             best_score, best_phrase = overlap, raw
@@ -147,7 +147,7 @@ def _extract_locality_phrase(norm: str, db: Session) -> Optional[str]:
         return best_phrase
     if best_score == 1 and best_phrase:
         # Case 3: single overlapping token — only accept if it's a distinctive proper noun
-        raw_tokens = set(t for t in re.split(r"\W+", best_phrase.lower()) if len(t) > 2)
+        raw_tokens = {t for t in re.split(r"\W+", best_phrase.lower()) if len(t) > 2}
         overlap_tokens = raw_tokens & norm_tokens
         for tok in overlap_tokens:
             if tok not in LOCALITY_STOPWORDS and len(tok) >= 5:
@@ -288,9 +288,9 @@ def _relevance(s: Store, category: Optional[str], price_max: Optional[int],
         for disliked in prefs.disliked_categories:
             if disliked in s_cats:
                 score += W_PREF_DISLIKE
-        if prefs.budget_ceiling and price_max is None and s.price_min is not None:
-            if s.price_min <= prefs.budget_ceiling:
-                score += W_PRICE * 0.5
+        if (prefs.budget_ceiling and price_max is None and s.price_min is not None
+                and s.price_min <= prefs.budget_ceiling):
+            score += W_PRICE * 0.5
     return score
 
 

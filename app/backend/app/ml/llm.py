@@ -54,6 +54,6 @@ def phrase_reply(user_msg: str, base_reply: str, stores: list, intent: str,
         r.raise_for_status()
         text = (r.json()["choices"][0]["message"]["content"] or "").strip()
         return text or base_reply
-    except Exception as e:
+    except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as e:
         log.warning("Groq phrasing failed (%s); using rule-based reply", e)
         return base_reply

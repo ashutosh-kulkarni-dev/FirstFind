@@ -67,7 +67,7 @@ def evaluate(predict, rows: list[dict], pause: float = 0.0) -> tuple[dict, list]
     for row in rows:
         try:
             got = predict(row["text"])
-        except Exception as e:      # an engine outage is a miss, not a crash
+        except Exception as e:  # noqa: BLE001 - measuring tool: an engine outage is a miss, not a crash
             got = f"error: {e}"
         ok = got == row["label"]
         for key in (row["lang"], "ALL"):

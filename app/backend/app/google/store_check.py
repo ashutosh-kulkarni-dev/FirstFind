@@ -18,6 +18,8 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 
+import httpx
+
 from ..models import Store
 from .candidates import name_similarity
 
@@ -68,7 +70,7 @@ def verify_stores(db, client, limit: int | None = None) -> dict:
         except PlacesBudgetExceeded:
             log.info("Google call budget used up — the rest wait for the next run")
             break
-        except Exception as e:                      # quota / network: try again tomorrow
+        except (httpx.HTTPError, ValueError) as e:      # quota / network: try again tomorrow
             errors += 1
             log.warning("Google error on %s: %s", store.id, str(e)[:160])
             if errors >= 3:

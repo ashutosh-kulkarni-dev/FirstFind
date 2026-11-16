@@ -35,6 +35,8 @@ import re
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import httpx
+
 from ..common.aliases import alias_for
 from ..config import BOT_EMAIL, GOOGLE_PLACES_API_KEY, INGEST_MAX_DETAILS
 from ..database import SessionLocal
@@ -255,7 +257,7 @@ def ingest_from_google(db, bot: User, limit: int | None = None,
             log.info("Places call cap reached after %d stores — the rest wait for the next run",
                      visited)
             break
-        except Exception as e:
+        except (httpx.HTTPError, ValueError) as e:
             log.warning("Places API error for %s: %s", store.id, e)
             errors += 1
             if errors >= 5 and visited == 0:

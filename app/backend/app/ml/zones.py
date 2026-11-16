@@ -107,7 +107,7 @@ def cluster_stores(rows: list[dict]) -> list[dict]:
 
     zones = []
     for k in sorted(set(labels)):
-        idx = [i for i, l in enumerate(labels) if l == k]
+        idx = [i for i, label in enumerate(labels) if label == k]
         if not idx:
             continue
         members = [usable[i] for i in idx]

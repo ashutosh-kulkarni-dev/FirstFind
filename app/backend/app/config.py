@@ -21,7 +21,7 @@ if os.environ.get("SSLKEYLOGFILE", "").startswith("\\\\.\\"):
 try:
     import truststore
     truststore.inject_into_ssl()
-except Exception:
+except Exception:  # noqa: BLE001 - optional; any failure means default certificates
     pass
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent

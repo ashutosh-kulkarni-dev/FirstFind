@@ -43,7 +43,7 @@ def verify_google_token(credential: str) -> Optional[GoogleIdentity]:
         if res.status_code != 200:
             return None
         payload = res.json()
-    except Exception:
+    except (httpx.HTTPError, ValueError):
         return None
 
     # Validate audience and issuer — critical; never skip.

@@ -5,10 +5,8 @@ like the Places API (New).
 """
 from datetime import datetime
 
-import pytest
 
 from app.google import candidates as V
-from app.database import SessionLocal, ensure_schema
 from app.data import reviews as ingest_reviews
 from app.google.places import PlacesBudgetExceeded, parse_reviews
 from app.models import Review, Store
@@ -54,7 +52,7 @@ def cand(osm_id, name, lat=12.9700, lng=77.6400, brand="", store_type="branded")
     row = {"osm_id": osm_id, "name": name, "brand": brand, "store_type": store_type,
            "locality_raw": "Indiranagar", "address": "", "lat": str(lat), "lng": str(lng),
            "open_time": "", "close_time": "", "phone": ""}
-    row.update({c: "" for c in V.RESULT_COLS})
+    row.update(dict.fromkeys(V.RESULT_COLS, ""))
     return row
 
 
@@ -142,16 +140,6 @@ def test_verify_respects_limit():
 
 # ------------------------------------------------------ weekly Google ingest --
 
-@pytest.fixture()
-def db():
-    ensure_schema()
-    s = SessionLocal()
-    yield s
-    s.rollback()
-    s.query(Review).filter(Review.store_id.like("gg-%")).delete(synchronize_session=False)
-    s.query(Store).filter(Store.id.like("gg-%")).delete(synchronize_session=False)
-    s.commit()
-    s.close()
 
 
 def test_google_ingest_rotates_dedups_and_refreshes(db):
@@ -311,7 +299,11 @@ def test_verify_survives_a_google_error():
     """A quota/HTTP error must not crash the daily job or mark the row checked."""
     class Broken(FakePlaces):
         def search_text(self, *a, **k):
-            raise RuntimeError("429 quota exceeded")
+            # What the real client raises when Google answers 429.
+            import httpx
+            req = httpx.Request("POST", "https://places.googleapis.com/v1/places:searchText")
+            raise httpx.HTTPStatusError("429 quota exceeded", request=req,
+                                        response=httpx.Response(429, request=req))
     cands = [cand("node/1", "Peter England")]
     assert sum(V.verify(Broken(), cands, limit=5).values()) == 0
     assert cands[0]["verified"] == ""

@@ -75,8 +75,10 @@ def score_review(review_id: int) -> None:
         store.experience_score = sentiment_ml.experience_score(scored, sentiment_ml.score_prior(store))
         store.review_count = len(scored)
         db.commit()
-    except Exception as e:
-        log.warning("score_review(%s) failed: %s", review_id, e)
+    except Exception:
+        # Background task: it must not crash the request that queued it, but
+        # the traceback is logged so the failure can be found.
+        log.exception("score_review(%s) failed", review_id)
         db.rollback()
     finally:
         db.close()

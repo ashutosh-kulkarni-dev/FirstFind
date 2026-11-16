@@ -7,7 +7,7 @@ on:
 
 jobs:
   backend:
-    name: Backend — lint + smoke tests
+    name: Backend — lint + tests
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -22,19 +22,14 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt pyflakes
-      - name: Lint (pyflakes)
-        run: python -m pyflakes app/ _verify.py _audit.py
-      - name: Pytest (unit + API)
+          pip install -r requirements.txt ruff vulture
+      - name: Lint (ruff)
+        run: python -m ruff check .
+      - name: Unused code (vulture)
+        run: python -m vulture
+      - name: Tests (unit, API and end-to-end smoke)
         # Isolated SQLite + offline fallbacks: no HF/Groq secrets required.
         run: python -m pytest -q
-      - name: Smoke tests (SQLite, no external services)
-        # Both harnesses spin up the app on a throwaway SQLite DB. With no
-        # HUGGINGFACE_TOKEN / GROQ_API_KEY they exercise the VADER + rule-based
-        # fallbacks, so CI needs no secrets.
-        run: |
-          python _verify.py
-          python _audit.py
 
   frontend:
     name: Frontend — build
