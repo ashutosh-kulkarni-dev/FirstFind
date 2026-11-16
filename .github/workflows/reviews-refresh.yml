@@ -1,13 +1,17 @@
-name: Daily Data Job (stores, reviews, AI score)
+name: Daily Store Verification (Google check + AI scores)
 
 on:
   schedule:
-    # Daily 04:00 UTC. Daily (not weekly) because the Google key allows only
-    # ~100 calls per day: each run fetches reviews for the stores checked
-    # longest ago and stops at INGEST_MAX_CALLS (default 90).
+    # Daily 04:00 UTC. The Google key allows ~100 calls per day: each run
+    # checks the 90 stores verified longest ago (one call per store), so the
+    # whole list is re-verified about once a week.
     - cron: '0 4 * * *'
   workflow_dispatch:   # manual trigger from GitHub Actions UI
     inputs:
+      import_csv:
+        description: 'Load data/import/*.csv into the database first (after editing the CSV files)'
+        type: boolean
+        default: false
       prune:
         description: 'Delete stores that are in the database but not in data/import/stores.csv'
         type: boolean
@@ -60,19 +64,28 @@ jobs:
             exit 1
           fi
 
+      - name: Warn if verification cannot run
+        env:
+          GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
+        run: |
+          if [ -z "$GOOGLE_PLACES_API_KEY" ]; then
+            echo "::warning::GOOGLE_PLACES_API_KEY secret is not set - store verification is skipped, only AI scores are updated."
+          fi
+
       - name: Daily data job
         env:
           DATABASE_URL:          ${{ secrets.DATABASE_URL }}
           SENTIMENT_LOCAL:       'true'                                  # run the sentiment models in this job
           HUGGINGFACE_TOKEN:     ${{ secrets.HUGGINGFACE_TOKEN }}       # optional fallback (needs paid credits)
           GROQ_API_KEY:          ${{ secrets.GROQ_API_KEY }}            # optional: writes AI store descriptions
-          GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}   # optional: refreshes Google ratings/reviews
+          GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}   # needed for the verification step
           GOOGLE_DAILY_BUDGET:   '90'                                    # the key allows 100 calls/day
+          IMPORT_CSV:            ${{ inputs.import_csv || 'false' }}     # manual runs only
           PRUNE_STORES:          ${{ inputs.prune || 'false' }}          # manual clean-up only
           ENVIRONMENT:           production
         working-directory: app/backend
-        # import stores -> ingest reviews (+ Google ratings when a key is set) ->
-        # sentiment / AI scores / zones / recommendations / descriptions.
+        # verify our stores on Google (hide closed, refresh ratings) ->
+        # sentiment for new reviews / AI scores / zones / recommendations.
         # See app/backend/app/daily_job.py.
         run: python -m app.daily_job
 
@@ -87,6 +100,6 @@ jobs:
           if git diff --cached --quiet; then
             echo "No data changes to commit."
           else
-            git commit -m "data: daily store verification [skip ci] [skip render]"
+            git commit -m "data: daily job data update [skip ci] [skip render]"
             git push
           fi
