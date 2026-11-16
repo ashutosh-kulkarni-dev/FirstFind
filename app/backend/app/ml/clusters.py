@@ -1,6 +1,5 @@
 """Cluster discovery helpers — Phase 2+ (Mode B).
 
-discover_clusters  — reads precomputed Zone rows (Mode A, Phase 1).
 find_cluster       — coordinate + radius query returning a live result (Mode B, Phase 2).
 split_cluster      — recursive HDBSCAN + KMeans fallback split (Phase 4).
 """
@@ -13,13 +12,8 @@ from sklearn.preprocessing import StandardScaler
 from sqlalchemy.orm import Session
 
 from ..config import DEFAULT_MAX_SHOPS, DEFAULT_MIN_SHOPS, SEED
-from ..models import Store, Zone
-from ..utils import STORE_HAS_COORDS, haversine_km, store_to_dict, zone_to_dict
-
-
-def discover_clusters(db: Session) -> list[dict]:
-    """Return all precomputed geographic zones as dicts (Mode A)."""
-    return [zone_to_dict(z) for z in db.query(Zone).all()]
+from ..models import Store
+from ..utils import STORE_HAS_COORDS, haversine_km, store_to_dict
 
 
 def _geo_label(stores: list) -> str:

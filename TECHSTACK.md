@@ -12,7 +12,6 @@ A quick tour of what powers FirstFind and why we are using each part.
 | **Leaflet** | The map on Explore + the inline MiniMap in chat bubbles. |
 | **CARTO Voyager** | Basemap tiles (light, label-friendly, supports a free API key). |
 | **Google Identity Services** | Google sign-in button + ID-token flow. |
-| **three.js** | Landing-page 3D accent. |
 
 ## Backend
 

@@ -1,6 +1,6 @@
 """Stage 1–3: understand, retrieve, build context.
 
-Lifted from ml/chatbot.py and given two clean public entry points:
+Originally the single-file chatbot (since removed), given two clean public entry points:
     understand(msg, db) -> Entities
     retrieve(db, entities, geo_store_ids, prefs) -> (list[Store], list[dict])
 

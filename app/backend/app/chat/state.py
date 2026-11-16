@@ -82,9 +82,3 @@ def save_session(sid: Optional[str], session: ChatSession) -> None:
     """Persist the session. No-op when sid is None (stateless fallback)."""
     if sid is not None:
         _store.put(sid, session)
-
-
-def replace_store(new_store: SessionStore) -> None:
-    """Swap the backing store — used in tests or to inject Redis in prod."""
-    global _store
-    _store = new_store
