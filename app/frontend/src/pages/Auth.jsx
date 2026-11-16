@@ -7,12 +7,13 @@ import { useAuth } from '../auth/AuthContext'
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 
 export default function Auth() {
-  const [mode, setMode] = useState('login')
+  const [params] = useSearchParams()
+  // ?mode=register opens straight on the sign-up form.
+  const [mode, setMode] = useState(params.get('mode') === 'register' ? 'register' : 'login')
   const [form, setForm] = useState({ name: '', email: '', password: '' })
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const nav = useNavigate()
-  const [params] = useSearchParams()
   const { login } = useAuth()
   const gBtnRef = useRef(null)
 

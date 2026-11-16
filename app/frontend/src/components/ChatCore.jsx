@@ -49,7 +49,7 @@ export default function ChatCore({ compact = false }) {
       claimedRef.current = true
       api.claimChat(guestTurns).catch(() => {})
     }
-  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user])
 
   function loadHistory() {
     setHistoryLoading(true)
