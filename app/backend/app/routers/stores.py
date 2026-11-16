@@ -12,7 +12,7 @@ from ..ml.tasks import refit_recommender
 from ..models import Interaction, Review, Store, StoreSimilarity, User
 from ..schemas import ReviewIn
 from ..utils import (STORE_HAS_COORDS, has_coords, haversine_km, is_open_now,
-                     sentiment_summary, store_to_dict)
+                     review_display_name, sentiment_summary, store_to_dict)
 
 router = APIRouter(prefix="/api/stores", tags=["stores"])
 
@@ -181,9 +181,9 @@ def store_detail(store_id: str, background_tasks: BackgroundTasks,
 
     d = store_to_dict(store)
     d["reviews"] = [{
-        # External reviews are stored under the reviews-bot account; show the
-        # person who actually wrote them.
-        "id": r.id, "user_name": r.author_name or r.user.name,
+        # External reviews are stored under the reviews-bot account and are
+        # shown under a random alias, never the real reviewer's name.
+        "id": r.id, "user_name": review_display_name(r),
         "source": r.source or "app",
         "rating": r.rating, "text": r.text,
         "sentiment": r.sentiment,

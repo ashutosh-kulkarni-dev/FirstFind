@@ -68,7 +68,11 @@ def test_reviewer_names_are_stored_served_and_backfilled(db, tmp_path, client):
     assert r.author_name == "Asha Rao"
 
     shown = client.get("/api/stores/fx-1").json()["reviews"][0]
-    assert shown["user_name"] == "Asha Rao" and shown["source"] == "google"
+    # The page shows a random alias: never the real name, never the bot, and
+    # the same alias every time.
+    assert shown["source"] == "google"
+    assert shown["user_name"] not in ("Asha Rao", "Reviews Bot")
+    assert client.get("/api/stores/fx-1").json()["reviews"][0]["user_name"] == shown["user_name"]
 
     # A row ingested before names were kept gets its name on the next run.
     r.author_name = None
