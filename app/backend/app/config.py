@@ -103,7 +103,7 @@ CHAT_MAP    = os.environ.get("CHAT_MAP",    "true").lower() == "true"
 CHAT_ADVICE = os.environ.get("CHAT_ADVICE", "true").lower() == "true"
 
 # ---- Review ingestion ----
-# Google Places API key — used by ingest_reviews.py for the weekly review refresh.
+# Google Places API key — used by the daily store verification.
 # Without this key the ingester runs in CSV-only mode (loads the local archive).
 GOOGLE_PLACES_API_KEY = os.environ.get("GOOGLE_PLACES_API_KEY", "")
 # Hard cap on Places API calls per ingest run (Find Place + Details).
@@ -158,3 +158,13 @@ DESCRIPTION_MIN_REVIEWS = int(os.environ.get("DESCRIPTION_MIN_REVIEWS", "2"))
 # per day (10 spare for manual checks): the job runs daily and each run stops
 # at INGEST_MAX_CALLS total calls. Raise both if your key allows more.
 INGEST_MAX_DETAILS = int(os.environ.get("INGEST_MAX_DETAILS", "90"))
+
+# Data files the running app needs. They live inside the package because the
+# deployed image contains only app/ — anything under the repo's data/ folder
+# is available to jobs and local tools, never to the live server.
+ASSETS_DIR = Path(__file__).resolve().parent / "assets"
+
+# System account that owns all externally-ingested reviews.
+# auth_provider="system" distinguishes it from real users everywhere.
+BOT_EMAIL = "reviews-bot@thriftfind.local"
+BOT_NAME = "Reviews Bot"

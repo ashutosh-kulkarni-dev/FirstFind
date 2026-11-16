@@ -2,7 +2,7 @@
 
 Every day:
 
-  1. VERIFY   the stores we list against Google (app/store_check.py): about
+  1. VERIFY   the stores we list against Google (app/google/store_check.py): about
               GOOGLE_DAILY_BUDGET stores a day, the ones checked longest ago
               first. Permanently closed stores are hidden; Google ratings are
               refreshed. Adds no stores. Skipped without GOOGLE_PLACES_API_KEY.
@@ -19,9 +19,9 @@ Only on a manual run (workflow inputs / environment variables):
                       new stores. Off: the store list is the owner's CSV only.
 
 Run from app/backend:
-    python -m app.daily_job
-    python -m app.daily_job --no-google      # scoring only
-    python -m app.daily_job --import-csv     # after editing the CSV files
+    python -m app.jobs.daily
+    python -m app.jobs.daily --no-google      # scoring only
+    python -m app.jobs.daily --import-csv     # after editing the CSV files
 """
 from __future__ import annotations
 
@@ -29,9 +29,9 @@ import argparse
 import logging
 import os
 
-from . import verify_candidates as V
-from .config import GOOGLE_PLACES_API_KEY
-from .database import Base, SessionLocal, engine, ensure_schema
+from ..google import candidates as V
+from ..config import GOOGLE_PLACES_API_KEY
+from ..database import Base, SessionLocal, engine, ensure_schema
 
 log = logging.getLogger(__name__)
 
@@ -63,11 +63,11 @@ def verify_and_promote(client, budget: int) -> dict:
 def run(use_google: bool = True, budget: int = GOOGLE_DAILY_BUDGET,
         add_candidates: bool | None = None, prune: bool | None = None,
         import_csv: bool | None = None) -> dict:
-    from .importer import import_stores, prune_stores
-    from .ml.ingest_reviews import ingest_all
-    from .ml.pipeline import run_pipeline
-    from .models import Review
-    from .store_check import verify_stores
+    from ..data.importer import import_stores, prune_stores
+    from ..data.reviews import ingest_all
+    from .pipeline import run_pipeline
+    from ..models import Review
+    from ..google.store_check import verify_stores
     add_candidates = ADD_VERIFIED_CANDIDATES if add_candidates is None else add_candidates
     prune = PRUNE_STORES if prune is None else prune
     import_csv = IMPORT_CSV if import_csv is None else import_csv
@@ -79,7 +79,7 @@ def run(use_google: bool = True, budget: int = GOOGLE_DAILY_BUDGET,
     summary: dict = {}
     client = None
     if use_google and GOOGLE_PLACES_API_KEY:
-        from .ml.google_places import PlacesClient
+        from ..google.places import PlacesClient
         client = PlacesClient(max_calls=budget)
         if add_candidates:
             summary["candidates"] = verify_and_promote(client, budget)

@@ -1,7 +1,7 @@
 """Thin client for the Google Places API (New) — https://places.googleapis.com/v1
 
-Shared by the weekly review fetch (ingest_reviews.py) and the candidate-store
-verifier (verify_candidates.py). Enable "Places API (New)" for the key in
+Shared by the weekly review fetch (data/reviews.py) and the candidate-store
+verifier (google/candidates.py). Enable "Places API (New)" for the key in
 Google Cloud; the older "Places API" endpoints are not used.
 
 Cost control is built in, because these calls are billed:

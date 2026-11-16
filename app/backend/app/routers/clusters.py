@@ -11,7 +11,8 @@ from ..config import DEFAULT_MAX_SHOPS, DEFAULT_MIN_SHOPS, MAX_RADIUS_KM
 from ..database import get_db
 from ..ml.clusters import find_cluster, split_cluster
 from ..models import Store, Zone
-from ..utils import STORE_HAS_COORDS, haversine_km, zone_to_dict
+from ..common.serializers import STORE_HAS_COORDS, zone_to_dict
+from ..common.geo import haversine_km
 
 router = APIRouter(prefix="/api/clusters", tags=["clusters"])
 

@@ -11,12 +11,13 @@ from __future__ import annotations
 import json
 import logging
 from functools import lru_cache
-from pathlib import Path
 from typing import Optional
+
+from ..config import ASSETS_DIR
 
 log = logging.getLogger(__name__)
 
-_DATA_FILE = Path(__file__).resolve().parent.parent.parent.parent.parent / "data" / "thrift_advice.json"
+_DATA_FILE = ASSETS_DIR / "thrift_advice.json"
 
 
 @lru_cache(maxsize=1)

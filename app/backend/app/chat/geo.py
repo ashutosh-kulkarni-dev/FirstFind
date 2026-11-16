@@ -18,15 +18,16 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from ..config import REPO_ROOT
+from ..config import ASSETS_DIR
 from ..ml.clusters import find_cluster
 from ..models import Store
-from ..utils import STORE_HAS_COORDS, haversine_km
+from ..common.serializers import STORE_HAS_COORDS
+from ..common.geo import haversine_km
 from .contracts import Entities, GeoResult
 
 log = logging.getLogger(__name__)
 
-_METRO_ASSET = REPO_ROOT / "data" / "metro_stations_blr.json"
+_METRO_ASSET = ASSETS_DIR / "metro_stations_blr.json"
 
 # Area centroid cache — loaded once from DB per process.
 # Maps canonical area name → (lat, lng) mean of its stores.

@@ -18,7 +18,7 @@ os.environ["FIRSTFIND_JWT_SECRET"] = "verify-secret"
 from fastapi.testclient import TestClient  # noqa: E402
 
 from app.main import app  # noqa: E402
-from app.seed import seed  # noqa: E402
+from app.data.seed import seed  # noqa: E402
 
 
 def main():
@@ -135,7 +135,7 @@ def main():
         print(f"area hard-filter: '{target_area}' -> {len(body['stores'])} stores, all in-area")
 
     # batch pipeline
-    from app.ml.pipeline import run_pipeline
+    from app.jobs.pipeline import run_pipeline
     summary = run_pipeline()
     print("pipeline:", summary); ok += 1
 

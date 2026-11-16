@@ -13,7 +13,8 @@ from sqlalchemy.orm import Session
 
 from ..config import DEFAULT_MAX_SHOPS, DEFAULT_MIN_SHOPS, SEED
 from ..models import Store
-from ..utils import STORE_HAS_COORDS, haversine_km, store_to_dict
+from ..common.serializers import STORE_HAS_COORDS, store_to_dict
+from ..common.geo import haversine_km
 
 
 def _geo_label(stores: list) -> str:

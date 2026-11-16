@@ -1,11 +1,11 @@
 """Store descriptions: Google line > AI summary > plain template. Offline."""
 import pytest
 
-from app import importer
+from app.data import importer
 from app.database import SessionLocal, ensure_schema
 from app.ml import descriptions as D
 from app.models import Review, Store, User
-from app.utils import store_to_dict
+from app.common.serializers import store_to_dict
 
 
 def test_blurb_from_categories_keeps_google_lines_rejects_addresses():

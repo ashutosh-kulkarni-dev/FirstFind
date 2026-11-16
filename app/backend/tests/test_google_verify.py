@@ -7,10 +7,10 @@ from datetime import datetime
 
 import pytest
 
-from app import verify_candidates as V
+from app.google import candidates as V
 from app.database import SessionLocal, ensure_schema
-from app.ml import ingest_reviews
-from app.ml.google_places import PlacesBudgetExceeded, parse_reviews
+from app.data import reviews as ingest_reviews
+from app.google.places import PlacesBudgetExceeded, parse_reviews
 from app.models import Review, Store
 
 
@@ -256,7 +256,8 @@ def test_google_ingest_stops_when_key_returns_no_reviews(db):
 
 
 def test_daily_job_shares_one_google_budget(db, tmp_path, monkeypatch):
-    from app import daily_job, importer
+    from app.jobs import daily as daily_job
+    from app.data import importer
 
     fields = ["id", "name", "locality_raw", "city", "instagram", "phone", "open_time",
               "close_time", "timing_note", "notes", "lat", "lng", "geocode_precision",
@@ -285,7 +286,7 @@ def test_daily_job_shares_one_google_budget(db, tmp_path, monkeypatch):
 
     client = FakePlaces(search={"Daily Shop 0": [place("d0", "Daily Shop 0", 12.9700, 77.6400)],
                                 "Daily Shop 1": [place("d1", "Daily Shop 1", 12.9700, 77.6400)]})
-    import app.ml.google_places as GP
+    import app.google.places as GP
     monkeypatch.setattr(GP, "PlacesClient", lambda max_calls: setattr(client, "max_calls", max_calls) or client)
 
     # Budget 2: both calls go to the candidates; nothing is left for store checks.
@@ -318,7 +319,7 @@ def test_verify_survives_a_google_error():
 
 def test_store_verification_checks_own_stores_and_adds_none(db):
     """Daily check: confirm, refresh rating, hide closed, report not-found."""
-    from app.store_check import verify_stores
+    from app.google.store_check import verify_stores
     for st in db.query(Store).all():                       # everything else: checked just now
         st.reviews_fetched_at = datetime.utcnow()
     db.add_all([
@@ -359,11 +360,12 @@ def test_store_verification_checks_own_stores_and_adds_none(db):
 
 
 def test_daily_run_does_not_import_csv_unless_asked(monkeypatch, tmp_path):
-    from app import daily_job, importer
+    from app.jobs import daily as daily_job
+    from app.data import importer
     called = []
     monkeypatch.setattr(importer, "import_stores", lambda *a, **k: called.append("import"))
     monkeypatch.setattr(daily_job, "GOOGLE_PLACES_API_KEY", "")
-    import app.ml.pipeline as P
+    import app.jobs.pipeline as P
     monkeypatch.setattr(P, "run_pipeline", lambda: {"ok": True})
     out = daily_job.run(import_csv=False, prune=False, add_candidates=False)
     assert called == [] and out["pipeline"] == {"ok": True} and "stores" not in out

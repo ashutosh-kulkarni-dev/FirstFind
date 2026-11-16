@@ -16,13 +16,13 @@ from collections import namedtuple
 from functools import lru_cache
 from typing import Optional
 
-from ..config import REPO_ROOT
+from ..config import ASSETS_DIR
 
 log = logging.getLogger(__name__)
 
 PlaceHit = namedtuple("PlaceHit", ["canonical", "lat", "lng"])
 
-_PLACES_ASSET = REPO_ROOT / "data" / "bengaluru_places.json"
+_PLACES_ASSET = ASSETS_DIR / "bengaluru_places.json"
 
 
 @lru_cache(maxsize=1)

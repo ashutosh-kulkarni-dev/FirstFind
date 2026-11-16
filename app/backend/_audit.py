@@ -23,7 +23,7 @@ from starlette.routing import Route                 # noqa: E402
 
 from app.main import app                            # noqa: E402
 from app.middleware import RateLimitMiddleware      # noqa: E402
-from app.seed import seed                           # noqa: E402
+from app.data.seed import seed                           # noqa: E402
 from app.database import SessionLocal               # noqa: E402
 from app.models import Interaction, Store            # noqa: E402
 

@@ -125,3 +125,21 @@ def cluster_stores(rows: list[dict]) -> list[dict]:
             "avg_price": round(float(np.mean(prices)), 0) if prices else None,
         })
     return zones
+
+
+def zone_rows(stores: list) -> list[dict]:
+    """Shared builder for cluster_stores input — used by seed and pipeline so
+    both call sites pass identical fields and can't drift from each other."""
+    return [
+        {
+            "id": s.id,
+            "lat": s.lat,
+            "lng": s.lng,
+            "area": s.area,
+            "locality_raw": s.locality_raw,
+            "price": (s.price_min + s.price_max) / 2 if s.price_min and s.price_max else None,
+            "score": s.experience_score,
+            "review_count": s.review_count,
+        }
+        for s in stores
+    ]

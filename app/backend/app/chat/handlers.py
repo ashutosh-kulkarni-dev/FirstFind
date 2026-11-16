@@ -16,7 +16,7 @@ from typing import Callable, Optional
 from sqlalchemy.orm import Session
 
 from ..models import Store, User, Zone
-from ..utils import is_open_now, now_ist
+from ..common.hours import is_open_now, now_ist
 from .contracts import Draft, Entities
 from .retrieval import (get_known_areas, get_store_by_name,
                         get_stores_for_comparison, rank_stores,

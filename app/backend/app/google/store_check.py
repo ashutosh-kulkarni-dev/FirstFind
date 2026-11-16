@@ -18,8 +18,8 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 
-from .models import Store
-from .verify_candidates import name_similarity
+from ..models import Store
+from .candidates import name_similarity
 
 log = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ def _find(client, store: Store) -> dict | None:
 
 def verify_stores(db, client, limit: int | None = None) -> dict:
     """Check as many stores as the client's call budget allows. Commits as it goes."""
-    from .ml.google_places import PlacesBudgetExceeded
+    from .places import PlacesBudgetExceeded
 
     stores = [s for s in db.query(Store).all()
               if s.lat is not None and s.lng is not None and s.is_active is not False]

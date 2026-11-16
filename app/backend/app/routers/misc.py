@@ -10,7 +10,7 @@ from ..database import get_db
 from ..ml.recommender import user_recs
 from ..models import Store, User, Zone
 from ..schemas import ChatIn
-from ..utils import STORE_HAS_COORDS, has_coords, store_to_dict, zone_to_dict
+from ..common.serializers import STORE_HAS_COORDS, has_coords, store_to_dict, zone_to_dict
 
 router = APIRouter(prefix="/api", tags=["misc"])
 

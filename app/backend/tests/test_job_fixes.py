@@ -12,12 +12,13 @@ import httpx
 import pytest
 from sqlalchemy import event
 
-from app import importer
+from app.data import importer
 from app.database import SessionLocal, engine, ensure_schema
-from app.ml import ingest_reviews, pipeline
+from app.data import reviews as ingest_reviews
+from app.jobs import pipeline
 from app.ml import sentiment as S
 from app.models import Review, Store
-from app.utils import sentiment_summary
+from app.common.serializers import sentiment_summary
 
 
 def test_ensure_schema_issues_no_alter_when_up_to_date():
@@ -221,3 +222,16 @@ def test_prune_removes_only_stores_missing_from_the_csv(tmp_path, db):
     with _pt.raises(RuntimeError):
         importer.prune_stores(db, p)
     db.rollback()
+
+
+def test_runtime_assets_ship_inside_the_package(client):
+    """The deployed image contains only app/. Files the server reads must be
+    there — the metro file used to be refreshed in data/ and never reach the site."""
+    import json
+
+    from app.config import ASSETS_DIR
+    assert ASSETS_DIR.parent.name == "app"
+    for name in ("metro_stations_blr.json", "bengaluru_places.json", "thrift_advice.json"):
+        json.loads((ASSETS_DIR / name).read_text(encoding="utf-8"))
+    lines = client.get("/api/metro/stations").json()["lines"]
+    assert {"Purple Line", "Green Line"} <= {ln["name"] for ln in lines}

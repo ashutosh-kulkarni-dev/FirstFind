@@ -77,11 +77,10 @@ LINE_CONFIG = [
     {"match": ["blue"],   "id": "blue",   "name": "Blue Line",   "color": "#0072BC"},
 ]
 
-OUTPUT_PATH = Path(__file__).parent.parent / "data" / "metro_stations_blr.json"
-# Keep the production copy in sync — the FastAPI image only ships files under
-# app/backend/app/, so the Docker build picks this one up, not the data/ one.
-PACKAGE_MIRROR = (Path(__file__).parent.parent / "app" / "backend" / "app"
-                  / "metro_stations_blr.json")
+# The one copy. It lives inside the backend package because the deployed
+# image only contains app/backend/app/.
+OUTPUT_PATH = (Path(__file__).parent.parent / "app" / "backend" / "app" / "assets"
+               / "metro_stations_blr.json")
 
 # ── Overpass query ─────────────────────────────────────────────────────────────
 
@@ -367,10 +366,8 @@ def main():
     print("Validation passed.")
 
     serialized = json.dumps(result, indent=2, ensure_ascii=False)
-    for path in (OUTPUT_PATH, PACKAGE_MIRROR):
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(serialized, encoding="utf-8")
-        print(f"Wrote {path}")
+    OUTPUT_PATH.write_text(serialized, encoding="utf-8")
+    print(f"Wrote {OUTPUT_PATH}")
     print(f"({sum(len(l['stations']) for l in result['lines'])} total stations)")
 
 
