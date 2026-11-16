@@ -28,7 +28,7 @@ AI-powered store discovery for Bengaluru — search by area, budget, or vibe, ch
 ## Highlights worth a code read
 
 - [app/backend/app/routers/auth_routes.py](app/backend/app/routers/auth_routes.py) — Google ID-token verification, link-existing-account flow, JWT issuance.
-- [app/backend/app/ml/pipeline.py](app/backend/app/ml/pipeline.py) — background sentiment pipeline with graceful fallback.
+- [app/backend/app/jobs/pipeline.py](app/backend/app/jobs/pipeline.py) — background sentiment pipeline with graceful fallback.
 - [app/frontend/src/components/MapExplorer.jsx](app/frontend/src/components/MapExplorer.jsx) — Leaflet integration with ResizeObserver-driven tile invalidation (so the map re-tiles correctly on layout changes).
 - [app/frontend/src/components/ChatCore.jsx](app/frontend/src/components/ChatCore.jsx) — chat UI with inline MiniMap context bubbles.
 

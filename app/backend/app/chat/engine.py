@@ -24,7 +24,7 @@ from ..config import (CHAT_ADVICE, CHAT_GEO, CHAT_MAP, CHAT_STATE,
 from ..ml.llm import phrase_reply
 from ..ml.recommender import user_recs
 from ..models import Store, User
-from ..utils import has_coords, store_to_dict
+from ..common.serializers import has_coords, store_to_dict
 from .contracts import ChatResult, ChatSession, Draft, Entities, Trip
 from .handlers import (GREETING_SUGGESTIONS, SUGGESTIONS, HandlerCtx,
                        dispatch)

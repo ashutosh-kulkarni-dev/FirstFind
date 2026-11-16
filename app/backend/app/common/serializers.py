@@ -1,12 +1,10 @@
-"""Shared helpers: serialization, geo, opening hours."""
-import datetime as dt
-import hashlib
-import math
+"""What the API sends for a store, a zone and a review summary — and which
+stores are visible at all."""
 from typing import Optional
 
-from .models import Store, Zone
-
-DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+from ..models import Store, Zone
+from .geo import haversine_km
+from .hours import is_open_now
 
 # Store visibility policy: a store is shown to users (and placed on the map)
 # only once it has real coordinates. Stores whose location couldn't be geocoded
@@ -25,14 +23,6 @@ def has_coords(store: Store) -> bool:
     return (store is not None and store.lat is not None
             and store.lng is not None and store.is_active is not False)
 
-# FirstFind is Bengaluru-only; opening hours are always evaluated in IST
-# so "open now" is correct regardless of the server's local timezone.
-IST = dt.timezone(dt.timedelta(hours=5, minutes=30))
-
-
-def now_ist() -> dt.datetime:
-    return dt.datetime.now(IST)
-
 
 def sentiment_summary(reviews: list) -> dict:
     """Count reviews by sentiment label. `reviews`: any objects with `.sentiment`.
@@ -49,35 +39,8 @@ def sentiment_summary(reviews: list) -> dict:
             "unscored": len(reviews) - pos - neg - neu, "total": len(reviews)}
 
 
-def haversine_km(lat1, lng1, lat2, lng2) -> float:
-    r = 6371.0
-    p1, p2 = math.radians(lat1), math.radians(lat2)
-    dp = math.radians(lat2 - lat1)
-    dl = math.radians(lng2 - lng1)
-    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
-    return 2 * r * math.asin(math.sqrt(a))
-
-
-def is_open_now(store: Store, now: Optional[dt.datetime] = None) -> Optional[bool]:
-    """True/False if we have enough info, None if unknown."""
-    now = now or now_ist()
-    day = DAYS[now.weekday()]
-    closed = [d for d in (store.closed_days or "").split(",") if d]
-    if day in closed:
-        return False
-    if not store.open_time or not store.close_time:
-        return None
-    try:
-        o_h, o_m = map(int, store.open_time.split(":"))
-        c_h, c_m = map(int, store.close_time.split(":"))
-    except ValueError:
-        return None
-    t = now.hour * 60 + now.minute
-    return (o_h * 60 + o_m) <= t <= (c_h * 60 + c_m)
-
-
 def store_to_dict(store: Store, user_lat=None, user_lng=None) -> dict:
-    from .ml.descriptions import describe   # local: keeps utils import-light
+    from ..ml.descriptions import describe   # local: avoids an import cycle
     description, description_source = describe(store)
     d = {
         "id": store.id,
@@ -130,33 +93,3 @@ def zone_to_dict(zone: Zone, stores: Optional[list] = None) -> dict:
     if stores is not None:
         d["top_stores"] = [store_to_dict(s) for s in stores]
     return d
-
-
-# Imported (Google) reviews are shown under a made-up name, not the real
-# reviewer's. The name is picked from the review's own id, so a review keeps
-# the same name on every page load and every deploy.
-_ALIAS_FIRST = ["Aarav", "Aditi", "Akash", "Ananya", "Arjun", "Bhavna", "Chetan", "Deepa",
-                "Divya", "Farhan", "Gauri", "Harish", "Ishaan", "Jaya", "Karthik", "Kavya",
-                "Lakshmi", "Manoj", "Meera", "Naveen", "Neha", "Nikhil", "Pooja", "Pranav",
-                "Priya", "Rahul", "Rekha", "Rohan", "Sahana", "Sanjay", "Shreya", "Sneha",
-                "Suresh", "Tanvi", "Tejas", "Uma", "Varun", "Vidya", "Vikram", "Zoya"]
-_ALIAS_LAST = "ABCDGHJKMNPRSTV"
-
-
-def alias_for(store_id, key) -> str:
-    seed = f"{store_id}|{key}"
-    h = int(hashlib.sha1(seed.encode("utf-8")).hexdigest(), 16)
-    first = _ALIAS_FIRST[h % len(_ALIAS_FIRST)]
-    last = _ALIAS_LAST[(h // len(_ALIAS_FIRST)) % len(_ALIAS_LAST)]
-    return f"{first} {last}."
-
-
-def reviewer_alias(review) -> str:
-    return alias_for(review.store_id, review.external_id or review.id)
-
-
-def review_display_name(review) -> str:
-    """App reviews show the member's own name; imported ones show an alias."""
-    if (review.source or "app") == "google":
-        return reviewer_alias(review)
-    return review.user.name

@@ -5,7 +5,7 @@ from ..auth import get_current_user
 from ..database import get_db
 from ..models import SavedList, SavedListItem, Store, User
 from ..schemas import SavedListIn, SavedListPatch
-from ..utils import has_coords, store_to_dict
+from ..common.serializers import has_coords, store_to_dict
 
 router = APIRouter(prefix="/api/lists", tags=["lists"])
 

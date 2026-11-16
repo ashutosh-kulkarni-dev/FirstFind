@@ -15,16 +15,16 @@ Interactive models stay on the request path by design: single-review sentiment
 (POST /reviews) and the chatbot. This job handles bulk/consistency work so no
 user ever waits on it.
 
-Run: python -m app.ml.pipeline
+Run: python -m app.jobs.pipeline
 """
 import logging
 
 from ..database import SessionLocal
 from ..models import Review, Store, Zone
-from ..seed import _zone_rows
-from . import sentiment as sentiment_ml
-from . import zones as zones_ml
-from .recommender import recommender
+from ..ml.zones import zone_rows
+from ..ml import sentiment as sentiment_ml
+from ..ml import zones as zones_ml
+from ..ml.recommender import recommender
 
 log = logging.getLogger(__name__)
 
@@ -78,7 +78,7 @@ def recompute_store_scores(db) -> int:
 def recompute_zones(db) -> int:
     """Stage 3: recluster stores into zones and rewrite the Zone table."""
     stores = db.query(Store).all()
-    zone_dicts = zones_ml.cluster_stores(_zone_rows(stores))
+    zone_dicts = zones_ml.cluster_stores(zone_rows(stores))
 
     for s in stores:
         s.zone_id = None
@@ -112,7 +112,7 @@ def run_pipeline(db=None) -> dict:
         db.commit()
         n_zones = recompute_zones(db)          # before recommender: zone_id feeds content features
         db.commit()
-        from .descriptions import generate_descriptions
+        from ..ml.descriptions import generate_descriptions
         described = generate_descriptions(db)  # AI summaries; no-op without GROQ_API_KEY
         db.commit()
         recommender.build(db)

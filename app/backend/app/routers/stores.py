@@ -11,8 +11,10 @@ from ..ml.recommender import similar_ids
 from ..ml.tasks import refit_recommender
 from ..models import Interaction, Review, Store, StoreSimilarity, User
 from ..schemas import ReviewIn
-from ..utils import (STORE_HAS_COORDS, has_coords, haversine_km, is_open_now,
-                     review_display_name, sentiment_summary, store_to_dict)
+from ..common.serializers import STORE_HAS_COORDS, has_coords, sentiment_summary, store_to_dict
+from ..common.geo import haversine_km
+from ..common.hours import is_open_now
+from ..common.aliases import review_display_name
 
 router = APIRouter(prefix="/api/stores", tags=["stores"])
 

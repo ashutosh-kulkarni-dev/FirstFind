@@ -14,17 +14,17 @@ promoted. For `not_found` the closest thing Google did return is kept in the
 `near_miss` column so a person can judge it.
 
 To add a store yourself, append a candidate and let the daily job verify it:
-    python -m app.verify_candidates --add "Store Name" --area "Indiranagar" --type thrift
+    python -m app.google.candidates --add "Store Name" --area "Indiranagar" --type thrift
 
 These calls count against the Google key's quota. Nothing is sent without
 --verify, each run is capped by --limit, and progress is saved after every row
 so a run can be stopped and resumed. Rows already checked are never re-sent.
 
 Run from app/backend (needs GOOGLE_PLACES_API_KEY with "Places API (New)" enabled):
-    python -m app.verify_candidates                  # status report, no API calls
-    python -m app.verify_candidates --verify --limit 90
-    python -m app.verify_candidates --promote        # dry run: what would be added
-    python -m app.verify_candidates --promote --write
+    python -m app.google.candidates                  # status report, no API calls
+    python -m app.google.candidates --verify --limit 90
+    python -m app.google.candidates --promote        # dry run: what would be added
+    python -m app.google.candidates --promote --write
 """
 from __future__ import annotations
 
@@ -38,8 +38,8 @@ from datetime import date
 from difflib import SequenceMatcher
 from pathlib import Path
 
-from .config import CITY_CENTER, REPO_ROOT
-from .utils import haversine_km
+from ..config import CITY_CENTER, REPO_ROOT
+from ..common.geo import haversine_km
 
 log = logging.getLogger(__name__)
 
@@ -232,7 +232,7 @@ def unchecked(cands: list[dict]) -> list[dict]:
 def verify(client, rows: list[dict], limit: int, on_progress=None,
            reviews: dict | None = None) -> Counter:
     """Check up to `limit` unchecked rows in place. Returns a status tally."""
-    from .ml.google_places import PlacesBudgetExceeded, parse_reviews
+    from .places import PlacesBudgetExceeded, parse_reviews
 
     tally: Counter = Counter()
     reviews = reviews if reviews is not None else {}
@@ -413,8 +413,8 @@ def main() -> None:
         print(f"Added candidate {row['osm_id']}: {row['name']} — it will be checked on the next --verify run.")
 
     if args.verify:
-        from .config import GOOGLE_PLACES_API_KEY
-        from .ml.google_places import PlacesClient
+        from ..config import GOOGLE_PLACES_API_KEY
+        from .places import PlacesClient
         if not GOOGLE_PLACES_API_KEY:
             raise SystemExit("GOOGLE_PLACES_API_KEY is not set. Add it to app/backend/.env "
                              "(a Google Cloud key with \"Places API (New)\" enabled).")
@@ -436,7 +436,7 @@ def main() -> None:
         if len(new_stores) > 15:
             print(f"    ... and {len(new_stores) - 15} more")
         if args.write:
-            print("WRITTEN. Run `python -m app.importer --write` to load them into the database.")
+            print("WRITTEN. Run `python -m app.data.importer --write` to load them into the database.")
         else:
             print("DRY RUN — nothing written. Add --write to commit to the CSV files.")
             return      # the in-memory "promoted" marks were not saved; don't report them

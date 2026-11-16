@@ -86,8 +86,8 @@ jobs:
         working-directory: app/backend
         # verify our stores on Google (hide closed, refresh ratings) ->
         # sentiment for new reviews / AI scores / zones / recommendations.
-        # See app/backend/app/daily_job.py.
-        run: python -m app.daily_job
+        # See app/backend/app/jobs/daily.py.
+        run: python -m app.jobs.daily
 
       - name: Commit updated data files
         # The CSVs record which candidates were checked and which stores were

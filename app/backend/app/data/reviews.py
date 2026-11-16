@@ -1,7 +1,7 @@
 """External review ingestion — Stage 0 of the ML batch pipeline.
 
 Loads reviews from external sources into the `reviews` table so the existing
-sentiment + score pipeline (`pipeline.py`) can process them.
+sentiment + score pipeline (`jobs/pipeline.py`) can process them.
 
 Sources (in priority order):
   1. Local CSV          — `data/import/reviews.csv` (keyed by store id).
@@ -16,15 +16,15 @@ Responsible by design:
     ignores the date: Google only gives relative dates ("2 weeks ago") that
     change every week, which would re-insert the same review on each run.
   - Bot attribution: all external reviews are attributed to the system user
-    `reviews-bot@thriftfind.local` (seeded by seed.py).
+    `reviews-bot@thriftfind.local` (created on first use).
   - Quota-safe: Places calls are throttled, capped by INGEST_MAX_CALLS, and
     cache `google_place_id` per store so Find Place runs only once ever.
   - Non-destructive: never touches existing app-user reviews.
 
 Run:
-    python -m app.ml.ingest_reviews               # CSV only
-    python -m app.ml.ingest_reviews --run-pipeline  # CSV + score pipeline
-    python -m app.ml.ingest_reviews --google --run-pipeline  # + Google Places
+    python -m app.data.reviews               # CSV only
+    python -m app.data.reviews --run-pipeline  # CSV + score pipeline
+    python -m app.data.reviews --google --run-pipeline  # + Google Places
 """
 from __future__ import annotations
 
@@ -35,12 +35,11 @@ import re
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from ..config import GOOGLE_PLACES_API_KEY, INGEST_MAX_DETAILS
+from ..common.aliases import alias_for
+from ..config import BOT_EMAIL, GOOGLE_PLACES_API_KEY, INGEST_MAX_DETAILS
 from ..database import SessionLocal
 from ..models import Review, Store, User
-from ..seed import BOT_EMAIL
 
-from ..utils import alias_for  # noqa: E402
 
 log = logging.getLogger(__name__)
 
@@ -209,7 +208,7 @@ def ingest_from_google(db, bot: User, limit: int | None = None,
                        seen: set[tuple[str, str]] | None = None,
                        client=None) -> dict:
     """Fetch current reviews for each store from the Google Places API (New)."""
-    from .google_places import PlacesBudgetExceeded, PlacesClient, parse_reviews
+    from ..google.places import PlacesBudgetExceeded, PlacesClient, parse_reviews
 
     if client is None:
         if not GOOGLE_PLACES_API_KEY:
@@ -373,7 +372,7 @@ if __name__ == "__main__":
                          "check the CSV path and that stores are imported.")
 
     if args.run_pipeline:
-        from .pipeline import run_pipeline
+        from ..jobs.pipeline import run_pipeline
         print("Running ML pipeline...")
         result = run_pipeline()
         print(f"Pipeline: {result['reviews_scored']} scored, "

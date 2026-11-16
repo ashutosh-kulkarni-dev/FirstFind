@@ -15,90 +15,18 @@ Raw locality strings are canonicalised into clean area names, and stores
 missing coordinates are backfilled from their area centroid so every store
 still appears on the map and in a zone.
 
-Run: python -m app.seed
+Run: python -m app.data.seed
 """
 import json
-import re
 
-from .config import STORES_JSON
-from .database import Base, SessionLocal, engine
-from .ml import zones as zones_ml
-from .models import Store, User, Zone
+from ..config import STORES_JSON
+from ..database import Base, SessionLocal, engine
+from ..ml import zones as zones_ml
+from ..models import Store, User, Zone
 
-# System account used to attribute all externally-ingested reviews.
-# auth_provider="system" distinguishes it from real users everywhere.
-BOT_EMAIL = "reviews-bot@thriftfind.local"
-BOT_NAME = "Reviews Bot"
-
-
-# Canonical Bengaluru localities. Raw `locality_raw` values in the source
-# data are messy ("J.P Nagar 5th Phase", "3rd Phase,JP Nagar", "Electronic
-# City,Bengaluru", "Koramangala 8th Block"…), which fragmented the same
-# neighbourhood into many "areas" and broke exact-match filtering. Any raw
-# string containing one of these (ignoring case/punctuation/spacing) is
-# collapsed to the canonical name.
-KNOWN_AREAS = [
-    "Koramangala", "Indiranagar", "JP Nagar", "HSR Layout", "BTM Layout",
-    "Jayanagar", "Whitefield", "Electronic City", "Commercial Street",
-    "Church Street", "Shivaji Nagar", "Rajajinagar", "Kothanur",
-    "Kalasipalaya", "KR Market", "Lingarajapuram", "Mathikere",
-    "Bannerghatta Road", "Chandra Layout", "Sriramapura",
-    "Sivanchetti Gardens", "Richards Town", "Jayamahal", "Bendre Nagar",
-    # More specific must come before shorter substrings they contain:
-    # "Btm 1st Stage" before "1st Stage" (both match "btm 1st stage" input,
-    # but "btm1ststage" ⊄ "1ststage" so ordering only matters the other way).
-    "S G Palya", "Btm 1st Stage", "1st Stage",
-    "Old Madiwala", "Malleshwaram", "Hbr Layout",
-]
-
-_STREET_SUFFIX_RE = re.compile(r"\s+(main\s+road|road|rd|street|st)\.?$", re.I)
-
-
-def _squash(s: str) -> str:
-    """Lowercase and drop everything but letters/digits, for fuzzy matching."""
-    return re.sub(r"[^a-z0-9]", "", s.lower())
-
-
-def canonical_area(raw: str) -> str:
-    """Map a raw locality string to a clean, canonical area name."""
-    raw = (raw or "").strip()
-    if not raw:
-        return "Bengaluru"
-    squashed = _squash(raw)
-    for area in KNOWN_AREAS:
-        if _squash(area) in squashed:
-            return area
-    # Fallback: strip a trailing ", Bengaluru", take the last comma segment
-    # (usually the locality). If that segment is a bare generic suffix word
-    # (e.g. "Bapuji,Nagar" -> "Nagar"), merge it with the preceding segment.
-    cleaned = re.sub(r",?\s*bengaluru$", "", raw, flags=re.I).strip()
-    parts = [p.strip() for p in cleaned.split(",") if p.strip()]
-    if not parts:
-        return "Bengaluru"
-    seg = parts[-1]
-    generic = {"nagar", "layout", "road", "cross", "circle", "block", "phase", "stage"}
-    if _squash(seg) in generic and len(parts) >= 2:
-        seg = f"{parts[-2]} {seg}"
-    seg = _STREET_SUFFIX_RE.sub("", seg).strip()
-    return seg or cleaned or "Bengaluru"
-
-
-def _zone_rows(stores: list) -> list[dict]:
-    """Shared builder for cluster_stores input — used by seed and pipeline so
-    both call sites pass identical fields and can't drift from each other."""
-    return [
-        {
-            "id": s.id,
-            "lat": s.lat,
-            "lng": s.lng,
-            "area": s.area,
-            "locality_raw": s.locality_raw,
-            "price": (s.price_min + s.price_max) / 2 if s.price_min and s.price_max else None,
-            "score": s.experience_score,
-            "review_count": s.review_count,
-        }
-        for s in stores
-    ]
+from ..config import BOT_EMAIL, BOT_NAME
+from ..common.areas import canonical_area
+from ..ml.zones import zone_rows
 
 
 def seed():
@@ -187,7 +115,7 @@ def _seed_all(db):
     db.flush()
 
     # ---- 2. geospatial zones (clustered from real coordinates) ----
-    zone_dicts = zones_ml.cluster_stores(_zone_rows(stores))
+    zone_dicts = zones_ml.cluster_stores(zone_rows(stores))
     for z in zone_dicts:
         zone = Zone(label=z["label"], center_lat=z["center_lat"],
                     center_lng=z["center_lng"], radius_km=z["radius_km"],

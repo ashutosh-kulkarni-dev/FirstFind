@@ -1,6 +1,6 @@
 """Idempotent store importer: data/import/stores.csv -> the `stores` table.
 
-Unlike `seed.py` (which DROPS every table, users included), this is safe to run
+Unlike `data/seed.py` (which DROPS every table, users included), this is safe to run
 against a live database as often as you like:
 
   * Upsert by store id — new ids are inserted, existing ids are updated.
@@ -13,9 +13,9 @@ against a live database as often as you like:
   * Never deletes anything.
 
 Run from app/backend:
-    python -m app.importer                       # dry-run report
-    python -m app.importer --write               # commit
-    python -m app.importer --write --run-pipeline  # + zones / scores / recs
+    python -m app.data.importer                       # dry-run report
+    python -m app.data.importer --write               # commit
+    python -m app.data.importer --write --run-pipeline  # + zones / scores / recs
 """
 from __future__ import annotations
 
@@ -27,11 +27,11 @@ import re
 from collections import Counter
 from pathlib import Path
 
-from .config import REPO_ROOT
-from .database import Base, SessionLocal, engine, ensure_schema
-from .models import Store
-from .seed import KNOWN_AREAS, _squash, canonical_area
-from .utils import haversine_km
+from ..common.areas import KNOWN_AREAS, _squash, canonical_area
+from ..common.geo import haversine_km
+from ..config import ASSETS_DIR, REPO_ROOT
+from ..database import Base, SessionLocal, engine, ensure_schema
+from ..models import Store
 
 log = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ def clean_hours(open_raw, close_raw, note_raw):
     if close_time is None and note.lower().startswith("closes"):
         close_time = clean_time(note)
     # Midnight opening = unknown/placeholder in this dataset (same rule as
-    # seed.py) — drop both so "open now" is never falsely true.
+    # data/seed.py) — drop both so "open now" is never falsely true.
     if open_time == "00:00":
         open_time = close_time = None
     permanently_closed = bool(_CLOSED_FOR_GOOD_RE.search(note))
@@ -213,7 +213,7 @@ def _is_junk_area(area: str) -> bool:
 
 
 NEAREST_PLACE_MAX_KM = 3.0
-_PLACES_JSON = REPO_ROOT / "data" / "bengaluru_places.json"
+_PLACES_JSON = ASSETS_DIR / "bengaluru_places.json"
 _places_cache: list | None = None
 
 
@@ -239,7 +239,7 @@ def derive_area(locality: str, address: str | None,
                 lat: float | None = None, lng: float | None = None) -> str:
     """Best neighbourhood name for a store.
 
-    1. A known locality named in `locality_raw` (seed.py's rule).
+    1. A known locality named in `locality_raw` (common/areas.py's rule).
     2. Else read it from the street address: Google formats these as
        "..., <locality>, Bengaluru, Karnataka 5600xx", so walk the segments
        before the city backwards and take the first known locality, falling
@@ -441,8 +441,7 @@ def prune_stores(db, csv_path: Path | None = None, max_share: float = 0.25) -> d
     Deliberate, destructive and never part of a normal run. Refuses to act if
     it would remove more than max_share of the stores — that means the CSV is
     wrong, not the database."""
-    from .models import (Interaction, Review, SavedListItem, StoreSimilarity,
-                         UserRecommendation)
+    from ..models import Interaction, Review, SavedListItem, StoreSimilarity, UserRecommendation
     csv_path = csv_path or STORES_CSV
     with open(csv_path, encoding="utf-8-sig", newline="") as f:
         keep = {(r.get("id") or "").strip() for r in csv.DictReader(f)} - {""}
@@ -511,7 +510,7 @@ def main() -> None:
         db.close()
 
     if args.write and args.run_pipeline:
-        from .ml.pipeline import run_pipeline
+        from ..jobs.pipeline import run_pipeline
         print("Running ML pipeline...")
         print(run_pipeline())
 

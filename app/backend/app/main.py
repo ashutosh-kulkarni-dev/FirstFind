@@ -37,13 +37,13 @@ async def lifespan(app: FastAPI):
     # NOT done here: seed() drops and recreates every table, so running it from
     # startup races (and can wipe data) when Uvicorn runs >1 worker — each
     # process runs lifespan. Seeding is now an explicit one-shot CLI step
-    # (`python -m app.seed`); startup only warns if the DB looks empty.
+    # (`python -m app.data.seed`); startup only warns if the DB looks empty.
     Base.metadata.create_all(engine)
     # create_all creates missing tables but never ALTERs an existing one, so
     # columns added after the initial schema are applied here (idempotent).
     ensure_schema()
     if _db_empty():
-        log.warning("Database looks empty — run `python -m app.seed` to populate it. "
+        log.warning("Database looks empty — run `python -m app.data.seed` to populate it. "
                     "Skipping auto-seed (unsafe to seed from startup with multiple workers).")
     build_recommender()
     # Sentiment runs via the HuggingFace Inference API (no local model). Nudge the

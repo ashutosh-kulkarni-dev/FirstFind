@@ -6,12 +6,12 @@ import csv
 
 import pytest
 
-from app import importer
+from app.data import importer
 from app.database import SessionLocal, ensure_schema
-from app.ml import ingest_reviews
+from app.data import reviews as ingest_reviews
 from app.ml import sentiment as S
 from app.models import Review, Store
-from app.utils import has_coords
+from app.common.serializers import has_coords
 
 
 # ---------------------------------------------------------------- cleaning --
