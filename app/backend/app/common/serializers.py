@@ -63,6 +63,7 @@ def store_to_dict(store: Store, user_lat=None, user_lng=None) -> dict:
         "zone_id": store.zone_id,
         "is_open_now": is_open_now(store),
         "store_type": store.store_type or "thrift",
+        "tags": [t for t in (store.tags or "").split(",") if t],
         "address": store.address,
         "description": description,
         # "google" | "ai" | "admin" | "auto" (plain line built from category + area)

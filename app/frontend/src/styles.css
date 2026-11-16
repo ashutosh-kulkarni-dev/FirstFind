@@ -447,8 +447,10 @@ html.dark .review-item.flagged { background: #1e1600; border-color: #7a5000; }
 }
 
 /* ---------------- page layout shells (class-based so breakpoints can restack) ---- */
-.explore-shell { flex: 1; display: grid; grid-template-columns: 360px 1fr; height: calc(100vh - 60px); overflow: hidden; }
-.explore-aside { display: flex; flex-direction: column; background: var(--surface); border-right: 1px solid var(--line); overflow: hidden; height: 100%; }
+/* flex: none + a fixed height: with flex: 1 the page grew to fit the sidebar
+   content, so long lists ran off the screen instead of scrolling. */
+.explore-shell { flex: none; display: grid; grid-template-columns: 360px 1fr; grid-template-rows: minmax(0, 1fr); height: calc(100vh - 60px); overflow: hidden; }
+.explore-aside { display: flex; flex-direction: column; min-height: 0; background: var(--surface); border-right: 1px solid var(--line); overflow-x: hidden; overflow-y: auto; height: 100%; }
 .explore-map { position: relative; overflow: hidden; height: 100%; }
 
 /* ---------------- shared small pieces ---------------- */
@@ -481,7 +483,7 @@ html.dark .review-item.flagged { background: #1e1600; border-color: #7a5000; }
 .explore-count .anton { font-size: 18px; color: var(--ink); }
 .explore-reset { padding: 5px 11px; border-radius: 16px; font-size: 11px; }
 .explore-draw { padding: 0 22px 8px; flex-shrink: 0; }
-.explore-cluster { flex: 1; padding: 0 22px 12px; overflow-y: auto; min-height: 0; display: flex; flex-direction: column; gap: 12px; }
+.explore-cluster { flex: 1; padding: 0 22px 12px; overflow-y: auto; min-height: 240px; display: flex; flex-direction: column; gap: 12px; }
 .explore-cluster-actions { display: flex; gap: 8px; }
 .explore-hint { padding: 14px; border: 1.5px dashed var(--line); border-radius: 12px; background: var(--surface-2); color: var(--muted); font-size: 12.5px; line-height: 1.5; text-align: center; }
 .explore-selected { padding: 14px 22px; border-top: 1px solid var(--line-2); flex-shrink: 0; }
@@ -504,6 +506,26 @@ html.dark .review-item.flagged { background: #1e1600; border-color: #7a5000; }
 .explore-list-count { font-size: 11px; color: var(--muted-2); font-weight: 500; flex-shrink: 0; margin-left: 6px; }
 .explore-lists-more { font-size: 12px; color: var(--brand-blue-2); font-weight: 600; margin-top: 2px; }
 
+/* ---------------- explore filters + results list ---------------- */
+.explore-filter-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.explore-filter-pair .select { width: 100%; }
+.explore-draw summary { cursor: pointer; list-style: none; padding: 8px 12px; margin-bottom: 8px; border: 1px solid var(--line); border-radius: 10px; font-size: 12.5px; font-weight: 700; color: var(--brand-blue); background: var(--surface); user-select: none; }
+.explore-draw summary::-webkit-details-marker { display: none; }
+.explore-draw summary::after { content: "▾"; float: right; color: var(--muted-2); }
+.explore-draw[open] summary::after { content: "▴"; }
+.explore-tip { font-size: 11.5px; color: var(--muted-2); line-height: 1.5; text-align: center; padding: 2px 6px 6px; }
+.results-list { display: flex; flex-direction: column; gap: 6px; }
+.result-row { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface-2); cursor: pointer; transition: border-color .15s ease, background .15s ease; }
+.result-row:hover, .result-row:focus-visible { border-color: var(--brand-blue-2); outline: none; }
+.result-row-on { border-color: var(--brand-blue-2); background: var(--surface); box-shadow: 0 0 0 2px rgba(20,120,209,.14); }
+.result-main { flex: 1; min-width: 0; }
+.result-name { font-size: 12.5px; font-weight: 700; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.result-meta { margin-top: 1px; font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.result-open { flex-shrink: 0; width: 26px; height: 26px; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--muted); font-size: 13px; cursor: pointer; }
+.result-open:hover { border-color: var(--brand-blue-2); color: var(--brand-blue-2); }
+.results-more { align-self: center; margin-top: 4px; }
+.tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+
 /* ---------------- responsive ---------------- */
 /* Tablet: tighten the top nav so it doesn't overflow. */
 @media (max-width: 860px) {
@@ -516,7 +538,7 @@ html.dark .review-item.flagged { background: #1e1600; border-color: #7a5000; }
 
 /* Phone: stack the two-column app views and simplify the landing hero. */
 @media (max-width: 760px) {
-  .explore-shell { grid-template-columns: 1fr; overflow: visible; }
+  .explore-shell { grid-template-columns: 1fr; grid-template-rows: auto; height: auto; overflow: visible; }
   .explore-aside { max-height: 48vh; border-right: 0; border-bottom: 1px solid var(--line); }
   .explore-map { min-height: 60vh; }
 

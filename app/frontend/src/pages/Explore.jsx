@@ -11,6 +11,7 @@ import DrawControls from '../components/zones/DrawControls'
 import ClusterPanel from './explore/ClusterPanel'
 import FilterPanel from './explore/FilterPanel'
 import MyListsPanel from './explore/MyListsPanel'
+import ResultsList from './explore/ResultsList'
 import SaveListModal from './explore/SaveListModal'
 import SelectedStoreCard from './explore/SelectedStoreCard'
 
@@ -20,7 +21,7 @@ const BLR_DEFAULT = [12.9716, 77.5946]
 // the sidebar lives in ./explore/*.
 export default function Explore() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { user } = useAuth()
   const guard = useRequireAuth()
 
@@ -29,13 +30,18 @@ export default function Explore() {
   const init = useRef(parseZoneParams(searchParams)).current
 
   const [areas, setAreas] = useState([])
+  const [facets, setFacets] = useState({ store_types: [], tags: [] })
   const [stores, setStores] = useState([])
   const [metroLines, setMetroLines] = useState([])
   const [metroOn, setMetroOn] = useState(true)
 
-  const [q, setQ] = useState('')
-  const [area, setArea] = useState('')
-  const [openOnly, setOpenOnly] = useState(false)
+  // Filters start from the address bar (?q&area&type&tag&open) and are written
+  // back to it, so Back, refresh and shared links keep them.
+  const [q, setQ] = useState(searchParams.get('q') || '')
+  const [area, setArea] = useState(searchParams.get('area') || '')
+  const [storeType, setStoreType] = useState(searchParams.get('type') || '')
+  const [tag, setTag] = useState(searchParams.get('tag') || '')
+  const [openOnly, setOpenOnly] = useState(searchParams.get('open') === '1')
   const [selectedId, setSelectedId] = useState(null)
 
   // Cluster: null centre = off. Enabled by double-clicking the map (or a deep-link).
@@ -55,6 +61,7 @@ export default function Explore() {
 
   useEffect(() => {
     api.areas().then(setAreas).catch(() => {})
+    api.facets().then(setFacets).catch(() => {})
     api.metroStations().then(r => setMetroLines(r?.lines ?? [])).catch(() => {})
   }, [])
 
@@ -79,6 +86,8 @@ export default function Explore() {
     const params = {}
     if (q) params.q = q
     if (area) params.area = area
+    if (storeType) params.store_type = storeType
+    if (tag) params.tag = tag
     const controller = new AbortController()
     const t = setTimeout(() => {
       api.stores(params, { signal: controller.signal })
@@ -86,10 +95,27 @@ export default function Explore() {
         .catch(() => {}) // includes AbortError from a superseded search
     }, 200)
     return () => { clearTimeout(t); controller.abort() }
-  }, [q, area])
+  }, [q, area, storeType, tag])
+
+  useEffect(() => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      const put = (key, value) => (value ? next.set(key, value) : next.delete(key))
+      put('q', q); put('area', area); put('type', storeType); put('tag', tag); put('open', openOnly ? '1' : '')
+      return next
+    }, { replace: true })
+  }, [q, area, storeType, tag, openOnly, setSearchParams])
 
   // "Open now only" is a client-side filter on the already-fetched set.
-  const shown = useMemo(() => (openOnly ? stores.filter(s => s.open) : stores), [stores, openOnly])
+  const shown = useMemo(() => {
+    const kindLabel = Object.fromEntries(facets.store_types.map(k => [k.value, k.label]))
+    const tagLabel = Object.fromEntries(facets.tags.map(t => [t.value, t.label]))
+    return (openOnly ? stores.filter(s => s.open) : stores).map(s => ({
+      ...s,
+      kindLabel: kindLabel[s.storeType] || '',
+      tagLabels: s.tags.map(t => tagLabel[t]).filter(Boolean),
+    }))
+  }, [stores, openOnly, facets])
 
   const selected = useMemo(() => shown.find(s => s.id === selectedId), [shown, selectedId])
 
@@ -99,7 +125,7 @@ export default function Explore() {
     [shown, center, radiusKm],
   )
 
-  const reset = () => { setQ(''); setArea(''); setOpenOnly(false) }
+  const reset = () => { setQ(''); setArea(''); setStoreType(''); setTag(''); setOpenOnly(false) }
 
   const handleGps = () => {
     if (!navigator.geolocation) return
@@ -164,19 +190,37 @@ export default function Explore() {
         </div>
 
         <FilterPanel q={q} onQ={setQ} area={area} onArea={setArea} areas={areas}
+          storeType={storeType} onStoreType={setStoreType} kinds={facets.store_types}
+          tag={tag} onTag={setTag} tags={facets.tags}
           openOnly={openOnly} onOpenOnly={v => { setOpenOnly(v); setSelectedId(null) }}
           count={shown.length} onReset={reset} />
 
         {/* Distance slider — always visible */}
-        <div className="explore-draw">
+        {/* Folded away until wanted, so the results list has room. Opens by
+            itself once a cluster pin is on the map. */}
+        <details className="explore-draw" open={!!center || undefined}>
+          <summary>Group stores by distance</summary>
           <DrawControls radius={radiusKm} onRadius={setRadiusKm} onGps={handleGps} />
+        </details>
+
+        {/* The scrolling middle: the cluster once a pin is dropped, else the results */}
+        <div className="explore-cluster">
+          {center ? (
+            <ClusterPanel stores={clusterStores} radiusKm={radiusKm}
+              onOpenStore={id => navigate(`/store/${id}`)}
+              onSave={openSavePrompt} onClear={() => setCenter(null)} />
+          ) : (
+            <>
+              <ResultsList stores={shown} selectedId={selectedId} onSelect={setSelectedId}
+                onOpen={id => navigate(`/store/${id}`)} />
+              <div className="explore-tip">Tip: double-click the map to group stores within the distance above.</div>
+            </>
+          )}
         </div>
 
-        <ClusterPanel active={!!center} stores={clusterStores} radiusKm={radiusKm}
-          onOpenStore={id => navigate(`/store/${id}`)}
-          onSave={openSavePrompt} onClear={() => setCenter(null)} />
-
-        {selected && <SelectedStoreCard store={selected} />}
+        {/* With the results list showing, the highlighted row is the selection.
+            The card is only needed while the cluster view replaces the list. */}
+        {selected && center && <SelectedStoreCard store={selected} />}
 
         <label className="check-row explore-metro-toggle">
           <input type="checkbox" checked={metroOn} onChange={e => setMetroOn(e.target.checked)} />

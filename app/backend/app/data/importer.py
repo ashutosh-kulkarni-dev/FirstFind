@@ -30,6 +30,7 @@ from pathlib import Path
 from ..common.areas import KNOWN_AREAS, _squash, canonical_area
 from ..common.geo import haversine_km
 from ..config import ASSETS_DIR, REPO_ROOT
+from .tags import is_known_chain
 from ..database import Base, SessionLocal, engine, ensure_schema
 from ..models import Store
 
@@ -297,6 +298,10 @@ def clean_row(row: dict) -> dict:
     store_type = (row.get("store_type") or "").strip() or "thrift"
     if store_type not in STORE_TYPES:
         store_type = "thrift"
+    # The source files list many chain outlets (Peter England, Biba, Westside…)
+    # as generic shops. A known brand name in the store's name settles it.
+    if store_type == "retail_fashion" and is_known_chain(row.get("name") or ""):
+        store_type = "branded"
 
     # Google's description: its own column (verified candidates), else the
     # editorial line the scrape left in the categories column.

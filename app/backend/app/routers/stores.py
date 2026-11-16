@@ -1,4 +1,5 @@
 import datetime as dt
+from collections import Counter
 from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
@@ -6,6 +7,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload
 
 from ..auth import get_current_user, get_optional_user
+from ..data.tags import STORE_TYPE_LABELS, TAG_LABELS, split_tags
 from ..database import get_db
 from ..ml.recommender import similar_ids
 from ..ml.tasks import refit_recommender
@@ -38,13 +40,20 @@ def stores_within(db: Session, lat: float, lng: float, radius_km: float) -> list
 @router.get("")
 def list_stores(area: Optional[str] = None, category: Optional[str] = None,
                 price_max: Optional[int] = None, open_now: Optional[bool] = None,
-                q: Optional[str] = None, db: Session = Depends(get_db)):
+                q: Optional[str] = None, store_type: Optional[str] = None,
+                tag: Optional[str] = None, db: Session = Depends(get_db)):
     # Only stores with real coordinates are shown to users (see STORE_HAS_COORDS).
     query = db.query(Store).filter(*STORE_HAS_COORDS)
     if area:
         query = query.filter(Store.area == area)
     if category:
         query = query.filter(Store.categories.contains(category))
+    if store_type:
+        # Rows that predate the column have NULL, which means thrift.
+        kind = Store.store_type == store_type
+        query = query.filter(or_(kind, Store.store_type.is_(None)) if store_type == "thrift" else kind)
+    if tag:
+        query = query.filter(Store.tags.contains(tag))
     if price_max:
         query = query.filter(Store.price_min.isnot(None), Store.price_min <= price_max)
     if q:
@@ -56,10 +65,29 @@ def list_stores(area: Optional[str] = None, category: Optional[str] = None,
             Store.locality_raw.ilike(like),
         ))
     stores = query.all()
+    if tag:      # `contains` is a substring match; keep exact tags only
+        stores = [s for s in stores if tag in split_tags(s.tags)]
     if open_now:
         stores = [s for s in stores if is_open_now(s)]
     stores.sort(key=lambda s: (s.experience_score or 0), reverse=True)
     return {"count": len(stores), "stores": [store_to_dict(s) for s in stores]}
+
+
+@router.get("/facets")
+def facets(db: Session = Depends(get_db)):
+    """The store kinds and tags that exist among visible stores, with counts —
+    what the Explore filters offer. Empty options are left out."""
+    kinds: Counter = Counter()
+    tags: Counter = Counter()
+    for store_type, store_tags in db.query(Store.store_type, Store.tags).filter(*STORE_HAS_COORDS):
+        kinds[store_type or "thrift"] += 1
+        tags.update(split_tags(store_tags))
+    return {
+        "store_types": [{"value": k, "label": label, "count": kinds[k]}
+                        for k, label in STORE_TYPE_LABELS.items() if kinds[k]],
+        "tags": [{"value": t, "label": label, "count": tags[t]}
+                 for t, label in TAG_LABELS.items() if tags[t]],
+    }
 
 
 @router.get("/areas")

@@ -62,6 +62,9 @@ class Store(Base):
     description = Column(Text, nullable=True)
     # "google" | "ai" | "admin" — the UI labels AI-written text as such.
     description_source = Column(String(10), nullable=True)
+    # Comma-separated tags (see data/tags.py): who the store is for / what it sells.
+    tags = Column(String(200), nullable=True)
+    tags_source = Column(String(10), nullable=True)      # "auto" | "admin"
     # Google Maps listing aggregates (source data, not our own reviews).
     google_rating = Column(Float, nullable=True)
     google_review_count = Column(Integer, nullable=True)
