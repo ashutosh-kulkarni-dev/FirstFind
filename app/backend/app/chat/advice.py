@@ -24,7 +24,7 @@ _DATA_FILE = ASSETS_DIR / "thrift_advice.json"
 def _load() -> dict:
     try:
         return json.loads(_DATA_FILE.read_text(encoding="utf-8"))
-    except Exception as e:
+    except (OSError, ValueError) as e:
         log.warning("advice: failed to load thrift_advice.json (%s)", e)
         return {"topics": [], "category_tips": {}, "general_tip": ""}
 

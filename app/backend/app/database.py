@@ -1,6 +1,7 @@
 import logging
 
 from sqlalchemy import create_engine, inspect, text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 from .config import DATABASE_URL
@@ -95,5 +96,5 @@ def ensure_schema() -> None:
                 else:
                     conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {coltype}"))
             log.info("ensure_schema: added %s.%s", table, col)
-        except Exception as e:  # raced with another process / lock timeout
+        except SQLAlchemyError as e:  # raced with another process / lock timeout
             log.warning("ensure_schema: could not add %s.%s (%s)", table, col, e)

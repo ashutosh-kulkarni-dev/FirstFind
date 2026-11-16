@@ -96,7 +96,7 @@ def ai_description(store, review_texts: list[str], timeout: float = 20.0) -> str
         )
         r.raise_for_status()
         text = (r.json()["choices"][0]["message"]["content"] or "").strip().strip('"')
-    except Exception as e:
+    except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as e:
         log.warning("AI description failed for %s: %s", store.id, e)
         return None
     # Reject anything that is not a short plain paragraph.

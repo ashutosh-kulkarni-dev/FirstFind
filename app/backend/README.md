@@ -16,7 +16,7 @@ Docker image copies only that folder.
 | `app/common/` | Small shared helpers: distance, opening hours, area names, API shapes. |
 | `app/assets/` | JSON files the running server reads (metro stations, place names, advice). |
 | `app/config.py`, `database.py`, `models.py`, `schemas.py`, `auth*.py` | Settings, DB session, tables, request shapes, login. |
-| `tests/` | Pytest suite. `_verify.py` and `_audit.py` are end-to-end smoke scripts. |
+| `tests/` | Pytest suite. `tests/smoke/` holds two end-to-end walkthroughs that pytest also runs. |
 
 Rules that keep it tidy:
 
@@ -29,7 +29,9 @@ Rules that keep it tidy:
 ## Commands (run from `app/backend`)
 
 ```bash
-python -m pytest -q                      # tests
+python -m pytest -q                      # tests (every test starts with empty tables)
+python -m ruff check .                   # lint
+python -m vulture                        # unused code
 python -m app.jobs.daily --no-google     # score reviews, rebuild zones and recommendations
 python -m app.jobs.daily --import-csv    # load data/import/*.csv first
 python -m app.data.importer              # dry-run report of the stores CSV

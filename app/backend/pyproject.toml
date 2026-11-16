@@ -1,0 +1,48 @@
+# Code checks for the backend (run from app/backend):
+#   python -m ruff check .       style and likely-bug rules
+#   python -m vulture            unused code
+#   python -m pytest -q          tests, including the end-to-end smoke scripts
+
+[tool.ruff]
+target-version = "py311"
+line-length = 110
+
+[tool.ruff.lint]
+select = [
+  "F",    # unused imports/variables, undefined names
+  "E7", "E9",
+  "B",    # likely bugs
+  "C4",   # clumsy comprehensions
+  "SIM",  # needless complexity
+  "BLE",  # catch-all `except Exception` (must re-raise, log the traceback, or carry a reason)
+  "T20",  # print() outside a command-line entry point
+]
+ignore = [
+  "B008",    # FastAPI's Depends(...) in argument defaults is the intended idiom
+  "SIM108",  # ternaries are not always clearer
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["T20", "BLE", "E731", "E741"]
+"tests/smoke/*" = ["T20", "BLE", "E7", "SIM", "B", "C4"]   # long scripted walkthroughs
+# Command-line entry points print their report to the terminal on purpose.
+"app/data/importer.py" = ["T20"]
+"app/data/reviews.py" = ["T20"]
+"app/data/seed.py" = ["T20"]
+"app/google/candidates.py" = ["T20"]
+"app/jobs/daily.py" = ["T20"]
+"app/jobs/pipeline.py" = ["T20"]
+"app/ml/eval_sentiment.py" = ["T20"]
+
+[tool.vulture]
+paths = ["app"]
+min_confidence = 60
+# Functions FastAPI / pydantic call for us.
+ignore_decorators = ["@router.*", "@app.*", "@field_validator", "@model_validator", "@lru_cache"]
+# Names that are used, just not by a direct reference vulture can see:
+# database columns and relationships, dataclass fields, and one helper used only by tests.
+ignore_names = [
+  "is_admin", "saved_list", "conversation_id", "conversation",
+  "email_verified", "store_names", "home_area", "last_entities",
+  "analyze",
+]

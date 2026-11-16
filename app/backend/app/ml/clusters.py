@@ -159,7 +159,7 @@ def _kmeans_split(Xgeo: np.ndarray, k: int) -> np.ndarray:
 def _build_sub_zones(usable, labels, lats, lngs, parent_lat, parent_lng) -> list[dict]:
     sub_zones = []
     for k in sorted(set(labels)):
-        idx = [i for i, l in enumerate(labels) if l == k]
+        idx = [i for i, label in enumerate(labels) if label == k]
         if not idx:
             continue
         members = [usable[i] for i in idx]

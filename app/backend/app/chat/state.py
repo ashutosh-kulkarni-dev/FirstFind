@@ -24,6 +24,9 @@ class SessionStore(Protocol):
     def delete(self, sid: str) -> None: ...
 
 
+_SWEEP_EVERY_SECONDS = 60
+
+
 class InMemoryStore:
     """Thread-safe in-memory session store with TTL eviction.
 
@@ -35,6 +38,7 @@ class InMemoryStore:
         self._store: dict[str, tuple[ChatSession, float]] = {}
         self._lock = threading.Lock()
         self._ttl = ttl
+        self._last_sweep = time.monotonic()
 
     def get(self, sid: str) -> Optional[ChatSession]:
         with self._lock:
@@ -50,20 +54,24 @@ class InMemoryStore:
             return session
 
     def put(self, sid: str, session: ChatSession) -> None:
+        now = time.monotonic()
         with self._lock:
-            self._store[sid] = (session, time.monotonic())
+            self._store[sid] = (session, now)
+            # Sessions that are never read again would otherwise stay in memory
+            # for the life of the process. Sweep at most once a minute.
+            if now - self._last_sweep >= _SWEEP_EVERY_SECONDS:
+                self._last_sweep = now
+                self._evict_expired(now)
 
     def delete(self, sid: str) -> None:
         with self._lock:
             self._store.pop(sid, None)
 
-    def _evict_expired(self) -> None:
-        now = time.monotonic()
-        with self._lock:
-            expired = [sid for sid, (_, ts) in self._store.items()
-                       if now - ts > self._ttl]
-            for sid in expired:
-                del self._store[sid]
+    def _evict_expired(self, now: float) -> None:
+        """Drop every expired session. Caller holds the lock."""
+        expired = [sid for sid, (_, ts) in self._store.items() if now - ts > self._ttl]
+        for sid in expired:
+            del self._store[sid]
 
 
 # Module-level singleton — one store per process.

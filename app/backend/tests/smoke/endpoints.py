@@ -2,15 +2,18 @@
 
 Exercises EVERY endpoint and feature and prints a per-functionality PASS/FAIL
 report (continues past failures so you see the whole picture in one run).
-Complements _verify.py (which focuses on the ML/retrieval invariants).
+Complements flows.py (which focuses on the ML/retrieval invariants).
 
-Run: python _audit.py     (set HUGGINGFACE_TOKEN to exercise the live HF path)
+Run by pytest (tests/test_smoke.py), or directly from app/backend:
+    PYTHONPATH=. python tests/smoke/endpoints.py
+    (set HUGGINGFACE_TOKEN to exercise the live HF path)
 """
 import os
 import pathlib
+import tempfile
 import uuid
 
-_DB = pathlib.Path(__file__).parent / "_audit.db"
+_DB = pathlib.Path(tempfile.mkdtemp(prefix="firstfind_smoke_")) / "endpoints.db"
 if _DB.exists():
     _DB.unlink()
 os.environ["DATABASE_URL"] = f"sqlite:///{_DB.as_posix()}"

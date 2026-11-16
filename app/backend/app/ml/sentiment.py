@@ -77,7 +77,7 @@ def warmup() -> None:
     for model in HF_SENTIMENT_MODELS:
         try:
             _hf_probs(model, "ok")
-        except Exception as e:
+        except (httpx.HTTPError, ValueError) as e:
             log.info("Sentiment: warmup ping for %s failed (%s); will retry on demand", model, e)
 
 
@@ -190,7 +190,7 @@ def ensemble_probs(text: str, models: list[str] | None = None,
                 log.warning("Sentiment: %s failed (%s)", model, e)
             if _hf_disabled:
                 break
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - a local model can fail in many ways; fall back to the next engine
             log.warning("Sentiment: %s failed (%s)", model, e)
     return _average(votes) if votes else None
 

@@ -1,8 +1,6 @@
 """Store descriptions: Google line > AI summary > plain template. Offline."""
-import pytest
 
 from app.data import importer
-from app.database import SessionLocal, ensure_schema
 from app.ml import descriptions as D
 from app.models import Review, Store, User
 from app.common.serializers import store_to_dict
@@ -46,18 +44,6 @@ def test_describe_and_serializer_label_the_source():
     s.description, s.description_source = "Vintage denim and jackets.", "ai"
     d = store_to_dict(s)
     assert (d["description"], d["description_source"]) == ("Vintage denim and jackets.", "ai")
-
-
-@pytest.fixture()
-def db():
-    ensure_schema()
-    s = SessionLocal()
-    yield s
-    s.rollback()
-    s.query(Review).filter(Review.store_id.like("ds-%")).delete(synchronize_session=False)
-    s.query(Store).filter(Store.id.like("ds-%")).delete(synchronize_session=False)
-    s.commit()
-    s.close()
 
 
 def test_generate_descriptions_only_fills_gaps(db, monkeypatch):

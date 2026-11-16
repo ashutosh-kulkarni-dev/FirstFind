@@ -38,6 +38,8 @@ from datetime import date
 from difflib import SequenceMatcher
 from pathlib import Path
 
+import httpx
+
 from ..config import CITY_CENTER, REPO_ROOT
 from ..common.geo import haversine_km
 
@@ -210,7 +212,7 @@ def add_candidate(cands: list[dict], name: str, area: str = "", store_type: str 
     if not name:
         raise ValueError("a store name is required")
     n = sum(1 for c in cands if str(c.get("osm_id", "")).startswith("manual/")) + 1
-    row = {c: "" for c in BASE_COLS + RESULT_COLS}
+    row = dict.fromkeys(BASE_COLS + RESULT_COLS, "")
     row.update({"osm_id": f"manual/{n}", "name": name, "locality_raw": area.strip(),
                 "store_type": store_type or "retail_fashion", "lat": lat, "lng": lng})
     cands.append(row)
@@ -251,7 +253,7 @@ def verify(client, rows: list[dict], limit: int, on_progress=None,
                                         radius_m=radius, page_size=5)
         except PlacesBudgetExceeded:
             break
-        except Exception as e:
+        except (httpx.HTTPError, ValueError) as e:
             # Quota used up for the day, key problem, network: leave this row
             # unchecked for the next run instead of failing the whole job.
             log.warning("Google check failed for %r (%s) — stopping verification for this run",
@@ -331,7 +333,7 @@ def promote(cands: list[dict], stores: list[dict], store_fields: list[str],
             continue
 
         sid = next(ids)
-        store = {f: "" for f in store_fields}
+        store = dict.fromkeys(store_fields, "")
         store.update({
             "id": sid, "name": name,
             "locality_raw": c.get("locality_raw", ""), "city": "Bengaluru",

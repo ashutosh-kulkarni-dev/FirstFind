@@ -69,11 +69,7 @@ def _db_empty() -> bool:
     """
     db = SessionLocal()
     try:
-        if db.query(Store).count() == 0:
-            return True
-        if db.query(Zone).count() == 0:
-            return True
-        return False
+        return db.query(Store).count() == 0 or db.query(Zone).count() == 0
     finally:
         db.close()
 

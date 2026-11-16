@@ -7,7 +7,6 @@ import csv
 import pytest
 
 from app.data import importer
-from app.database import SessionLocal, ensure_schema
 from app.data import reviews as ingest_reviews
 from app.ml import sentiment as S
 from app.models import Review, Store
@@ -97,18 +96,6 @@ def _write_csv(path, rows, fields=FIELDS):
         w.writeheader()
         for r in rows:
             w.writerow({k: r.get(k, "") for k in fields})
-
-
-@pytest.fixture()
-def db():
-    ensure_schema()
-    s = SessionLocal()
-    yield s
-    s.rollback()
-    s.query(Review).filter(Review.store_id.like("imp-%")).delete(synchronize_session=False)
-    s.query(Store).filter(Store.id.like("imp-%")).delete(synchronize_session=False)
-    s.commit()
-    s.close()
 
 
 def test_import_is_idempotent_and_fill_only(db, tmp_path):

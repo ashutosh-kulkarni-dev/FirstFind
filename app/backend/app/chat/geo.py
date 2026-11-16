@@ -141,8 +141,10 @@ def locate(db: Session, entities: Entities,
     lat, lng = center
     try:
         cluster = find_cluster(db, lat, lng, radius_km)
-    except Exception as e:
-        log.warning("geo.locate: find_cluster failed (%s); falling back", e)
+    except Exception:
+        # The assistant must still answer; the traceback is logged so a real
+        # bug in clustering is visible instead of silently degrading replies.
+        log.exception("geo.locate: find_cluster failed; falling back")
         return None
 
     store_ids = [s["id"] for s in cluster.get("stores", [])]

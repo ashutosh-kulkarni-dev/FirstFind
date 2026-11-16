@@ -6,8 +6,6 @@ __pycache__/
 .env
 .env.*
 !.env.example
-_verify.py
-_audit.py
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
