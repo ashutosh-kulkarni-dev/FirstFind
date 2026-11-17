@@ -4,8 +4,9 @@ import ScorePill from '../../components/ScorePill'
 const PAGE = 40
 
 // The stores matching the current filters, best rated first. Clicking a row
-// selects the store (the map pans to it); the arrow opens its page.
-export default function ResultsList({ stores, selectedId, onSelect, onOpen }) {
+// selects the store (the map pans to it); the arrow opens its page. Hovering a
+// row highlights its dot on the map, and hovering a dot highlights its row.
+export default function ResultsList({ stores, selectedId, hoveredId, onSelect, onHover, onOpen }) {
   const [shown, setShown] = useState(PAGE)
   // A new result set starts from the top again.
   useEffect(() => { setShown(PAGE) }, [stores])
@@ -24,14 +25,26 @@ export default function ResultsList({ stores, selectedId, onSelect, onOpen }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId])
 
+  // A dot hovered on the map: show its row if it is already in the list.
+  useEffect(() => {
+    if (!hoveredId) return
+    listRef.current?.querySelector(`[data-store-id="${CSS.escape(hoveredId)}"]`)
+      ?.scrollIntoView({ block: 'nearest' })
+  }, [hoveredId])
+
   if (stores.length === 0) {
     return <div className="explore-hint">No stores match these filters. Try removing one.</div>
   }
   return (
     <div className="results-list" ref={listRef}>
       {stores.slice(0, shown).map(s => (
-        <div key={s.id} role="button" tabIndex={0}
-          className={s.id === selectedId ? 'result-row result-row-on' : 'result-row'}
+        <div key={s.id} role="button" tabIndex={0} data-store-id={s.id}
+          className={['result-row', s.id === selectedId && 'result-row-on', s.id === hoveredId && 'result-row-hover']
+            .filter(Boolean).join(' ')}
+          onMouseEnter={() => onHover?.(s.id)}
+          onMouseLeave={() => onHover?.(null)}
+          onFocus={() => onHover?.(s.id)}
+          onBlur={() => onHover?.(null)}
           onClick={() => onSelect(s.id)}
           onKeyDown={e => e.key === 'Enter' && onSelect(s.id)}>
           <div className="result-main">

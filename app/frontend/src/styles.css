@@ -84,7 +84,6 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 400; letter-spac
 @keyframes ffExitUp { to { opacity: 0; transform: translateY(-20px); } }
 @keyframes ffPop    { from { opacity: 0; transform: scale(.9) translateY(10px); } to { opacity: 1; transform: none; } }
 @keyframes ffPopC   { from { opacity: 0; transform: translate(-50%,-50%) scale(.5); } to { opacity: 1; transform: translate(-50%,-50%) scale(1); } }
-@keyframes ffPing   { 0% { transform: scale(1); opacity: .55; } 100% { transform: scale(2.4); opacity: 0; } }
 @keyframes ffRing   { from { transform: translate(-50%,-50%) scale(.4); opacity: 0; } to { transform: translate(-50%,-50%) scale(1); opacity: 1; } }
 @keyframes ffDot    { 0%,60%,100% { transform: translateY(0); opacity: .4; } 30% { transform: translateY(-4px); opacity: 1; } }
 @keyframes ffPulse  { 0% { box-shadow: 0 0 0 0 rgba(255,40,101,.55); } 70% { box-shadow: 0 0 0 9px rgba(255,40,101,0); } 100% { box-shadow: 0 0 0 0 rgba(255,40,101,0); } }
@@ -517,6 +516,7 @@ html.dark .review-item.flagged { background: #1e1600; border-color: #7a5000; }
 .results-list { display: flex; flex-direction: column; gap: 6px; }
 .result-row { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface-2); cursor: pointer; transition: border-color .15s ease, background .15s ease; }
 .result-row:hover, .result-row:focus-visible { border-color: var(--brand-blue-2); outline: none; }
+.result-row-hover { border-color: var(--brand-blue-2); }
 .result-row-on { border-color: var(--brand-blue-2); background: var(--surface); box-shadow: 0 0 0 2px rgba(20,120,209,.14); }
 .result-main { flex: 1; min-width: 0; }
 .result-name { font-size: 12.5px; font-weight: 700; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -560,3 +560,12 @@ html.dark .review-item.flagged { background: #1e1600; border-color: #7a5000; }
   .nav-links { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .nav-chip { display: none; }
 }
+
+/* Explore map: numbered store clusters (zoomed out) */
+.ff-cluster {
+  display: grid; place-items: center; border-radius: 50%;
+  background: rgba(20,120,209,.88); color: #fff; font: 700 12px Inter, sans-serif;
+  border: 2px solid rgba(255,255,255,.9); box-shadow: 0 0 0 5px rgba(20,120,209,.22), 0 2px 8px rgba(0,0,0,.4);
+  cursor: pointer; transition: transform .15s ease;
+}
+.ff-cluster:hover { transform: scale(1.08); }

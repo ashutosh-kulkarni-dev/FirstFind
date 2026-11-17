@@ -1,16 +1,25 @@
 import { useEffect, useRef } from 'react'
 import L from 'leaflet'
 import { createDarkMap } from '../lib/map/leaflet'
-import { drawStores, drawCluster, drawMetro } from '../lib/map/zoneLayers'
+import { drawCluster, drawMetro } from '../lib/map/zoneLayers'
+import { StoreMarkers } from '../lib/map/storeMarkers'
 
-// The single map for the Explore page: grey store dots + an optional movable
-// cluster ring + optional metro lines. Double-clicking the map sets (or
-// relocates) the cluster centre; the centre pin can also be dragged.
+const SETTLE_MS = 700   // after a search settles, re-fit only if no result is in view
+
+// The single map for the Explore page: store dots (clustered when zoomed out) +
+// an optional movable cluster ring + optional metro lines. Double-clicking the
+// map sets (or relocates) the cluster centre; the centre pin can also be dragged.
+//
+// fitKey: the map zooms to fit the stores when this changes (a filter was
+// picked), not on every new result set, so typing in search never re-zooms.
 export default function MapExplorer({
   stores = [],
   selectedId,
+  hoveredId,
   onSelectStore,
   onViewStore,
+  onHoverStore,
+  fitKey = '',
   clusterCenter,
   radiusKm,
   onMoveCenter,
@@ -22,7 +31,8 @@ export default function MapExplorer({
 }) {
   const elRef = useRef(null)
   const mapRef = useRef(null)
-  const storeLayerRef = useRef(null)
+  const markersRef = useRef(null)
+  const lastFitRef = useRef(undefined)
   const clusterLayerRef = useRef(null)
   const metroLayerRef = useRef(null)
   // Keep the latest move handler reachable from the once-bound dblclick listener.
@@ -33,7 +43,7 @@ export default function MapExplorer({
     if (!elRef.current || mapRef.current) return
     const map = createDarkMap(elRef.current)
     map.doubleClickZoom.disable() // double-click is reserved for dropping the cluster centre
-    storeLayerRef.current = L.layerGroup().addTo(map)
+    markersRef.current = new StoreMarkers(L, map, {})
     clusterLayerRef.current = L.layerGroup().addTo(map)
     metroLayerRef.current = L.layerGroup().addTo(map)
     mapRef.current = map
@@ -53,6 +63,8 @@ export default function MapExplorer({
       cancelAnimationFrame(firstFrame)   // the map may be gone before the frame runs
       ro.disconnect()
       window.removeEventListener('resize', onWinResize)
+      markersRef.current?.destroy()
+      markersRef.current = null
       map.remove()
       mapRef.current = null
     }
@@ -66,20 +78,46 @@ export default function MapExplorer({
     return () => clearTimeout(t)
   }, [fullscreen])
 
-  // Grey dots + fit/pan. Fit to all dots on data change; pan to a selected store.
   useEffect(() => {
-    const map = mapRef.current, layer = storeLayerRef.current
-    if (!map || !layer) return
-    drawStores(L, layer, stores, { selectedId, onSelect: onSelectStore, onView: onViewStore })
+    markersRef.current?.setHandlers({ onSelect: onSelectStore, onView: onViewStore, onHover: onHoverStore })
+  }, [onSelectStore, onViewStore, onHoverStore])
 
-    if (selectedId) {
-      const sel = stores.find(s => s.id === selectedId)
-      if (sel && sel.lat != null) map.panTo([sel.lat, sel.lng], { animate: true })
-    } else if (!clusterCenter) {
-      const pts = stores.filter(s => s.lat != null && s.lng != null).map(s => [s.lat, s.lng])
-      if (pts.length) map.fitBounds(pts, { padding: [50, 50], maxZoom: 14 })
+  // New store set: rebuild the dots. Zoom to fit only when the filters changed
+  // (fitKey) — or, once a search settles, when none of its results is in view.
+  const clusterOn = !!clusterCenter
+  useEffect(() => {
+    const map = mapRef.current, markers = markersRef.current
+    if (!map || !markers) return
+    markers.setStores(stores)
+    const pts = markers.bounds()
+    if (!pts.length || clusterOn) return
+    const fit = () => map.fitBounds(pts, { padding: [50, 50], maxZoom: 14 })
+    if (fitKey !== lastFitRef.current) {
+      lastFitRef.current = fitKey
+      fit()
+      return
     }
-  }, [stores, selectedId])
+    const t = setTimeout(() => {
+      const view = map.getBounds()
+      if (!pts.some(p => view.contains(p))) fit()
+    }, SETTLE_MS)
+    return () => clearTimeout(t)
+  }, [stores, fitKey, clusterOn])
+
+  // Selection and hover: only the highlighted dots change.
+  useEffect(() => {
+    markersRef.current?.setHighlight(selectedId || null, hoveredId || null)
+  }, [selectedId, hoveredId, stores])
+
+  // Bring a newly selected store into view (zooming in if it is inside a cluster).
+  useEffect(() => {
+    const map = mapRef.current, markers = markersRef.current
+    if (!map || !markers || !selectedId) return
+    const p = markers.position(selectedId)
+    if (!p) return
+    if (markers.isClustered(selectedId)) map.setView(p, 15, { animate: true })
+    else if (!map.getBounds().pad(-0.15).contains(p)) map.panTo(p, { animate: true })
+  }, [selectedId])
 
   useEffect(() => {
     const layer = clusterLayerRef.current
