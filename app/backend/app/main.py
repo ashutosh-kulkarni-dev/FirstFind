@@ -12,7 +12,7 @@ from .middleware import (AuthRateLimitMiddleware, RateLimitMiddleware,
                          SecurityHeadersMiddleware, TimingMiddleware)
 from .ml.tasks import build_recommender
 from .models import Store, Zone
-from .routers import auth_routes, clusters, conversations, lists, metro, misc, stores
+from .routers import admin, auth_routes, clusters, conversations, lists, metro, misc, stores
 
 log = logging.getLogger(__name__)
 
@@ -103,3 +103,4 @@ app.include_router(clusters.router)
 app.include_router(metro.router)
 app.include_router(conversations.router)
 app.include_router(lists.router)
+app.include_router(admin.router)

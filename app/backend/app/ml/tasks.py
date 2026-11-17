@@ -12,6 +12,7 @@ import threading
 import time
 
 from ..database import SessionLocal
+from ..common.serializers import REVIEW_VISIBLE
 from ..models import Review
 from . import sentiment as sentiment_ml
 from .recommender import recommender
@@ -71,7 +72,8 @@ def score_review(review_id: int) -> None:
         # Recompute the store's experience_score + review_count over all its reviews.
         store = review.store
         scored = [sentiment_ml.review_tuple(r) for r in
-                  db.query(Review).filter(Review.store_id == review.store_id).all()]
+                  db.query(Review).filter(Review.store_id == review.store_id,
+                                          REVIEW_VISIBLE).all()]
         store.experience_score = sentiment_ml.experience_score(scored, sentiment_ml.score_prior(store))
         store.review_count = len(scored)
         db.commit()

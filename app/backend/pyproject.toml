@@ -26,6 +26,7 @@ ignore = [
 "tests/*" = ["T20", "BLE", "E731", "E741"]
 "tests/smoke/*" = ["T20", "BLE", "E7", "SIM", "B", "C4"]   # long scripted walkthroughs
 # Command-line entry points print their report to the terminal on purpose.
+"app/admin_cli.py" = ["T20"]
 "app/data/importer.py" = ["T20"]
 "app/data/reviews.py" = ["T20"]
 "app/data/seed.py" = ["T20"]

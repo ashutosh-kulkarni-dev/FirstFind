@@ -31,6 +31,9 @@ export default function Navbar() {
         {user && (
           <NavLink to="/lists" className={({ isActive }) => (isActive ? 'active' : '')}>My Lists</NavLink>
         )}
+        {user?.is_admin && (
+          <NavLink to="/admin" className={({ isActive }) => (isActive ? 'active' : '')}>Admin</NavLink>
+        )}
       </div>
       <div className="nav-right">
         <Link to="/lists" className="nav-chip" title="Your saved lists">♥ SAVED ({saved})</Link>

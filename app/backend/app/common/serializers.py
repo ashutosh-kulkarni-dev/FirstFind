@@ -2,7 +2,7 @@
 stores are visible at all."""
 from typing import Optional
 
-from ..models import Store, Zone
+from ..models import Review, Store, Zone
 from .geo import haversine_km
 from .hours import is_open_now
 
@@ -16,6 +16,11 @@ from .hours import is_open_now
 # column — where it may be NULL — stay visible.
 STORE_HAS_COORDS = (Store.lat.isnot(None), Store.lng.isnot(None),
                     Store.is_active.isnot(False))
+
+
+# Reviews an admin hid stay in the table but count for nothing: spread into
+# every review query with `.filter(REVIEW_VISIBLE)`.
+REVIEW_VISIBLE = Review.is_hidden.isnot(True)
 
 
 def has_coords(store: Store) -> bool:

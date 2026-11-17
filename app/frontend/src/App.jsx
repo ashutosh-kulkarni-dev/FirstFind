@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import ChatWidget from './components/ChatWidget'
@@ -8,6 +9,9 @@ import StoreDetail from './pages/StoreDetail'
 import Auth from './pages/Auth'
 import Lists from './pages/Lists'
 import NotFound from './pages/NotFound'
+
+// Admin is only for a handful of accounts — keep it out of everyone else's bundle.
+const Admin = lazy(() => import('./pages/Admin'))
 
 // Explore + Zones were merged into one map page at /explore. Keep /zones working
 // (deep-links from chat/Lists carry ?lat&lng&radius) by redirecting, query intact.
@@ -20,7 +24,7 @@ export default function App() {
   const { pathname } = useLocation()
   // Landing carries its own hero nav; other pages use the shared dark navbar.
   const hideNav = pathname === '/'
-  const hideWidget = pathname === '/chat' || pathname === '/auth' || pathname === '/'
+  const hideWidget = ['/chat', '/auth', '/', '/admin'].includes(pathname)
   return (
     <div className="app-shell">
       {!hideNav && <Navbar />}
@@ -32,6 +36,7 @@ export default function App() {
         <Route path="/zones" element={<ZonesRedirect />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/lists" element={<Lists />} />
+        <Route path="/admin" element={<Suspense fallback={null}><Admin /></Suspense>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       {!hideWidget && <ChatWidget />}

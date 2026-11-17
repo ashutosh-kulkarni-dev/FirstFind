@@ -391,14 +391,17 @@ def import_stores(db, csv_path: Path | None = None, overwrite: bool = False) -> 
 
         store = existing.get(sid)
         if store is None:
-            db.add(Store(experience_score=None, review_count=0, **vals))
+            db.add(Store(experience_score=None, review_count=0, created_via="csv", **vals))
             created += 1
             final_lat, final_active = vals["lat"], vals["is_active"]
         else:
             changed = False
+            admin_owned = store.admin_edited_at is not None or store.created_via == "admin"
             for field, new in vals.items():
                 if field in ("id", "lat", "lng", "geocode_precision"):
                     continue
+                if admin_owned and field not in ("google_rating", "google_review_count"):
+                    continue    # an admin's edit wins over the CSV
                 cur = getattr(store, field)
                 if field in ALWAYS_REFRESH:
                     apply = new is not None and new != cur
@@ -416,7 +419,7 @@ def import_stores(db, csv_path: Path | None = None, overwrite: bool = False) -> 
             # Coordinates move as one unit (lat, lng, precision) so a pin is
             # never half-replaced.
             has_pin = store.lat is not None and store.lng is not None
-            if vals["lat"] is not None and (overwrite or not has_pin):
+            if vals["lat"] is not None and (overwrite or not has_pin) and not admin_owned:
                 pin = (vals["lat"], vals["lng"], vals["geocode_precision"])
                 if pin != (store.lat, store.lng, store.geocode_precision):
                     store.lat, store.lng, store.geocode_precision = pin
@@ -439,32 +442,44 @@ def import_stores(db, csv_path: Path | None = None, overwrite: bool = False) -> 
     }
 
 
+def delete_stores(db, ids: list[str]) -> int:
+    """Delete these stores and every row that points at them (reviews, saves,
+    views, recommendations). Flushes, no commit. Returns reviews removed."""
+    from ..models import Interaction, Review, SavedListItem, StoreSimilarity, UserRecommendation
+    if not ids:
+        return 0
+    reviews = db.query(Review).filter(Review.store_id.in_(ids)).delete(synchronize_session=False)
+    for model, cols in ((Interaction, ("store_id",)), (SavedListItem, ("store_id",)),
+                        (UserRecommendation, ("store_id",)),
+                        (StoreSimilarity, ("store_id", "similar_id"))):
+        for col in cols:
+            db.query(model).filter(getattr(model, col).in_(ids)).delete(synchronize_session=False)
+    db.query(Store).filter(Store.id.in_(ids)).delete(synchronize_session=False)
+    db.flush()
+    return reviews
+
+
 def prune_stores(db, csv_path: Path | None = None, max_share: float = 0.25) -> dict:
     """Delete every store that is NOT in the stores CSV, with everything that
-    hangs off it (reviews, saves, views, recommendations). Flushes, no commit.
+    hangs off it (reviews, saves, views, recommendations). Stores added through
+    /admin are never in the CSV and are always kept. Flushes, no commit.
 
     Deliberate, destructive and never part of a normal run. Refuses to act if
     it would remove more than max_share of the stores — that means the CSV is
     wrong, not the database."""
-    from ..models import Interaction, Review, SavedListItem, StoreSimilarity, UserRecommendation
     csv_path = csv_path or STORES_CSV
     with open(csv_path, encoding="utf-8-sig", newline="") as f:
         keep = {(r.get("id") or "").strip() for r in csv.DictReader(f)} - {""}
     all_ids = [sid for (sid,) in db.query(Store.id)]
-    gone = sorted(set(all_ids) - keep)
+    # Stores added through /admin are never in the CSV — they must survive.
+    admin_ids = {sid for (sid,) in db.query(Store.id).filter(Store.created_via == "admin")}
+    gone = sorted(set(all_ids) - keep - admin_ids)
     if not gone:
         return {"stores_removed": 0, "reviews_removed": 0, "ids": []}
     if not keep or len(gone) > max_share * len(all_ids):
         raise RuntimeError(f"Refusing to prune {len(gone)} of {len(all_ids)} stores "
                            f"(CSV has {len(keep)} ids) — check {csv_path}")
-    reviews = db.query(Review).filter(Review.store_id.in_(gone)).delete(synchronize_session=False)
-    for model, cols in ((Interaction, ("store_id",)), (SavedListItem, ("store_id",)),
-                        (UserRecommendation, ("store_id",)),
-                        (StoreSimilarity, ("store_id", "similar_id"))):
-        for col in cols:
-            db.query(model).filter(getattr(model, col).in_(gone)).delete(synchronize_session=False)
-    db.query(Store).filter(Store.id.in_(gone)).delete(synchronize_session=False)
-    db.flush()
+    reviews = delete_stores(db, gone)
     log.info("Pruned %d stores not in %s (and %d of their reviews)",
              len(gone), csv_path.name, reviews)
     return {"stores_removed": len(gone), "reviews_removed": reviews, "ids": gone}

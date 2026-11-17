@@ -56,12 +56,16 @@ _ADDED_COLUMNS = {
         ("google_review_count", "INTEGER"),
         ("price_estimated", "BOOLEAN DEFAULT FALSE"),
         ("is_active", "BOOLEAN DEFAULT TRUE"),
+        ("created_via", "VARCHAR(10)"),
+        ("admin_edited_at", "TIMESTAMP NULL"),
+        ("google_status", "VARCHAR(12)"),
     ],
     "reviews": [
         ("source", "VARCHAR(20) DEFAULT 'app'"),
         ("external_id", "VARCHAR(128)"),
         ("author_name", "VARCHAR(120)"),
         ("sentiment_engine", "VARCHAR(12)"),
+        ("is_hidden", "BOOLEAN DEFAULT FALSE"),
     ],
 }
 

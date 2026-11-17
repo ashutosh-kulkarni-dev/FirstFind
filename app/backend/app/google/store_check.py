@@ -80,15 +80,18 @@ def verify_stores(db, client, limit: int | None = None) -> dict:
 
         store.reviews_fetched_at = datetime.utcnow()
         if place is None:
+            store.google_status = "not_found"
             not_found.append(f"{store.id} {store.name}")
         else:
             confirmed += 1
+            store.google_status = "found"
             if place.get("rating") is not None:
                 store.google_rating = float(place["rating"])
             if place.get("userRatingCount") is not None:
                 store.google_review_count = int(place["userRatingCount"])
             if place.get("businessStatus") == "CLOSED_PERMANENTLY":
                 store.is_active = False
+                store.google_status = "closed"
                 closed.append(f"{store.id} {store.name}")
         if n % 10 == 0:
             db.commit()

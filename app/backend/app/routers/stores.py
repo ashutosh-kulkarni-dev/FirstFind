@@ -13,7 +13,8 @@ from ..ml.recommender import similar_ids
 from ..ml.tasks import refit_recommender
 from ..models import Interaction, Review, Store, StoreSimilarity, User
 from ..schemas import ReviewIn
-from ..common.serializers import STORE_HAS_COORDS, has_coords, sentiment_summary, store_to_dict
+from ..common.serializers import (REVIEW_VISIBLE, STORE_HAS_COORDS, has_coords,
+                                  sentiment_summary, store_to_dict)
 from ..common.geo import haversine_km
 from ..common.hours import is_open_now
 from ..common.aliases import review_display_name
@@ -184,7 +185,7 @@ def store_detail(store_id: str, background_tasks: BackgroundTasks,
             background_tasks.add_task(refit_recommender)
 
     # joinedload(user) so rendering r.user.name below is one query, not N+1.
-    reviews = (db.query(Review).filter(Review.store_id == store_id)
+    reviews = (db.query(Review).filter(Review.store_id == store_id, REVIEW_VISIBLE)
                .options(joinedload(Review.user))
                .order_by(Review.created_at.desc()).all())
     summary = sentiment_summary(reviews)

@@ -20,7 +20,8 @@ def _normalize_email(email: str) -> str:
 def _token_out(user: User) -> TokenOut:
     """Single place that shapes the auth response, for every provider."""
     return TokenOut(token=create_token(user), id=user.id, name=user.name,
-                    email=user.email, avatar_url=user.avatar_url)
+                    email=user.email, avatar_url=user.avatar_url,
+                    is_admin=bool(user.is_admin))
 
 
 @router.post("/register", response_model=TokenOut)
