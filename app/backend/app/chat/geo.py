@@ -58,7 +58,7 @@ def _load_metro() -> dict:
     return json.loads(_METRO_ASSET.read_text(encoding="utf-8"))
 
 
-def _nearest_metro(lat: float, lng: float) -> Optional[dict]:
+def nearest_metro(lat: float, lng: float) -> Optional[dict]:
     data = _load_metro()
     best: Optional[dict] = None
     best_dist = float("inf")
@@ -78,7 +78,7 @@ def _nearest_metro(lat: float, lng: float) -> Optional[dict]:
     return best
 
 
-def _resolve_center(db: Session, entities: Entities,
+def resolve_center(db: Session, entities: Entities,
                     origin: Optional[tuple[float, float]] = None) -> Optional[tuple[float, float]]:
     """Return (lat, lng) for the queried place, or None.
 
@@ -134,7 +134,7 @@ def locate(db: Session, entities: Entities,
             return None
         return None
 
-    center = _resolve_center(db, entities, origin=origin)
+    center = resolve_center(db, entities, origin=origin)
     if center is None:
         return None
 
@@ -148,7 +148,7 @@ def locate(db: Session, entities: Entities,
         return None
 
     store_ids = [s["id"] for s in cluster.get("stores", [])]
-    nearest = _nearest_metro(lat, lng)
+    nearest = nearest_metro(lat, lng)
 
     return GeoResult(
         center=(lat, lng),

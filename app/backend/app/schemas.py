@@ -62,7 +62,14 @@ class Origin(BaseModel):
     lng: float
 
 
+class ChatAnswer(BaseModel):
+    """A tapped answer to the assistant's question (see chat/slots.QUESTIONS)."""
+    slot: str = Field(max_length=20)
+    value: Optional[str] = Field(None, max_length=40)
+
+
 class ChatIn(BaseModel):
     message: str = Field(min_length=1, max_length=500)
     session_id: Optional[str] = None
     origin: Optional[Origin] = None
+    answer: Optional[ChatAnswer] = None

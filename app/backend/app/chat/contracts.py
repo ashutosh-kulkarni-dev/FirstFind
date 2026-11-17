@@ -23,6 +23,11 @@ class Entities:
     place: Optional[object] = None   # PlaceHit namedtuple; typed as object to stay a leaf
     # B3: user said "near me" (browser geolocation will supply origin)
     near_me: bool = False
+    # Shopping slots (slots.py): store kind, who it's for, style tag, price tier
+    store_kind: str | None = None
+    audience: str | None = None
+    style: str | None = None
+    price_tier: str | None = None
 
 
 @dataclass(frozen=True)
@@ -58,6 +63,15 @@ class Prefs:
     disliked_categories: list[str] = field(default_factory=list)
     budget_ceiling: int | None = None
     home_area: str | None = None
+    # Answers to the assistant's questions — remembered for the conversation
+    # and, for a logged-in user, across visits (User.chat_prefs).
+    price_tier: str | None = None
+    audience: str | None = None
+    store_kind: str | None = None
+
+    def remembered(self) -> dict:
+        return {k: v for k, v in (("price_tier", self.price_tier), ("audience", self.audience),
+                                  ("store_kind", self.store_kind)) if v}
 
 
 @dataclass
@@ -66,6 +80,8 @@ class ChatSession:
     last_entities: Entities | None = None
     current_trip: Trip | None = None
     prefs: Prefs = field(default_factory=Prefs)
+    pending: Optional[object] = None      # slots.Pending while waiting on an answer
+    prefs_loaded: bool = False            # a logged-in user's saved answers applied
 
 
 @dataclass
@@ -90,3 +106,6 @@ class ChatResult:
     map: dict | None = None       # Pillar 4 — mini-map render spec
     action: dict | None = None    # Pillar 4 — deep-link directive
     trip: dict | None = None      # Pillar 3 — serialized Trip
+    # A clarifying question: {slot, question, options: [{label, value}], skip}
+    clarify: dict | None = None
+    route: list | None = None     # ordered trip stops with walking legs

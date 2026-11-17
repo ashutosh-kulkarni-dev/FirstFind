@@ -28,6 +28,7 @@ from ..common.serializers import has_coords, store_to_dict
 from .contracts import ChatResult, ChatSession, Draft, Entities, Trip
 from .handlers import (GREETING_SUGGESTIONS, SUGGESTIONS, HandlerCtx,
                        dispatch)
+from . import assist, slots
 from .retrieval import normalize, rank_stores, retrieve, understand
 
 GREETING_RE = re.compile(r"^\s*(hi|hello|hey|yo|namaste|hola)\b", re.I)
@@ -39,33 +40,77 @@ RETRIEVAL_INTENTS = {"find_by_area", "find_by_category", "find_by_price",
 
 def respond(msg: str, db: Session, user: Optional[User] = None,
             session_id: Optional[str] = None,
-            origin: Optional[tuple[float, float]] = None) -> dict:
+            origin: Optional[tuple[float, float]] = None,
+            answer: Optional[dict] = None) -> dict:
     """Main entry point. Returns a dict matching the ChatResult shape.
 
-    origin: browser-supplied (lat, lng), used only when the user says "near me".
+    origin: browser-supplied (lat, lng), for "near me" and trip starts.
+    answer: a tapped answer to the question we asked last ({slot, value}).
     """
 
     # ── Greeting short-circuit ──────────────────────────────────────────────
     if GREETING_RE.match(msg) and len(msg.split()) <= 3:
         name = f" {user.name.split()[0]}" if user else ""
         return _serialize(ChatResult(
-            reply=(f"Hey{name}! I'm the FirstFind assistant. Ask me anything about"
-                   "thrift shopping in Bengaluru — stores by area, category, budget, "
-                   "what's open now, or where the best thrift zones are."),
+            reply=(f"Hey{name}! Tell me what you're after — an area, a style, a budget — "
+                   "or ask me to plan a thrift walk."),
             intent="general_assistance",
             stores=[],
             suggestions=GREETING_SUGGESTIONS,
         ))
 
-    # ── Pillar 2: load session ───────────────────────────────────────────────
+    # ── Pillar 2: load session (and a logged-in user's saved answers) ────────
     session = _load_session(session_id)
+    assist.load_user_prefs(session, user)
+
+    if assist.FORGET_RE.search(msg):
+        assist.forget(session, db, user)
+        _save_session(session_id, session, None, None)
+        return _serialize(ChatResult(
+            reply="Done — I've forgotten your budget and preferences. What are we looking for?",
+            intent="general_assistance", stores=[], suggestions=GREETING_SUGGESTIONS))
+
+    # ── An answer to the question we asked? Then resume that request. ────────
+    pending = session.pending
+    resumed = False
+    if pending is not None:
+        slot = pending.asked[-1]
+        is_answer, value = assist.read_answer(slot, msg, answer, origin, db)
+        if is_answer:
+            pending.answers[slot] = value
+            assist.remember(session, db, user, slot, value)
+            msg, resumed = pending.message, True
+        elif slot == "start" and answer and answer.get("value") == "here":
+            # Location refused or unavailable: ask for an area instead.
+            return _ask(session, session_id, slots.QUESTIONS["start"], db, first=False,
+                        reply="No problem — which area are you starting from?")
+        else:
+            session.pending = pending = None    # a new request instead
 
     # ── Stage 1: understand ──────────────────────────────────────────────────
     entities = understand(msg, db)
     norm = normalize(msg)
+    asked_for = entities                      # what the message itself says
+    entities = assist.with_answers(entities, session)
+
+    # ── Trip planning: needs a starting point, then builds a walking route ───
+    if entities.intent == "plan_trip":
+        return _plan_trip(session, session_id, entities, msg, origin, db)
+
+    # ── Vague store search: ask (at most two) short questions first ──────────
+    personal = entities.intent == "store_recommendation" and user and user_recs(db, user.id)
+    if entities.intent in assist.SEARCH_INTENTS and assist.is_vague(asked_for) and not personal:
+        pending = pending or slots.Pending(message=msg)
+        q = slots.next_question(assist.hits_of(asked_for), session.prefs, pending)
+        if q is not None:
+            pending.asked.append(q.slot)
+            session.pending = pending
+            return _ask(session, session_id, q, db, first=len(pending.asked) == 1)
+    session.pending = None
 
     # ── Check for trip-refinement ────────────────────────────────────────────
-    if CHAT_TRIPS and CHAT_STATE and session.current_trip and session.current_trip.store_ids:
+    if (not resumed and CHAT_TRIPS and CHAT_STATE and session.current_trip
+            and session.current_trip.store_ids):
         refine_op = _detect_refine_op(norm)
         if refine_op:
             result = _handle_refinement(refine_op, session, entities, db, user, norm, msg, session_id)
@@ -150,6 +195,50 @@ def respond(msg: str, db: Session, user: Optional[User] = None,
 # Private helpers
 # ---------------------------------------------------------------------------
 
+def _ask(session: ChatSession, session_id: Optional[str], q, db: Session,
+         first: bool, reply: Optional[str] = None) -> dict:
+    """Return a clarifying question and keep the request waiting for it."""
+    extra = ()
+    if q.slot == "start":
+        extra = tuple(slots.Option(a, a) for a in assist.popular_areas(db))
+    result = assist.clarify_result(q, first, extra)
+    if reply:
+        result.reply = reply
+        result.clarify["options"] = [o for o in result.clarify["options"] if o["value"] != "here"]
+    _save_session(session_id, session, None, None)
+    return _serialize(result)
+
+
+def _plan_trip(session: ChatSession, session_id: Optional[str], entities: Entities,
+               msg: str, origin: Optional[tuple[float, float]], db: Session) -> dict:
+    """A walking route from the user's location or a named area; asks where
+    to start when the message does not say."""
+    pending = session.pending if (session.pending and session.pending.trip) else None
+    start = pending.answers.get("start") if pending else None
+    if start is None:
+        if entities.near_me and origin:
+            start = {"lat": origin[0], "lng": origin[1], "label": "where you are"}
+        else:
+            from .geo import resolve_center
+            center = resolve_center(db, entities)
+            if center is not None:
+                label = (entities.area or entities.locality
+                         or (entities.place.canonical if entities.place else "there"))
+                start = {"lat": center[0], "lng": center[1], "label": label}
+    if start is None:
+        session.pending = slots.Pending(message=msg, trip=True, asked=["start"])
+        return _ask(session, session_id, slots.QUESTIONS["start"], db, first=True)
+    session.pending = None
+    result = assist.plan_trip(db, entities, start, session.prefs)
+    trip = None
+    if result.stores:
+        trip = Trip(store_ids=[s["id"] for s in result.stores],
+                    center=(start["lat"], start["lng"]), radius_km=assist.TRIP_RADIUS_KM,
+                    origin_label=f"{start['label']} thrift walk")
+    _save_session(session_id, session, entities, trip)
+    return _serialize(result)
+
+
 def _load_session(session_id: Optional[str]) -> ChatSession:
     if not CHAT_STATE or session_id is None:
         return ChatSession()
@@ -158,10 +247,11 @@ def _load_session(session_id: Optional[str]) -> ChatSession:
 
 
 def _save_session(session_id: Optional[str], session: ChatSession,
-                  entities: Entities, trip: Optional[Trip]) -> None:
+                  entities: Optional[Entities], trip: Optional[Trip]) -> None:
     if not CHAT_STATE or session_id is None:
         return
-    session.last_entities = entities
+    if entities is not None:
+        session.last_entities = entities
     if trip is not None:
         session.current_trip = trip
     from .state import save_session
@@ -182,7 +272,9 @@ def _retrieve_stores(db: Session, entities: Entities, user: Optional[User],
             stores = [s for s in stores if has_coords(s)][:5]
         if not stores:
             stores = rank_stores(db, area=entities.area, limit=5,
-                                 geo_store_ids=geo_store_ids, prefs=prefs)
+                                 geo_store_ids=geo_store_ids, prefs=prefs,
+                                 store_kind=entities.store_kind, audience=entities.audience,
+                                 style=entities.style, price_tier=entities.price_tier)
         from .retrieval import _build_context
         return stores, _build_context(db, stores, entities.intent)
 
@@ -280,4 +372,8 @@ def _serialize(result: ChatResult) -> dict:
         d["action"] = result.action
     if result.trip is not None:
         d["trip"] = result.trip
+    if result.clarify is not None:
+        d["clarify"] = result.clarify
+    if result.route is not None:
+        d["route"] = result.route
     return d

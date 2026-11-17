@@ -42,6 +42,7 @@ _ADDED_COLUMNS = {
         ("google_sub", "VARCHAR(64)"),
         ("avatar_url", "VARCHAR(300)"),
         ("is_admin", "BOOLEAN DEFAULT FALSE"),
+        ("chat_prefs", "TEXT"),
     ],
     "stores": [
         ("google_place_id", "VARCHAR(120)"),

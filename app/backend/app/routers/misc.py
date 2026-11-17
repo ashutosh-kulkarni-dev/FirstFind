@@ -54,7 +54,9 @@ def recommendations(db: Session = Depends(get_db),
 def chat(body: ChatIn, db: Session = Depends(get_db),
          user: Optional[User] = Depends(get_optional_user)):
     origin = (body.origin.lat, body.origin.lng) if body.origin else None
-    result = chat_engine.respond(body.message, db, user, body.session_id, origin=origin)
+    answer = body.answer.model_dump() if body.answer else None
+    result = chat_engine.respond(body.message, db, user, body.session_id, origin=origin,
+                                 answer=answer)
     # Persist the turn for logged-in users only; guests stay ephemeral.
     # Import lazily so history stays an optional, removable module.
     if user:
