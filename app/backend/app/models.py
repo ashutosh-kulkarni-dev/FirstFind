@@ -74,6 +74,15 @@ class Store(Base):
     # False hides a store everywhere (permanently closed / removed by an admin)
     # without deleting rows that reviews and saved lists point at.
     is_active = Column(Boolean, default=True, nullable=True)
+    # Where the row came from: "csv" (owner's import) | "admin" (added on
+    # /admin) | NULL for rows that predate the column (treated as "csv"). The
+    # prune job never deletes "admin" stores.
+    created_via = Column(String(10), nullable=True)
+    # Set whenever an admin edits the store. The CSV importer then leaves the
+    # row alone (apart from Google rating figures) so imports never undo edits.
+    admin_edited_at = Column(DateTime, nullable=True)
+    # Last Google check result: "found" | "not_found" | "closed".
+    google_status = Column(String(12), nullable=True)
     # ML-derived
     experience_score = Column(Float, nullable=True)   # 0-5 blended score
     review_count = Column(Integer, default=0)
@@ -102,6 +111,9 @@ class Review(Base):
     # Which engine produced the sentiment: "local" | "hf" | "vader". Lets the
     # daily job re-score anything that only got the English-only fallback.
     sentiment_engine = Column(String(12), nullable=True)
+    # Hidden by an admin: kept in the table but left out of every page,
+    # score, tag and chat answer.
+    is_hidden = Column(Boolean, default=False, nullable=True)
     store = relationship("Store", back_populates="reviews")
     user = relationship("User", back_populates="reviews")
 
@@ -211,3 +223,18 @@ class UserRecommendation(Base):
     store_id = Column(String(20), ForeignKey("stores.id"), nullable=False)
     rank = Column(Integer, nullable=False)   # 0 = top pick
     score = Column(Float, nullable=True)
+
+
+class AdminAudit(Base):
+    """One row per admin change: who did what to which store or review.
+    `changes` is JSON: {field: [before, after]} for edits, or a snapshot of
+    the row for create / delete."""
+    __tablename__ = "admin_audit"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    user_email = Column(String(255), nullable=True)   # kept if the user is deleted
+    action = Column(String(20), nullable=False)       # create/update/hide/unhide/delete
+    entity = Column(String(20), nullable=False)       # "store" | "review"
+    entity_id = Column(String(40), nullable=False, index=True)
+    changes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=dt.datetime.utcnow, index=True)

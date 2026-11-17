@@ -85,6 +85,14 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     return user
 
 
+def require_admin(user: User = Depends(get_current_user)) -> User:
+    """Admin-only routes. Read from the database on every request (not from the
+    token), so revoking admin takes effect immediately."""
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user
+
+
 def get_optional_user(request: Request, db: Session = Depends(get_db)) -> Optional[User]:
     """Optional auth — guest users get None."""
     header = request.headers.get("Authorization", "")

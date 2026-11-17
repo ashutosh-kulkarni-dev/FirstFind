@@ -54,6 +54,17 @@ export async function req(path, opts = {}) {
   return res.json();
 }
 
+// For non-JSON responses (file downloads). Same auth header and error handling.
+export async function reqBlob(path) {
+  const headers = _token ? { Authorization: `Bearer ${_token}` } : {}
+  const res = await fetch(`${API_BASE}${path}`, { headers })
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(errorText(body.detail) || `Request failed (${res.status})`)
+  }
+  return res.blob()
+}
+
 const json = (method, body) => ({ method, ...(body === undefined ? {} : { body: JSON.stringify(body) }) })
 export const post = (path, body) => req(path, json('POST', body))
 export const patch = (path, body) => req(path, json('PATCH', body))

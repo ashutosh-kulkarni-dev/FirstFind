@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Optional
 from sqlalchemy.orm import Session
 
 from ..models import Review, Store, Zone
-from ..common.serializers import STORE_HAS_COORDS, sentiment_summary
+from ..common.serializers import REVIEW_VISIBLE, STORE_HAS_COORDS, sentiment_summary
 from ..common.hours import is_open_now
 from .contracts import Entities
 
@@ -374,12 +374,12 @@ def retrieve(db: Session, entities: Entities,
 # ---------------------------------------------------------------------------
 
 def _sentiment_summary(db: Session, store: Store) -> dict:
-    revs = db.query(Review).filter(Review.store_id == store.id).all()
+    revs = db.query(Review).filter(Review.store_id == store.id, REVIEW_VISIBLE).all()
     return sentiment_summary(revs)
 
 
 def _review_snippets(db: Session, store_id: str, k: int = 2) -> list[str]:
-    revs = (db.query(Review).filter(Review.store_id == store_id)
+    revs = (db.query(Review).filter(Review.store_id == store_id, REVIEW_VISIBLE)
             .order_by(Review.created_at.desc()).all())
     return [(r.text or "").strip()[:200] for r in revs if (r.text or "").strip()][:k]
 

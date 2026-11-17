@@ -27,6 +27,7 @@ class TokenOut(BaseModel):
     name: str
     email: str
     avatar_url: Optional[str] = None
+    is_admin: bool = False
 
 
 # ---- auth: google ----

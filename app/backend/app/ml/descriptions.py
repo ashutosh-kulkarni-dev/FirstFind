@@ -114,13 +114,14 @@ def generate_descriptions(db, limit: int = DESCRIPTION_BATCH) -> int:
     admin typed are left alone. Capped at `limit` per run; the rest are picked
     up by later runs. Flushes, does not commit.
     """
+    from ..common.serializers import REVIEW_VISIBLE
     from ..models import Review, Store
 
     if not GROQ_API_KEY:
         log.info("Descriptions: no GROQ_API_KEY — skipping AI summaries")
         return 0
     texts: dict[str, list[str]] = {}
-    for sid, text in (db.query(Review.store_id, Review.text)
+    for sid, text in (db.query(Review.store_id, Review.text).filter(REVIEW_VISIBLE)
                       .order_by(Review.created_at.desc())):
         if (text or "").strip():
             texts.setdefault(sid, []).append(text)

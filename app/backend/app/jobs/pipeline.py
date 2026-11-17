@@ -20,6 +20,7 @@ Run: python -m app.jobs.pipeline
 import logging
 
 from ..database import SessionLocal
+from ..common.serializers import REVIEW_VISIBLE
 from ..models import Review, Store, Zone
 from ..ml.zones import zone_rows
 from ..ml import sentiment as sentiment_ml
@@ -65,7 +66,7 @@ def recompute_store_scores(db) -> int:
     """Stage 2: recompute each store's experience_score and review_count."""
     stores = db.query(Store).all()
     by_store: dict[str, list] = {}
-    for r in db.query(Review).all():
+    for r in db.query(Review).filter(REVIEW_VISIBLE):
         by_store.setdefault(r.store_id, []).append(sentiment_ml.review_tuple(r))
     for s in stores:
         scored = by_store.get(s.id, [])

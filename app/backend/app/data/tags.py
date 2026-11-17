@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import re
 
+from ..common.serializers import REVIEW_VISIBLE
 from ..models import Review, Store
 
 # value -> label shown in the app, in display order.
@@ -131,7 +132,7 @@ def assign_tags(db) -> int:
     """Recompute tags for every store not edited by an admin. Flushes, no commit.
     Returns how many stores changed."""
     texts: dict[str, list[str]] = {}
-    for store_id, text in db.query(Review.store_id, Review.text):
+    for store_id, text in db.query(Review.store_id, Review.text).filter(REVIEW_VISIBLE):
         if text:
             texts.setdefault(store_id, []).append(text)
     changed = 0
