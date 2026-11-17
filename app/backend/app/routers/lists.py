@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..auth import get_current_user
@@ -6,13 +6,15 @@ from ..database import get_db
 from ..models import SavedList, SavedListItem, Store, User
 from ..schemas import SavedListIn, SavedListPatch
 from ..common.serializers import has_coords, store_to_dict
+from ..ml import signals
+from ..ml.tasks import refit_recommender
 
 router = APIRouter(prefix="/api/lists", tags=["lists"])
 
 
 @router.post("", status_code=201)
-def create_list(body: SavedListIn, db: Session = Depends(get_db),
-                user: User = Depends(get_current_user)):
+def create_list(body: SavedListIn, background_tasks: BackgroundTasks,
+                db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     name = body.name.strip()
     if db.query(SavedList).filter(SavedList.user_id == user.id,
                                   SavedList.name == name).first():
@@ -24,11 +26,15 @@ def create_list(body: SavedListIn, db: Session = Depends(get_db),
     db.add(lst)
     db.flush()   # get lst.id before adding items
 
+    added = False
     for pos, sid in enumerate(body.store_ids):
         if db.get(Store, sid):   # only attach stores that exist
             db.add(SavedListItem(list_id=lst.id, store_id=sid, position=pos))
+            added |= signals.record(db, user.id, sid, "save")   # listing a store = saving it
 
     db.commit()
+    if added:
+        background_tasks.add_task(refit_recommender, force=True)
     db.refresh(lst)
     return _list_summary(lst)
 
@@ -58,7 +64,7 @@ def get_list(list_id: int, db: Session = Depends(get_db),
 
 
 @router.patch("/{list_id}")
-def update_list(list_id: int, body: SavedListPatch,
+def update_list(list_id: int, body: SavedListPatch, background_tasks: BackgroundTasks,
                 db: Session = Depends(get_db),
                 user: User = Depends(get_current_user)):
     lst = _owned_or_404(db, user, list_id)
@@ -77,10 +83,12 @@ def update_list(list_id: int, body: SavedListPatch,
     existing_ids = {item.store_id for item in lst.items}
     max_pos = max((item.position for item in lst.items), default=-1)
 
+    added = False
     for sid in body.add_ids:
         if sid not in existing_ids and db.get(Store, sid):
             max_pos += 1
             db.add(SavedListItem(list_id=lst.id, store_id=sid, position=max_pos))
+            added |= signals.record(db, user.id, sid, "save")
 
     for sid in body.remove_ids:
         for item in lst.items:
@@ -89,6 +97,8 @@ def update_list(list_id: int, body: SavedListPatch,
                 break
 
     db.commit()
+    if added:
+        background_tasks.add_task(refit_recommender, force=True)
     db.refresh(lst)
     return _list_summary(lst)
 

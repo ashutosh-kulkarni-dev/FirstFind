@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom'
 import ScorePill from './ScorePill'
 
 // Compact store preview card (used on Landing, Chat results, similar lists).
-export default function StoreCard({ store, match }) {
+// `reason` says why it was recommended ("Because you saved X").
+export default function StoreCard({ store, match, reason }) {
   // `categories` is an array from the API but a comma-string in some contexts —
   // handle both so `.split` is never called on an array (which throws and blanks the page).
   const cats = Array.isArray(store.categories)
@@ -30,6 +31,7 @@ export default function StoreCard({ store, match }) {
           </span>
         ) : null}
       </div>
+      {reason && <div className="store-card-reason">{reason}</div>}
     </Link>
   )
 }

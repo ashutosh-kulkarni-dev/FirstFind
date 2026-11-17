@@ -242,7 +242,7 @@ export default function StoreDetail() {
           <div className="anton" style={{ fontSize: 20, color: 'var(--ink)', lineHeight: 1.05 }}>SHOPPERS<br />ALSO LIKED</div>
           <div className="muted" style={{ marginTop: 4, fontSize: 11.5 }}>Collaborative filtering</div>
           <div style={{ marginTop: 15, display: 'flex', flexDirection: 'column', gap: 11 }}>
-            {(store.similar || []).map(s => <StoreCard key={s.id} store={s} match={s.match_pct} />)}
+            {(store.similar || []).map(s => <StoreCard key={s.id} store={s} match={s.match_pct} reason={s.reason} />)}
           </div>
         </aside>
       </div>
