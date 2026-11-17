@@ -1,9 +1,8 @@
-import datetime as dt
-
 from sqlalchemy import (Boolean, Column, DateTime, Float, ForeignKey, Integer,
                         String, Text, UniqueConstraint)
 from sqlalchemy.orm import relationship
 
+from .common.geo import utcnow
 from .database import Base
 
 
@@ -22,7 +21,7 @@ class User(Base):
     is_admin = Column(Boolean, default=False, nullable=True)
     # The assistant's remembered answers (JSON: price_tier / audience / store_kind).
     chat_prefs = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=dt.datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
     reviews = relationship("Review", back_populates="user")
     interactions = relationship("Interaction", back_populates="user")
 
@@ -91,7 +90,7 @@ class Review(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     rating = Column(Integer, nullable=False)  # 1-5
     text = Column(Text, default="")
-    created_at = Column(DateTime, default=dt.datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
     # Source tracking for external reviews (Google Maps, future providers).
     source = Column(String(20), default="app")          # "app" | "google"
     external_id = Column(String(128), nullable=True)    # provider review id / stable hash
@@ -119,7 +118,7 @@ class Interaction(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     store_id = Column(String(20), ForeignKey("stores.id"), nullable=False, index=True)
     kind = Column(String(20), nullable=False)  # view / save / like
-    created_at = Column(DateTime, default=dt.datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
     user = relationship("User", back_populates="interactions")
 
 
@@ -146,7 +145,7 @@ class SavedList(Base):
     center_lng   = Column(Float, nullable=True)
     radius_km    = Column(Float, nullable=True)
     source_label = Column(String(160), nullable=True)   # cluster label at save time
-    created_at   = Column(DateTime, default=dt.datetime.utcnow)
+    created_at   = Column(DateTime, default=utcnow)
     items        = relationship("SavedListItem", back_populates="saved_list",
                                 order_by="SavedListItem.position",
                                 cascade="all, delete-orphan")
@@ -168,8 +167,8 @@ class Conversation(Base):
     # session_id links a guest UUID to this record at claim time.
     session_id = Column(String(64), nullable=True, index=True)
     title      = Column(String(160), default="")   # first user message, truncated
-    created_at = Column(DateTime, default=dt.datetime.utcnow)
-    updated_at = Column(DateTime, default=dt.datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow)
     messages   = relationship("ChatMessage", back_populates="conversation",
                               order_by="ChatMessage.id",
                               cascade="all, delete-orphan")
@@ -185,7 +184,7 @@ class ChatMessage(Base):
     # Serialised assistant payload (stores/intent/suggestions) so a reopened
     # conversation can re-render cards, not just the text bubble.
     meta            = Column(Text, nullable=True)          # JSON or NULL
-    created_at      = Column(DateTime, default=dt.datetime.utcnow)
+    created_at      = Column(DateTime, default=utcnow)
     conversation    = relationship("Conversation", back_populates="messages")
 
 

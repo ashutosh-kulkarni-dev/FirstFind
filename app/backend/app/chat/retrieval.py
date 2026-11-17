@@ -32,7 +32,6 @@ CATEGORY_SYNONYMS: dict[str, list[str]] = {
     "oversized": ["oversized", "oversize", "baggy fits"],
     "formal": ["formal", "office wear", "blazer", "shirts"],
     "accessories": ["accessories", "bags", "belts", "jewellery", "jewelry"],
-    "budget": ["budget", "cheap", "affordable", "under"],
 }
 
 TRIP_RE = (r"\b(plan (a |my |me a )?(\w+ )?(trip|route|day|outing|walk)|thrift (run|crawl|trip|walk)|"
@@ -71,16 +70,6 @@ LOCALITY_STOPWORDS = {
     "show", "find", "get", "best",
 }
 
-REFINE_PATTERNS = [
-    ("cheaper",    r"\b(cheaper|less expensive|lower price|budget|under ₹?\d*)\b"),
-    ("open_only",  r"\b(only open|open ones|open now|currently open)\b"),
-    ("add_area",   r"\b(add|include|also|and)\b.{0,20}\b(area|stores?|shops?)\b"),
-    ("drop",       r"\b(drop|remove|exclude|not|without)\b"),
-    ("reorder",    r"\b(order|route|sequence|visit order|which (first|order))\b"),
-]
-
-GREETING_RE = re.compile(r"^\s*(hi|hello|hey|yo|namaste|hola)\b", re.I)
-
 W_QUALITY    = 2.0
 W_CATEGORY   = 1.5
 W_PRICE      = 1.0
@@ -97,6 +86,16 @@ W_PREF_DISLIKE = -2.0  # soft penalty for disliked category
 # ---------------------------------------------------------------------------
 # Stage 1 — Understand
 # ---------------------------------------------------------------------------
+
+def has_phrase(text: str, phrase: str, plural: bool = False) -> bool:
+    """`phrase` occurs in `text` as whole words (optionally pluralised). Plain
+    `in` matched inside longer words ("sari" in "safari", a short store or
+    area name inside another word)."""
+    if not phrase:
+        return False
+    tail = r"(?:e?s)?" if plural else ""
+    return re.search(rf"(?<!\w){re.escape(phrase)}{tail}(?!\w)", text) is not None
+
 
 def _normalize(msg: str) -> str:
     s = msg.lower().strip()
@@ -122,7 +121,7 @@ def _extract_area(norm: str, areas: list[str], cutoff: float = 0.8) -> Optional[
     if not areas:
         return None
     for a in areas:
-        if a.lower() in norm:
+        if has_phrase(norm, a.lower()):
             return a
     tokens = norm.split()
     best_area, best_ratio = None, 0.0
@@ -168,11 +167,8 @@ def _extract_locality_phrase(norm: str, db: Session) -> Optional[str]:
 
 def _extract_category(norm: str) -> Optional[str]:
     for cat, syns in CATEGORY_SYNONYMS.items():
-        if cat == "budget":
-            continue
-        for s in syns:
-            if s in norm:
-                return cat
+        if any(has_phrase(norm, s, plural=True) for s in syns):
+            return cat
     return None
 
 
@@ -209,19 +205,11 @@ def _detect_intent(norm: str, areas: list[str], db: Optional[Session] = None) ->
     return "general_assistance"
 
 
-def _detect_refine_op(norm: str) -> Optional[str]:
-    """Detect if this message is a trip-refinement rather than a new query."""
-    for op, pattern in REFINE_PATTERNS:
-        if re.search(pattern, norm):
-            return op
-    return None
-
-
 def _extract_stores(norm: str, db: Session, limit: int = 2) -> list[Store]:
     hits = []
     visible = db.query(Store).filter(*STORE_HAS_COORDS).all()
     for s in visible:
-        if s.name.lower() in norm:
+        if has_phrase(norm, s.name.lower()):
             hits.append(s)
     if not hits:
         names = {s.name.lower(): s for s in visible}
@@ -292,7 +280,7 @@ def understand(msg: str, db: Session) -> Entities:
                   "plan_trip"}:
         # In a search, only a store named in full counts: fuzzy windows turn
         # "me stores" into "Re Store".
-        named = [s for s in named if s.name.lower() in norm]
+        named = [s for s in named if has_phrase(norm, s.name.lower())]
     return Entities(
         intent=intent,
         area=area,

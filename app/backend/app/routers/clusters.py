@@ -7,12 +7,12 @@ Phase 4 — GET  /api/clusters/split  : split an over-cap cluster into sub-zones
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from ..config import DEFAULT_MAX_SHOPS, DEFAULT_MIN_SHOPS, MAX_RADIUS_KM
+from ..config import DEFAULT_MAX_SHOPS, MAX_RADIUS_KM
 from ..database import get_db
 from ..ml.clusters import find_cluster, split_cluster
-from ..models import Store, Zone
-from ..common.serializers import STORE_HAS_COORDS, zone_to_dict
-from ..common.geo import haversine_km
+from ..models import Zone
+from ..common.serializers import zone_to_dict
+from .stores import stores_within
 
 router = APIRouter(prefix="/api/clusters", tags=["clusters"])
 
@@ -28,18 +28,15 @@ def find(
     lat: float,
     lng: float,
     radius_km: float = 2.0,
-    min_shops: int = DEFAULT_MIN_SHOPS,
     max_shops: int = DEFAULT_MAX_SHOPS,
     db: Session = Depends(get_db),
 ):
     """Mode B: find stores within radius of a coordinate."""
     if radius_km <= 0 or radius_km > MAX_RADIUS_KM:
         raise HTTPException(400, f"radius_km must be between 0 and {MAX_RADIUS_KM}")
-    if min_shops < 1:
-        raise HTTPException(400, "min_shops must be >= 1")
-    if max_shops < min_shops:
-        raise HTTPException(400, "max_shops must be >= min_shops")
-    return find_cluster(db, lat, lng, radius_km, min_shops, max_shops)
+    if max_shops < 1:
+        raise HTTPException(400, "max_shops must be >= 1")
+    return find_cluster(db, lat, lng, radius_km, max_shops)
 
 
 @router.get("/split")
@@ -62,10 +59,7 @@ def split(
     if max_shops < 2:
         raise HTTPException(400, "max_shops must be >= 2")
 
-    stores_in = [
-        s for s in db.query(Store).filter(*STORE_HAS_COORDS).all()
-        if haversine_km(lat, lng, s.lat, s.lng) <= radius_km
-    ]
+    stores_in = stores_within(db, lat, lng, radius_km)
 
     if len(stores_in) < 2:
         raise HTTPException(400, "Need at least 2 stores to split")

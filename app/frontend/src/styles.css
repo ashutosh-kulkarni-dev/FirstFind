@@ -23,10 +23,7 @@
 
   /* AI-score scale */
   --score-green: #22c55e;
-  --score-lime: #84cc16;
-  --score-amber: #f59e0b;
   --score-red: #f43f5e;
-  --score-none: #94a3b8;
 
   /* sentiment */
   --sent-pos: #16a34a;

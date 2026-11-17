@@ -38,6 +38,9 @@ async def lifespan(app: FastAPI):
     # startup races (and can wipe data) when Uvicorn runs >1 worker — each
     # process runs lifespan. Seeding is now an explicit one-shot CLI step
     # (`python -m app.data.seed`); startup only warns if the DB looks empty.
+    # Config checks first: a production boot with a weak secret must fail
+    # before it spends time touching the database or fitting models.
+    _startup_checks()
     Base.metadata.create_all(engine)
     # create_all creates missing tables but never ALTERs an existing one, so
     # columns added after the initial schema are applied here (idempotent).
@@ -53,7 +56,6 @@ async def lifespan(app: FastAPI):
     sentiment_ml.warmup()
     log.info("Sentiment engine: %s",
              "HF Inference API" if hf_token else "VADER fallback")
-    _startup_checks()
     yield
 
 
@@ -92,8 +94,9 @@ app.add_middleware(RateLimitMiddleware, max_requests=120, window_seconds=60)
 app.add_middleware(AuthRateLimitMiddleware, max_requests=10, window_seconds=60)
 app.add_middleware(SecurityHeadersMiddleware)
 if ENVIRONMENT == "production":
-    # Render terminates TLS and sets X-Forwarded-Proto; Starlette honors it when
-    # ProxyHeadersMiddleware is active (uvicorn's --proxy-headers, on by default).
+    # Render terminates TLS and sets X-Forwarded-Proto. Uvicorn only trusts it
+    # from the IPs in --forwarded-allow-ips (see the Dockerfile CMD); without
+    # that every request looks like http and every client has the proxy's IP.
     app.add_middleware(HTTPSRedirectMiddleware)
 
 app.include_router(auth_routes.router)

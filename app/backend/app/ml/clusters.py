@@ -11,7 +11,7 @@ from sklearn.cluster import HDBSCAN, KMeans
 from sklearn.preprocessing import StandardScaler
 from sqlalchemy.orm import Session
 
-from ..config import DEFAULT_MAX_SHOPS, DEFAULT_MIN_SHOPS, SEED
+from ..config import DEFAULT_MAX_SHOPS, SEED
 from ..models import Store
 from ..common.serializers import STORE_HAS_COORDS, store_to_dict
 from ..common.geo import haversine_km
@@ -45,7 +45,6 @@ def find_cluster(
     lat: float,
     lng: float,
     radius_km: float,
-    min_shops: int = DEFAULT_MIN_SHOPS,
     max_shops: int = DEFAULT_MAX_SHOPS,
 ) -> dict:
     """Mode B: find stores within radius, compute real radius + geographic name.

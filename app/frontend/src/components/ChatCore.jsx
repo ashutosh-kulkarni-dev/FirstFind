@@ -145,7 +145,7 @@ export default function ChatCore({ compact = false }) {
       }])
     } catch (e) {
       setMessages(m => [...m, {
-        role: 'bot', text: `Hmm, I couldn't reach the server (${e.message}). Is the backend running on port 8000?`,
+        role: 'bot', text: `Sorry, something went wrong (${e.message}). Please try again in a moment.`,
         stores: [], suggestions: [],
       }])
     } finally {

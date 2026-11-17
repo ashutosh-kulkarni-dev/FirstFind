@@ -1,5 +1,5 @@
 import datetime as dt
-from collections import Counter
+from collections import Counter, defaultdict
 from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
@@ -10,11 +10,12 @@ from ..auth import get_current_user, get_optional_user
 from ..data.tags import STORE_TYPE_LABELS, TAG_LABELS, split_tags
 from ..database import get_db
 from ..ml.recommender import similar_ids
-from ..ml.tasks import refit_recommender
+from ..ml.tasks import refit_recommender, score_review
+from ..config import MAX_RADIUS_KM
 from ..models import Interaction, Review, Store, StoreSimilarity, User
 from ..schemas import ReviewIn
 from ..common.serializers import STORE_HAS_COORDS, has_coords, sentiment_summary, store_to_dict
-from ..common.geo import haversine_km
+from ..common.geo import haversine_km, utcnow
 from ..common.hours import is_open_now
 from ..common.aliases import review_display_name
 
@@ -117,7 +118,6 @@ def area_coords(db: Session = Depends(get_db)):
     named place — including small pockets inside a zone — as a start point.
     Shape: [{name, kind: "area"|"locality", lat, lng, count}]
     """
-    from collections import defaultdict
     area_pts: dict = defaultdict(list)
     locality_pts: dict = defaultdict(list)
 
@@ -152,6 +152,8 @@ def area_coords(db: Session = Depends(get_db)):
 @router.get("/nearby")
 def nearby(lat: float, lng: float, radius_km: float = 5.0,
            db: Session = Depends(get_db)):
+    if radius_km <= 0 or radius_km > MAX_RADIUS_KM:
+        raise HTTPException(400, f"radius_km must be between 0 and {MAX_RADIUS_KM}")
     stores = stores_within(db, lat, lng, radius_km)
     return {"count": len(stores), "stores": [store_to_dict(s, lat, lng) for s in stores]}
 
@@ -161,8 +163,6 @@ def store_detail(store_id: str, background_tasks: BackgroundTasks,
                  db: Session = Depends(get_db),
                  user: Optional[User] = Depends(get_optional_user)):
     store = db.get(Store, store_id)
-    if not store:
-        raise HTTPException(404, "Store not found")
     # Hidden (no-coordinate) stores exist in the DB for manual pinning but are
     # not exposed to users — treat their detail page as not found.
     if not has_coords(store):
@@ -171,7 +171,7 @@ def store_detail(store_id: str, background_tasks: BackgroundTasks,
     # per VIEW_DEDUP_HOURS so a page refresh doesn't inflate the CF signal. The
     # CF refit runs in the background (debounced), never on the request path.
     if user:
-        since = dt.datetime.utcnow() - dt.timedelta(hours=VIEW_DEDUP_HOURS)
+        since = utcnow() - dt.timedelta(hours=VIEW_DEDUP_HOURS)
         already_viewed = (db.query(Interaction.id)
                           .filter(Interaction.user_id == user.id,
                                   Interaction.store_id == store.id,
@@ -200,7 +200,8 @@ def store_detail(store_id: str, background_tasks: BackgroundTasks,
         s = db.get(Store, row.similar_id)
         if has_coords(s):
             d = store_to_dict(s)
-            d["match_pct"] = round(float(row.score) * 100)
+            if row.score is not None:   # nullable column: float(None) would 500 the page
+                d["match_pct"] = round(float(row.score) * 100)
             similar.append(d)
     # Fall back to in-memory recommender if DB has no precomputed rows yet.
     if not similar:
@@ -228,9 +229,8 @@ def store_detail(store_id: str, background_tasks: BackgroundTasks,
 def add_review(store_id: str, body: ReviewIn, background_tasks: BackgroundTasks,
                db: Session = Depends(get_db),
                user: User = Depends(get_current_user)):
-    from ..ml.tasks import score_review
     store = db.get(Store, store_id)
-    if not store:
+    if not has_coords(store):   # hidden / closed stores are "not found" everywhere
         raise HTTPException(404, "Store not found")
     # Save the review immediately with sentiment pending; scoring happens off the
     # request path via the HF Inference API. The store's experience_score /
@@ -248,7 +248,7 @@ def add_review(store_id: str, body: ReviewIn, background_tasks: BackgroundTasks,
 def save_store(store_id: str, background_tasks: BackgroundTasks,
                db: Session = Depends(get_db),
                user: User = Depends(get_current_user)):
-    if not db.get(Store, store_id):
+    if not has_coords(db.get(Store, store_id)):
         raise HTTPException(404, "Store not found")
     db.add(Interaction(user_id=user.id, store_id=store_id, kind="save"))
     db.commit()

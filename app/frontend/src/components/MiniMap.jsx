@@ -1,6 +1,7 @@
 // MiniMap — read-only Leaflet map for chat context bubbles. FIRSTFIND palette.
 import { useEffect, useRef } from 'react'
 import L from 'leaflet'
+import { escapeHtml } from '../lib/html'
 
 const TILE_URL = import.meta.env.VITE_MAP_TILE_URL
   || 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
@@ -13,7 +14,7 @@ function dotColor(isOpen) {
 
 const metroIcon = (color) => L.divIcon({
   className: '',
-  html: `<div style="width:12px;height:12px;border-radius:50%;border:2.5px solid ${color};background:transparent;box-shadow:0 0 0 2px rgba(15,26,43,.9)"></div>`,
+  html: `<div style="width:12px;height:12px;border-radius:50%;border:2.5px solid ${escapeHtml(color)};background:transparent;box-shadow:0 0 0 2px rgba(15,26,43,.9)"></div>`,
   iconSize: [12, 12], iconAnchor: [6, 6],
 })
 
@@ -33,8 +34,13 @@ const startIcon = L.divIcon({
 export default function MiniMap({ center, radiusKm, stores = [], metro = null, route = null }) {
   const containerRef = useRef(null)
   const mapRef = useRef(null)
+  // Redraw when anything shown changes. The props are fresh objects on every
+  // render, so compare by content (it used to compare only how many stores
+  // there were, leaving old pins up when a new answer had the same count).
+  const spec = JSON.stringify({ center, radiusKm, stores, metro, route })
 
   useEffect(() => {
+    const { center, radiusKm, stores, metro, route } = JSON.parse(spec)
     if (!containerRef.current || !center) return
     if (mapRef.current) { mapRef.current.remove(); mapRef.current = null }
 
@@ -63,17 +69,17 @@ export default function MiniMap({ center, radiusKm, stores = [], metro = null, r
       stores.forEach(s => {
         if (s.lat == null || s.lng == null) return
         L.circleMarker([s.lat, s.lng], { radius: 6, color: '#0f1a2b', fillColor: dotColor(s.is_open_now), fillOpacity: 0.95, weight: 1 })
-          .addTo(map).bindPopup(`<b>${s.name}</b>`)
+          .addTo(map).bindPopup(`<b>${escapeHtml(s.name)}</b>`)
       })
     }
     if (metro && metro.lat != null) {
       L.marker([metro.lat, metro.lng], { icon: metroIcon(metro.line_color || '#888') })
-        .addTo(map).bindPopup(`${metro.name} — ${metro.line_name}<br/>${metro.distance_m} m away`)
+        .addTo(map).bindPopup(`${escapeHtml(metro.name)} — ${escapeHtml(metro.line_name)}<br/>${escapeHtml(metro.distance_m)} m away`)
     }
 
     mapRef.current = map
     return () => { map.remove(); mapRef.current = null }
-  }, [center?.[0], center?.[1], radiusKm, stores.length, route?.length])
+  }, [spec])
 
   if (!center) return null
   return <div ref={containerRef} style={{ width: '100%', height: 180, borderRadius: 12, overflow: 'hidden', marginTop: 10, border: '1px solid var(--line)', pointerEvents: 'none' }} />

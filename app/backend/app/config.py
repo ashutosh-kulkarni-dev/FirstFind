@@ -90,7 +90,6 @@ SEED = 42
 
 # Zonal feature constants (Phase 1+)
 MAX_RADIUS_KM = 10.0        # hard cap on any zone radius
-DEFAULT_MIN_SHOPS = 3       # Mode B: minimum shops for a useful cluster
 DEFAULT_MAX_SHOPS = 8       # Mode B: cap before suggesting a split
 
 # ---- Chat pillar feature flags ----

@@ -41,15 +41,38 @@ def build_recommender() -> None:
         db.close()
 
 
+_rerun = False   # a forced refit arrived while one was running
+
+
 def refit_recommender(force: bool = False) -> None:
-    """Rebuild the CF model in the background, debounced unless forced."""
-    global _last_build
-    with _lock:
-        now = time.time()
-        if not force and now - _last_build < MIN_INTERVAL:
+    """Rebuild the CF model in the background, debounced unless forced.
+
+    Only one rebuild runs at a time. A request that arrives mid-rebuild does
+    not queue a thread behind the lock (a burst of saves used to tie up the
+    worker pool with back-to-back full rebuilds); a forced one instead asks the
+    running rebuild to go round once more so its signal is not lost.
+    """
+    global _last_build, _rerun
+    if not _lock.acquire(blocking=False):
+        if force:
+            _rerun = True
+        return
+    try:
+        if not force and time.time() - _last_build < MIN_INTERVAL:
             return
-        _last_build = now
-        build_recommender()
+        while True:
+            _rerun = False
+            _last_build = time.time()
+            try:
+                build_recommender()
+            except Exception:
+                # Background task: log it, never crash the worker.
+                log.exception("recommender refit failed")
+                return
+            if not _rerun:
+                return
+    finally:
+        _lock.release()
 
 
 def score_review(review_id: int) -> None:

@@ -28,6 +28,11 @@ export default function MapExplorer({
   // Keep the latest move handler reachable from the once-bound dblclick listener.
   const moveRef = useRef(onMoveCenter)
   useEffect(() => { moveRef.current = onMoveCenter }, [onMoveCenter])
+  // Same for the marker handlers and the cluster flag the store effect reads:
+  // the latest values, without redrawing every marker whenever the parent
+  // passes a new inline function.
+  const latest = useRef({})
+  latest.current = { onSelectStore, onViewStore, clusterCenter }
 
   useEffect(() => {
     if (!elRef.current || mapRef.current) return
@@ -70,12 +75,16 @@ export default function MapExplorer({
   useEffect(() => {
     const map = mapRef.current, layer = storeLayerRef.current
     if (!map || !layer) return
-    drawStores(L, layer, stores, { selectedId, onSelect: onSelectStore, onView: onViewStore })
+    drawStores(L, layer, stores, {
+      selectedId,
+      onSelect: id => latest.current.onSelectStore?.(id),
+      onView: id => latest.current.onViewStore?.(id),
+    })
 
     if (selectedId) {
       const sel = stores.find(s => s.id === selectedId)
       if (sel && sel.lat != null) map.panTo([sel.lat, sel.lng], { animate: true })
-    } else if (!clusterCenter) {
+    } else if (!latest.current.clusterCenter) {
       const pts = stores.filter(s => s.lat != null && s.lng != null).map(s => [s.lat, s.lng])
       if (pts.length) map.fitBounds(pts, { padding: [50, 50], maxZoom: 14 })
     }

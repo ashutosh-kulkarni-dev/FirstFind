@@ -194,10 +194,10 @@ def _handle_best_time(ctx: HandlerCtx) -> Draft:
 
 
 def _handle_shopping_advice(ctx: HandlerCtx) -> Draft:
-    # Delegates to advice.py via engine; returns a sentinel that engine swaps out.
-    # This handler is here so the registry is complete; engine calls advice.lookup()
-    # directly and bypasses retrieval for this intent.
-    return Draft(reply="__advice__", stores=[])
+    # With CHAT_ADVICE on, the engine answers advice questions itself before
+    # dispatch, so this only runs with the advice module switched off. It used
+    # to return a "__advice__" placeholder that then reached the user verbatim.
+    return _handle_general(ctx)
 
 
 def _handle_general(ctx: HandlerCtx) -> Draft:

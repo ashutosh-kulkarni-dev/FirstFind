@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api'
 import { useAuth } from '../auth/AuthContext'
@@ -30,8 +30,17 @@ export default function StoreDetail() {
   const guard = useRequireAuth()
   const reloadTimers = useRef([])
 
-  const load = () => api.store(id).then(d => { setStore(d); setSaved(isSaved(d.id)) }).catch(e => setError(e.message))
-  useEffect(() => { load() }, [id])
+  // Reload the current store (after a review). Ignores answers for a store the
+  // visitor has already navigated away from.
+  const idRef = useRef(id)
+  idRef.current = id
+  const load = useCallback(() => api.store(id)
+    .then(d => { if (idRef.current === id) { setStore(d); setSaved(isSaved(d.id)) } })
+    .catch(e => { if (idRef.current === id) setError(e.message) }), [id])
+
+  // Moving to another store (e.g. from "Shoppers also liked") starts from a
+  // clean page instead of showing the previous store until the fetch lands.
+  useEffect(() => { setStore(null); setError(''); load() }, [load])
 
   // Cancel any pending sentiment-poll reloads if the user leaves the page.
   useEffect(() => () => { reloadTimers.current.forEach(clearTimeout); reloadTimers.current = [] }, [])
@@ -57,7 +66,11 @@ export default function StoreDetail() {
 
   // Register the pending-action handler so a guest's draft is posted after login.
   // Runs before resumePendingAction() below, so the action is found on first try.
-  useEffect(() => registerActionHandler('post_review', postReview), [id])
+  // Goes through a ref so the replay uses the current render's postReview
+  // (logged-in user, current store), not the one captured at registration.
+  const postReviewRef = useRef(postReview)
+  postReviewRef.current = postReview
+  useEffect(() => registerActionHandler('post_review', p => postReviewRef.current(p)), [])
 
   // If the user just logged in and returned here (via ?next=), replay any queued review.
   useEffect(() => { if (user) resumePendingAction() }, [user])

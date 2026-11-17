@@ -20,6 +20,7 @@ from datetime import datetime
 
 import httpx
 
+from ..common.geo import utcnow
 from ..models import Store
 from .candidates import name_similarity
 
@@ -78,7 +79,7 @@ def verify_stores(db, client, limit: int | None = None) -> dict:
                 break
             continue
 
-        store.reviews_fetched_at = datetime.utcnow()
+        store.reviews_fetched_at = utcnow()
         if place is None:
             not_found.append(f"{store.id} {store.name}")
         else:

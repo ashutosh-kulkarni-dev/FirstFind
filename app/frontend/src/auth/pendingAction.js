@@ -11,12 +11,12 @@ export function setPendingAction(action) {
   try { sessionStorage.setItem(KEY, JSON.stringify(action)); } catch { /* quota/serialisation */ }
 }
 
-export function peekPendingAction() {
+function peekPendingAction() {
   try { return JSON.parse(sessionStorage.getItem(KEY) || 'null'); } catch { return null; }
 }
 
-export function clearPendingAction() {
-  sessionStorage.removeItem(KEY);
+function clearPendingAction() {
+  try { sessionStorage.removeItem(KEY); } catch { /* storage unavailable */ }
 }
 
 // Feature modules call this once (e.g. in a top-level effect) to register how their

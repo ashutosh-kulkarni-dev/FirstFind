@@ -7,8 +7,16 @@ const API_BASE = (import.meta.env.VITE_API_BASE || '').replace(/\/$/, '');
 
 // Token persists in localStorage so login survives a tab close / refresh (the
 // backend JWT is stateless, so nothing server-side needs to remember the session).
-let _token = localStorage.getItem('tf_token') || null;
-let _user = JSON.parse(localStorage.getItem('tf_user') || 'null');
+// Storage can be unavailable (privacy modes) or hold a corrupted value; either
+// used to throw here, at import time, and leave the whole app blank.
+function readStored(key) {
+  try { return localStorage.getItem(key) } catch { return null }
+}
+function readStoredUser() {
+  try { return JSON.parse(readStored('tf_user') || 'null') } catch { return null }
+}
+let _token = readStored('tf_token') || null;
+let _user = _token ? readStoredUser() : null;
 
 // Fired when the server rejects our token (401). AuthContext listens and logs out
 // cleanly instead of leaving a half-broken, "logged-in-looking" UI.
@@ -16,13 +24,15 @@ export const AUTH_UNAUTHORIZED_EVENT = 'tf:auth:unauthorized';
 
 export function setAuth(token, user) {
   _token = token; _user = user;
-  if (token) {
-    localStorage.setItem('tf_token', token);
-    localStorage.setItem('tf_user', JSON.stringify(user));
-  } else {
-    localStorage.removeItem('tf_token');
-    localStorage.removeItem('tf_user');
-  }
+  try {
+    if (token) {
+      localStorage.setItem('tf_token', token);
+      localStorage.setItem('tf_user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('tf_token');
+      localStorage.removeItem('tf_user');
+    }
+  } catch { /* storage unavailable: the session just won't survive a reload */ }
 }
 export function getToken() { return _token; }
 export function getUser() { return _user; }

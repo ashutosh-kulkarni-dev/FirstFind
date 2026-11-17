@@ -1,5 +1,6 @@
 import { storePopupHtml } from './leaflet'
 import { scoreHex } from '../score'
+import { escapeHtml } from '../html'
 
 // Store markers coloured by AI experience score (matches the Explore mockup +
 // sidebar legend). Open stores get a pulsing ring; the selected one is larger
@@ -93,7 +94,7 @@ export function drawMetro(L, layer, metroLines) {
         fillOpacity: 1,
         weight: 1.5,
       })
-        .bindTooltip(station.name, { direction: 'top', sticky: true, className: 'metro-tip', opacity: 1 })
+        .bindTooltip(escapeHtml(station.name), { direction: 'top', sticky: true, className: 'metro-tip', opacity: 1 })
         .addTo(layer)
     })
   })

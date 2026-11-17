@@ -1,24 +1,32 @@
 """Pydantic request/response schemas.
 
 Only the schemas actually used by the routers live here. Endpoints return
-hand-built dicts (via utils.store_to_dict), so there are no response models —
-these are the request bodies plus the one auth response.
+hand-built dicts (via common.serializers.store_to_dict), so there are no
+response models — these are the request bodies plus the one auth response.
 """
-from typing import Optional
+from typing import Annotated, Optional
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, StringConstraints
+
+# Text that must still say something once surrounding spaces are removed.
+NonBlank = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
+StoreId = Annotated[str, StringConstraints(max_length=20)]
+# Matches Conversation.session_id (String(64)); a frontend UUID is 36 chars.
+SessionId = Annotated[str, StringConstraints(min_length=1, max_length=64)]
+
+MAX_LIST_STORES = 200
 
 
 # ---- auth ----
 class RegisterIn(BaseModel):
-    name: str = Field(min_length=1, max_length=60)
+    name: Annotated[NonBlank, StringConstraints(max_length=60)]
     email: EmailStr
     password: str = Field(min_length=6, max_length=128)
 
 
 class LoginIn(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(max_length=128)
 
 
 class TokenOut(BaseModel):
@@ -31,7 +39,7 @@ class TokenOut(BaseModel):
 
 # ---- auth: google ----
 class GoogleAuthIn(BaseModel):
-    credential: str   # the ID token from Google Identity Services
+    credential: str = Field(max_length=4096)   # the ID token from Google Identity Services
 
 
 # ---- stores ----
@@ -42,24 +50,24 @@ class ReviewIn(BaseModel):
 
 # ---- saved lists ----
 class SavedListIn(BaseModel):
-    name: str = Field(min_length=1, max_length=120)
-    store_ids: list[str] = Field(min_length=1)
-    center_lat: Optional[float] = None
-    center_lng: Optional[float] = None
-    radius_km: Optional[float] = None
+    name: Annotated[NonBlank, StringConstraints(max_length=120)]
+    store_ids: list[StoreId] = Field(min_length=1, max_length=MAX_LIST_STORES)
+    center_lat: Optional[float] = Field(default=None, ge=-90, le=90)
+    center_lng: Optional[float] = Field(default=None, ge=-180, le=180)
+    radius_km: Optional[float] = Field(default=None, gt=0, le=50)
     source_label: Optional[str] = Field(default=None, max_length=160)
 
 
 class SavedListPatch(BaseModel):
-    name: Optional[str] = Field(default=None, min_length=1, max_length=120)
-    add_ids: list[str] = []
-    remove_ids: list[str] = []
+    name: Optional[Annotated[NonBlank, StringConstraints(max_length=120)]] = None
+    add_ids: list[StoreId] = Field(default_factory=list, max_length=MAX_LIST_STORES)
+    remove_ids: list[StoreId] = Field(default_factory=list, max_length=MAX_LIST_STORES)
 
 
 # ---- chat ----
 class Origin(BaseModel):
-    lat: float
-    lng: float
+    lat: float = Field(ge=-90, le=90)
+    lng: float = Field(ge=-180, le=180)
 
 
 class ChatAnswer(BaseModel):
@@ -70,6 +78,6 @@ class ChatAnswer(BaseModel):
 
 class ChatIn(BaseModel):
     message: str = Field(min_length=1, max_length=500)
-    session_id: Optional[str] = None
+    session_id: Optional[SessionId] = None
     origin: Optional[Origin] = None
     answer: Optional[ChatAnswer] = None

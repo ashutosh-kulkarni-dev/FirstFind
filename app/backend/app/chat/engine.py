@@ -109,8 +109,11 @@ def respond(msg: str, db: Session, user: Optional[User] = None,
     session.pending = None
 
     # ── Check for trip-refinement ────────────────────────────────────────────
+    # Only when the message names nothing new: "vintage under ₹500" or "open
+    # now in Jayanagar" after a search is a fresh request, not an edit of the
+    # previous trip (it used to be read as "make my trip cheaper").
     if (not resumed and CHAT_TRIPS and CHAT_STATE and session.current_trip
-            and session.current_trip.store_ids):
+            and session.current_trip.store_ids and not _names_new_subject(asked_for)):
         refine_op = _detect_refine_op(norm)
         if refine_op:
             result = _handle_refinement(refine_op, session, entities, db, user, norm, msg, session_id)
@@ -146,11 +149,6 @@ def respond(msg: str, db: Session, user: Optional[User] = None,
         stores=stores, context=context, db=db, user=user,
     )
     draft: Draft = dispatch(ctx)
-
-    # If handler returned the advice sentinel, swap it out
-    if draft.reply == "__advice__" and CHAT_ADVICE:
-        from .advice import lookup
-        draft = Draft(reply=lookup(msg), stores=[], suggestions=SUGGESTIONS[:3])
 
     # ── Pillar 3: build trip ──────────────────────────────────────────────────
     trip: Optional[Trip] = None
@@ -282,19 +280,26 @@ def _retrieve_stores(db: Session, entities: Entities, user: Optional[User],
     return stores, context
 
 
+REFINE_PATTERNS = [
+    ("reorder",   re.compile(r"\b(order|route|sequence|visit order|which (first|next|order)|plan the route)\b")),
+    ("open_only", re.compile(r"\b(only open|open ones|open now|currently open|open today)\b")),
+    ("cheaper",   re.compile(r"\b(cheaper|less expensive|lower price|more budget|affordable)\b")),
+    ("drop",      re.compile(r"\b(drop|remove|exclude|without|not that one|not the last)\b")),
+]
+
+
 def _detect_refine_op(norm: str) -> Optional[str]:
     """Detect trip-refinement intent from normalized text."""
-    import re
-    REFINE_PATTERNS = [
-        ("reorder",   r"\b(order|route|sequence|visit order|which (first|next|order)|plan the route)\b"),
-        ("open_only", r"\b(only open|open ones|open now|currently open|open today)\b"),
-        ("cheaper",   r"\b(cheaper|less expensive|lower price|more budget|under ₹?\d*|affordable)\b"),
-        ("drop",      r"\b(drop|remove|exclude|without|not that one|not the last)\b"),
-    ]
     for op, pattern in REFINE_PATTERNS:
-        if re.search(pattern, norm):
+        if pattern.search(norm):
             return op
     return None
+
+
+def _names_new_subject(e: Entities) -> bool:
+    """True when the message itself names a place, store, style or budget."""
+    return bool(e.area or e.locality or e.place or e.near_me or e.category or e.style
+                or e.store_kind or e.audience or e.price_max or e.store_names)
 
 
 def _handle_refinement(op: str, session: ChatSession, entities: Entities,
@@ -304,11 +309,8 @@ def _handle_refinement(op: str, session: ChatSession, entities: Entities,
     from .trip import refine as refine_trip, itinerary_text
 
     trip = session.current_trip
-    # Fetch all stores in the current trip to build the all_stores pool
-    from ..models import Store as StoreModel
-    all_stores = [store_to_dict(db.get(StoreModel, sid))
-                  for sid in (trip.store_ids if trip else [])
-                  if db.get(StoreModel, sid)]
+    # The current trip's stores (still visible ones) form the candidate pool.
+    all_stores = _store_dicts(db, trip.store_ids if trip else [])
 
     # Also include any newly retrieved stores for add operations
     if entities.area or entities.locality or entities.category:
@@ -325,10 +327,7 @@ def _handle_refinement(op: str, session: ChatSession, entities: Entities,
     }
     reply_base = op_replies.get(op, "Updated your plan:")
 
-    # Fetch fresh store dicts for the new trip
-    from ..models import Store as StoreModel
-    trip_stores = [store_to_dict(db.get(StoreModel, sid))
-                   for sid in new_trip.store_ids if db.get(StoreModel, sid)]
+    trip_stores = _store_dicts(db, new_trip.store_ids)
 
     if op == "reorder":
         itinerary = itinerary_text(new_trip, trip_stores)
@@ -355,6 +354,12 @@ def _handle_refinement(op: str, session: ChatSession, entities: Entities,
         action=action,
         trip=new_trip.to_dict(),
     )
+
+
+def _store_dicts(db: Session, store_ids: list[str]) -> list[dict]:
+    """Serialised stores for these ids, in order, skipping any now hidden."""
+    stores = (db.get(Store, sid) for sid in store_ids)
+    return [store_to_dict(s) for s in stores if has_coords(s)]
 
 
 def _serialize(result: ChatResult) -> dict:
