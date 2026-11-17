@@ -9,9 +9,10 @@ from sqlalchemy.orm import Session, joinedload
 from ..auth import get_current_user, get_optional_user
 from ..data.tags import STORE_TYPE_LABELS, TAG_LABELS, split_tags
 from ..database import get_db
-from ..ml.recommender import similar_ids
+from ..ml import signals
+from ..ml.recommender import match_pct, similar_rows
 from ..ml.tasks import refit_recommender
-from ..models import Interaction, Review, Store, StoreSimilarity, User
+from ..models import Interaction, Review, Store, User
 from ..schemas import ReviewIn
 from ..common.serializers import STORE_HAS_COORDS, has_coords, sentiment_summary, store_to_dict
 from ..common.geo import haversine_km
@@ -188,26 +189,16 @@ def store_detail(store_id: str, background_tasks: BackgroundTasks,
                .options(joinedload(Review.user))
                .order_by(Review.created_at.desc()).all())
     summary = sentiment_summary(reviews)
-    # Fetch similar stores with their precomputed similarity score so the frontend
-    # can show "X% match". Query StoreSimilarity directly to get the score in one
-    # pass rather than calling similar_ids() then re-fetching the rows.
+    # Similar stores, each with why it was picked and (when strong enough) a
+    # "% match".
     similar = []
-    sim_rows = (db.query(StoreSimilarity)
-                .filter(StoreSimilarity.store_id == store_id)
-                .order_by(StoreSimilarity.rank)
-                .limit(4).all())
-    for row in sim_rows:
-        s = db.get(Store, row.similar_id)
+    for sid, score, reason in similar_rows(db, store_id):
+        s = db.get(Store, sid)
         if has_coords(s):
             d = store_to_dict(s)
-            d["match_pct"] = round(float(row.score) * 100)
+            d["match_pct"] = match_pct(score)
+            d["reason"] = reason
             similar.append(d)
-    # Fall back to in-memory recommender if DB has no precomputed rows yet.
-    if not similar:
-        for sid in similar_ids(db, store_id):
-            s = db.get(Store, sid)
-            if has_coords(s):
-                similar.append(store_to_dict(s))
 
     d = store_to_dict(store)
     d["reviews"] = [{
@@ -239,8 +230,12 @@ def add_review(store_id: str, body: ReviewIn, background_tasks: BackgroundTasks,
     review = Review(store_id=store_id, user_id=user.id, rating=body.rating,
                     text=body.text, sentiment=None, sentiment_score=None)
     db.add(review)
+    # A 4-5 star review is the strongest taste signal the recommender gets.
+    liked = body.rating >= signals.LIKE_FROM_RATING and signals.record(db, user.id, store_id, "like")
     db.commit()
     background_tasks.add_task(score_review, review.id)
+    if liked:
+        background_tasks.add_task(refit_recommender, force=True)
     return {"ok": True, "sentiment": "pending"}
 
 
@@ -250,9 +245,10 @@ def save_store(store_id: str, background_tasks: BackgroundTasks,
                user: User = Depends(get_current_user)):
     if not db.get(Store, store_id):
         raise HTTPException(404, "Store not found")
-    db.add(Interaction(user_id=user.id, store_id=store_id, kind="save"))
-    db.commit()
-    # A save is a strong signal — refit promptly, but still off the request
-    # path (force=True skips the debounce so recs update within moments).
-    background_tasks.add_task(refit_recommender, force=True)
+    # Idempotent: the app re-sends a guest's saved stores after every login.
+    if signals.record(db, user.id, store_id, "save"):
+        db.commit()
+        # A save is a strong signal — refit promptly, but still off the request
+        # path (force=True skips the debounce so recs update within moments).
+        background_tasks.add_task(refit_recommender, force=True)
     return {"ok": True}

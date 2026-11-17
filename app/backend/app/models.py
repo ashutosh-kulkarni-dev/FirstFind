@@ -116,7 +116,7 @@ class Interaction(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     store_id = Column(String(20), ForeignKey("stores.id"), nullable=False, index=True)
-    kind = Column(String(20), nullable=False)  # view / save / like
+    kind = Column(String(20), nullable=False)  # view / save / like (a 4-5 star review)
     created_at = Column(DateTime, default=dt.datetime.utcnow)
     user = relationship("User", back_populates="interactions")
 
@@ -200,6 +200,7 @@ class StoreSimilarity(Base):
     similar_id = Column(String(20), ForeignKey("stores.id"), nullable=False)
     rank = Column(Integer, nullable=False)   # 0 = most similar
     score = Column(Float, nullable=True)
+    reason = Column(String(160), nullable=True)   # "Similar style, 1.2 km away"
 
 
 class UserRecommendation(Base):
@@ -211,3 +212,4 @@ class UserRecommendation(Base):
     store_id = Column(String(20), ForeignKey("stores.id"), nullable=False)
     rank = Column(Integer, nullable=False)   # 0 = top pick
     score = Column(Float, nullable=True)
+    reason = Column(String(160), nullable=True)   # "Because you saved X"

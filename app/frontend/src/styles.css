@@ -560,3 +560,9 @@ html.dark .review-item.flagged { background: #1e1600; border-color: #7a5000; }
   .nav-links { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .nav-chip { display: none; }
 }
+
+/* Why a store was recommended, under its card */
+.store-card-reason {
+  margin-top: 8px; padding-top: 7px; border-top: 1px solid var(--line-2);
+  font-size: 11.5px; color: var(--muted); line-height: 1.35;
+}

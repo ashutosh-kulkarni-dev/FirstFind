@@ -168,7 +168,7 @@ export default function Landing() {
               : 'Ranked by AI experience score — star ratings blended with review sentiment. Log in for picks tailored to you.'}
           </p>
           <div className="lp-grid">
-            {featured.map(s => <StoreCard key={s.id} store={s} />)}
+            {featured.map(s => <StoreCard key={s.id} store={s} reason={s.reason} />)}
           </div>
         </section>
       )}

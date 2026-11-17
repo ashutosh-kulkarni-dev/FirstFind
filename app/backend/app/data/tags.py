@@ -99,6 +99,8 @@ _BRANDS = {
 }
 _BRAND_RES = [(re.compile(rf"(?<![a-z0-9]){re.escape(name)}(?![a-z0-9])", re.I), tags)
               for name, tags in _BRANDS.items()]
+_BRAND_NAMES = [(re.compile(rf"(?<![a-z0-9]){re.escape(name)}(?![a-z0-9])", re.I), name)
+                for name in _BRANDS]
 
 REVIEW_MENTIONS_NEEDED = 2
 
@@ -106,6 +108,14 @@ REVIEW_MENTIONS_NEEDED = 2
 def is_known_chain(name: str) -> bool:
     """True when the store name carries one of the well-known brand names above."""
     return any(rx.search(name or "") for rx, _ in _BRAND_RES)
+
+
+def known_brand(name: str) -> str | None:
+    """The well-known brand in a store name ("levi's", "fabindia"), if any."""
+    for rx, brand in _BRAND_NAMES:
+        if rx.search(name or ""):
+            return brand
+    return None
 
 
 def derive_tags(name: str, categories: str = "", description: str = "",

@@ -63,6 +63,8 @@ _ADDED_COLUMNS = {
         ("author_name", "VARCHAR(120)"),
         ("sentiment_engine", "VARCHAR(12)"),
     ],
+    "store_similarity": [("reason", "VARCHAR(160)")],
+    "user_recommendations": [("reason", "VARCHAR(160)")],
 }
 
 

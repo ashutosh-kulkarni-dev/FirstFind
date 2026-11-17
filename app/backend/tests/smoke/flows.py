@@ -144,7 +144,7 @@ def main():
     # ---- Issue #1: recommender output is persisted + served from DB ----
     from app.database import SessionLocal
     from app.models import StoreSimilarity, UserRecommendation
-    from app.ml.recommender import recommender, similar_ids, user_recs
+    from app.ml.recommender import recommender, similar_rows, user_recs
     db = SessionLocal()
     try:
         n_sim = db.query(StoreSimilarity).count()
@@ -158,9 +158,9 @@ def main():
         recommender.sim = None
         recommender.user_vectors = {}
         some_user = db.query(UserRecommendation.user_id).first()[0]
-        sim_from_db = similar_ids(db, sid)
+        sim_from_db = similar_rows(db, sid)
         rec_from_db = user_recs(db, some_user)
-        assert sim_from_db, "similar_ids empty with cold in-memory model"
+        assert sim_from_db, "similar_rows empty with cold in-memory model"
         assert rec_from_db, "user_recs empty with cold in-memory model"; ok += 1
         print(f"cold-memory serving OK: similar={len(sim_from_db)}, recs(user {some_user})={len(rec_from_db)}")
     finally:
