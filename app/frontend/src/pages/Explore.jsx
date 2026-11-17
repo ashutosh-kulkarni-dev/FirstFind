@@ -43,6 +43,7 @@ export default function Explore() {
   const [tag, setTag] = useState(searchParams.get('tag') || '')
   const [openOnly, setOpenOnly] = useState(searchParams.get('open') === '1')
   const [selectedId, setSelectedId] = useState(null)
+  const [hoveredId, setHoveredId] = useState(null)   // shared by the list and the map
 
   // Cluster: null centre = off. Enabled by double-clicking the map (or a deep-link).
   const [center, setCenter] = useState(init.center)
@@ -168,6 +169,9 @@ export default function Explore() {
     }
   }
 
+  // The map re-fits when a filter is picked — not when the search text changes.
+  const fitKey = [area, storeType, tag, openOnly ? 'open' : ''].join('|')
+
   const badge = center
     ? 'CLUSTER · DRAG PIN OR DOUBLE-CLICK TO MOVE'
     : 'DOUBLE-CLICK THE MAP TO START A CLUSTER'
@@ -212,6 +216,7 @@ export default function Explore() {
           ) : (
             <>
               <ResultsList stores={shown} selectedId={selectedId} onSelect={setSelectedId}
+                hoveredId={hoveredId} onHover={setHoveredId}
                 onOpen={id => navigate(`/store/${id}`)} />
               <div className="explore-tip">Tip: double-click the map to group stores within the distance above.</div>
             </>
@@ -234,7 +239,10 @@ export default function Explore() {
         <MapExplorer
           stores={shown}
           selectedId={selectedId}
+          hoveredId={hoveredId}
           onSelectStore={setSelectedId}
+          onHoverStore={setHoveredId}
+          fitKey={fitKey}
           onViewStore={id => navigate(`/store/${id}`)}
           clusterCenter={center}
           radiusKm={radiusKm}
