@@ -17,7 +17,20 @@ const metroIcon = (color) => L.divIcon({
   iconSize: [12, 12], iconAnchor: [6, 6],
 })
 
-export default function MiniMap({ center, radiusKm, stores = [], metro = null }) {
+const stopIcon = (n) => L.divIcon({
+  className: '',
+  html: `<div class="mini-stop">${n}</div>`,
+  iconSize: [20, 20], iconAnchor: [10, 10],
+})
+
+const startIcon = L.divIcon({
+  className: '',
+  html: '<div class="mini-start"></div>',
+  iconSize: [14, 14], iconAnchor: [7, 7],
+})
+
+// route: [[lat, lng], ...] — the start, then each stop in walking order.
+export default function MiniMap({ center, radiusKm, stores = [], metro = null, route = null }) {
   const containerRef = useRef(null)
   const mapRef = useRef(null)
 
@@ -37,11 +50,22 @@ export default function MiniMap({ center, radiusKm, stores = [], metro = null })
     if (radiusKm) {
       L.circle(center, { radius: radiusKm * 1000, color: '#33a0e6', fillColor: '#33a0e6', fillOpacity: 0.12, weight: 1.5 }).addTo(map)
     }
-    stores.forEach(s => {
-      if (s.lat == null || s.lng == null) return
-      L.circleMarker([s.lat, s.lng], { radius: 6, color: '#0f1a2b', fillColor: dotColor(s.is_open_now), fillOpacity: 0.95, weight: 1 })
-        .addTo(map).bindPopup(`<b>${s.name}</b>`)
-    })
+    if (route && route.length > 1) {
+      // A walking route: dashed line from the start through numbered stops.
+      L.polyline(route, { color: '#33a0e6', weight: 3, opacity: 0.9, dashArray: '6 6' }).addTo(map)
+      L.marker(route[0], { icon: startIcon, keyboard: false }).addTo(map)
+      stores.forEach((s, i) => {
+        if (s.lat == null || s.lng == null) return
+        L.marker([s.lat, s.lng], { icon: stopIcon(i + 1), keyboard: false }).addTo(map)
+      })
+      map.fitBounds(route, { padding: [22, 22], maxZoom: 16 })
+    } else {
+      stores.forEach(s => {
+        if (s.lat == null || s.lng == null) return
+        L.circleMarker([s.lat, s.lng], { radius: 6, color: '#0f1a2b', fillColor: dotColor(s.is_open_now), fillOpacity: 0.95, weight: 1 })
+          .addTo(map).bindPopup(`<b>${s.name}</b>`)
+      })
+    }
     if (metro && metro.lat != null) {
       L.marker([metro.lat, metro.lng], { icon: metroIcon(metro.line_color || '#888') })
         .addTo(map).bindPopup(`${metro.name} — ${metro.line_name}<br/>${metro.distance_m} m away`)
@@ -49,7 +73,7 @@ export default function MiniMap({ center, radiusKm, stores = [], metro = null })
 
     mapRef.current = map
     return () => { map.remove(); mapRef.current = null }
-  }, [center?.[0], center?.[1], radiusKm, stores.length])
+  }, [center?.[0], center?.[1], radiusKm, stores.length, route?.length])
 
   if (!center) return null
   return <div ref={containerRef} style={{ width: '100%', height: 180, borderRadius: 12, overflow: 'hidden', marginTop: 10, border: '1px solid var(--line)', pointerEvents: 'none' }} />

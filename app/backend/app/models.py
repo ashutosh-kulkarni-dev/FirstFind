@@ -20,6 +20,8 @@ class User(Base):
     avatar_url = Column(String(300), nullable=True)
     # Admin accounts may edit stores/reviews through /api/admin (Phase 3).
     is_admin = Column(Boolean, default=False, nullable=True)
+    # The assistant's remembered answers (JSON: price_tier / audience / store_kind).
+    chat_prefs = Column(Text, nullable=True)
     created_at = Column(DateTime, default=dt.datetime.utcnow)
     reviews = relationship("Review", back_populates="user")
     interactions = relationship("Interaction", back_populates="user")

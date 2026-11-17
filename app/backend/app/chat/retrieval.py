@@ -18,6 +18,8 @@ from ..models import Review, Store, Zone
 from ..common.serializers import STORE_HAS_COORDS, sentiment_summary
 from ..common.hours import is_open_now
 from .contracts import Entities
+from .slots import (AUDIENCE_WORDS, STORE_KIND_WORDS, STYLE_WORDS, TIER_WORDS,
+                    extract as extract_slots, tier_of)
 
 if TYPE_CHECKING:
     from .contracts import Prefs
@@ -33,7 +35,12 @@ CATEGORY_SYNONYMS: dict[str, list[str]] = {
     "budget": ["budget", "cheap", "affordable", "under"],
 }
 
+TRIP_RE = (r"\b(plan (a |my |me a )?(\w+ )?(trip|route|day|outing|walk)|thrift (run|crawl|trip|walk)|"
+           r"shopping (trip|route|day|crawl|walk)|walking (route|tour)|itinerary|day out|"
+           r"route (for|through|around)|walk(ing)? between)\b")
+
 INTENT_PATTERNS = [
+    ("plan_trip",         TRIP_RE),
     ("store_comparison",  r"\b(compare|vs\.?|versus|better|which one)\b"),
     ("review_insight",    r"\b(review|say about|people say|reputation|feedback|experience at|rating of|rated)\b"),
     ("best_time_to_visit", r"\b(best time|when should i (go|visit)|crowded|rush|timing to visit)\b"),
@@ -80,6 +87,10 @@ W_PRICE      = 1.0
 W_POPULARITY = 0.3
 W_OPEN       = 1.5
 W_PREF_LIKED = 1.2   # soft boost for liked category
+W_TAG        = 1.5   # store carries the style / audience tag asked for
+W_TIER       = 1.0   # store is in the price tier asked for
+_AUDIENCE_TAGS = {"womenswear", "menswear", "kids"}
+_TIER_ORDER = {"budget": 0, "mid": 1, "premium": 2}
 W_PREF_DISLIKE = -2.0  # soft penalty for disliked category
 
 
@@ -89,7 +100,7 @@ W_PREF_DISLIKE = -2.0  # soft penalty for disliked category
 
 def _normalize(msg: str) -> str:
     s = msg.lower().strip()
-    s = re.sub(r"(.)\1{2,}", r"\1\1", s)
+    s = re.sub(r"([a-z])\1{2,}", r"\1\1", s)   # "sooo" -> "soo"; numbers stay intact
     s = re.sub(r"[^\w\s₹]", " ", s)
     return re.sub(r"\s+", " ", s).strip()
 
@@ -229,35 +240,73 @@ _NEAR_ME_RE = re.compile(
 )
 
 
+_BROWSE_RE = re.compile(r"\b(stores?|shops?|shopping|clothes|clothing|outfits?|something to wear|"
+                        r"places to (shop|buy))\b")
+_NOT_PLACE_RE = re.compile(
+    "|".join([*STORE_KIND_WORDS.values(), *AUDIENCE_WORDS.values(), *STYLE_WORDS.values(),
+              *TIER_WORDS.values(),
+              r"\b(under|below|less than|upto|up to)\s*₹?\s*\d+\b", r"₹\s*\d+", r"\b\d+\b",
+              r"\b(show|find|me|some|any|the|a|an|stores?|shops?|shopping|for|please|good|"
+              r"best|nice|want|looking|need|buy|clothes|clothing|outfits?|something|wear|"
+              r"budget|mid|range|premium|kids?|skip|in|at|near|around|from|plan|trip|walk|"
+              r"walking|route|run|crawl|day|out|outing|itinerary|starting|start)\b"]))
+
+
+def _without_slot_words(norm: str) -> str:
+    """The message minus shopping words and prices — what might name a place."""
+    return re.sub(r"\s+", " ", _NOT_PLACE_RE.sub(" ", norm)).strip()
+
+
 def understand(msg: str, db: Session) -> Entities:
     """Stage 1 — pure extraction. Returns Entities with no DB writes."""
     from .places import resolve_place
     norm = _normalize(msg)
+    price_max = _extract_price(norm)
+    slots = extract_slots(norm, price_max)
+    # Words about who / what / how much ("women", "budget", "under 700") are
+    # not places: look for the location in what is left.
+    where = _without_slot_words(norm)
     areas = _known_areas(db)
-    area = _extract_area(norm, areas)
+    area = _extract_area(where, areas) if where else None
     near_me = bool(_NEAR_ME_RE.search(norm))
     # Precedence: store-area exact > tightened locality fuzzy > gazetteer
-    locality = None if area else _extract_locality_phrase(norm, db)
+    locality = None if (area or not where) else _extract_locality_phrase(where, db)
     place = None
-    if not area and not locality and not near_me:
-        place = resolve_place(norm)
+    if where and not area and not locality and not near_me:
+        place = resolve_place(where)
     intent = _detect_intent(norm, areas, db)
+    # "Brand stores for men", "show me some stores": a store search even
+    # without an area or a known category.
+    if intent == "general_assistance" and (slots.store_kind or slots.audience or slots.style
+                                           or slots.price_tier or _BROWSE_RE.search(norm)):
+        intent = "find_by_category"
     # Gazetteer hit forces find_by_area if intent wasn't already geographic
     if place and intent not in {"find_by_area", "find_by_category", "find_by_price",
-                                "open_now", "store_recommendation", "zone_exploration"}:
+                                "open_now", "store_recommendation", "zone_exploration",
+                                "plan_trip"}:
         intent = "find_by_area"
     if near_me and intent == "general_assistance":
         intent = "find_by_area"
+    named = _extract_stores(norm, db)
+    if intent in {"find_by_area", "find_by_category", "find_by_price", "store_recommendation",
+                  "plan_trip"}:
+        # In a search, only a store named in full counts: fuzzy windows turn
+        # "me stores" into "Re Store".
+        named = [s for s in named if s.name.lower() in norm]
     return Entities(
         intent=intent,
         area=area,
         locality=locality,
         category=_extract_category(norm),
-        price_max=_extract_price(norm),
-        store_names=[s.name for s in _extract_stores(norm, db)],
+        price_max=price_max,
+        store_names=[s.name for s in named],
         open_now=(intent == "open_now"),
         place=place,
         near_me=near_me,
+        store_kind=slots.store_kind,
+        audience=slots.audience,
+        style=slots.style,
+        price_tier=slots.price_tier,
     )
 
 
@@ -266,8 +315,14 @@ def understand(msg: str, db: Session) -> Entities:
 # ---------------------------------------------------------------------------
 
 def _relevance(s: Store, category: Optional[str], price_max: Optional[int],
-               open_now: bool, prefs: Optional[Prefs]) -> float:
+               open_now: bool, prefs: Optional[Prefs], tags: tuple = (),
+               price_tier: Optional[str] = None) -> float:
     score = 0.0
+    if tags:
+        own = {t for t in (s.tags or "").split(",") if t}
+        score += W_TAG * len(own & set(tags))
+    if price_tier and tier_of(s) == price_tier:
+        score += W_TIER
     if s.experience_score is not None:
         score += W_QUALITY * (s.experience_score / 5.0)
     if category:
@@ -294,9 +349,20 @@ def _relevance(s: Store, category: Optional[str], price_max: Optional[int],
     return score
 
 
-def _soft_excluded(s: Store, category: Optional[str], price_max: Optional[int]) -> bool:
+def _soft_excluded(s: Store, category: Optional[str], price_max: Optional[int],
+                   audience: Optional[str] = None, price_tier: Optional[str] = None) -> bool:
     if price_max is not None and s.price_min is not None and s.price_min > price_max:
         return True
+    if audience:
+        # A store tagged only for someone else (a kids' shop when you want
+        # menswear) is out; untagged stores stay in.
+        own = {t for t in (s.tags or "").split(",") if t} & _AUDIENCE_TAGS
+        if own and audience not in own:
+            return True
+    if price_tier:
+        tier = tier_of(s)
+        if tier and abs(_TIER_ORDER[tier] - _TIER_ORDER[price_tier]) > 1:
+            return True
     if category:
         cats = {c for c in (s.categories or "").split(",") if c}
         if cats and category not in cats:
@@ -318,7 +384,9 @@ def rank_stores(db: Session, *, area: Optional[str] = None,
                 category: Optional[str] = None, price_max: Optional[int] = None,
                 open_now: bool = False, limit: int = 6,
                 geo_store_ids: Optional[list[str]] = None,
-                prefs: Optional[Prefs] = None) -> list[Store]:
+                prefs: Optional[Prefs] = None,
+                store_kind: Optional[str] = None, audience: Optional[str] = None,
+                style: Optional[str] = None, price_tier: Optional[str] = None) -> list[Store]:
     """Two-tier location retrieval with optional geo + prefs boosting.
 
     When geo_store_ids is provided (Pillar 1), those stores are ranked first
@@ -326,6 +394,11 @@ def rank_stores(db: Session, *, area: Optional[str] = None,
     fallback when Pillar 1 is off.
     """
     q = db.query(Store).filter(*STORE_HAS_COORDS)
+
+    def excluded(s: Store) -> bool:
+        return _soft_excluded(s, category, price_max, audience, price_tier)
+
+    tags = tuple(t for t in (audience, style) if t)
 
     if geo_store_ids is not None:
         # Pillar 1 path: geo engine already filtered; we just rank + soft-filter.
@@ -335,18 +408,26 @@ def rank_stores(db: Session, *, area: Optional[str] = None,
         # Koramangala's search radius).
         id_set = set(geo_store_ids)
         stores = [s for s in q.all()
-                  if s.id in id_set and not _soft_excluded(s, category, price_max)
+                  if s.id in id_set and not excluded(s)
                   and (not area or s.area == area)]
     elif area:
         stores = [s for s in q.filter(Store.area == area).all()
-                  if not _soft_excluded(s, category, price_max)]
+                  if not excluded(s)]
     elif locality_phrase:
-        all_visible = [s for s in q.all() if not _soft_excluded(s, category, price_max)]
+        all_visible = [s for s in q.all() if not excluded(s)]
         stores = [s for s in all_visible if _locality_match(s, locality_phrase)]
     else:
-        stores = [s for s in q.all() if not _soft_excluded(s, category, price_max)]
+        stores = [s for s in q.all() if not excluded(s)]
 
-    stores.sort(key=lambda s: _relevance(s, category, price_max, open_now, prefs),
+    if store_kind:
+        # A named kind is a filter, unless it would leave almost nothing
+        # (then the closest other stores are better than an empty answer).
+        of_kind = [s for s in stores if (s.store_type or "thrift") == store_kind]
+        if len(of_kind) >= min(3, limit):
+            stores = of_kind
+    # Stores of the kind asked for always come before the others mixed in.
+    stores.sort(key=lambda s: (bool(store_kind) and (s.store_type or "thrift") == store_kind,
+                               _relevance(s, category, price_max, open_now, prefs, tags, price_tier)),
                 reverse=True)
     return stores[:limit]
 
@@ -364,6 +445,10 @@ def retrieve(db: Session, entities: Entities,
         open_now=entities.open_now,
         geo_store_ids=geo_store_ids,
         prefs=prefs,
+        store_kind=entities.store_kind,
+        audience=entities.audience,
+        style=entities.style,
+        price_tier=entities.price_tier,
     )
     context = _build_context(db, stores, entities.intent)
     return stores, context

@@ -19,8 +19,12 @@ export function resetSession() {
 }
 
 export const chatApi = {
-  chat: (message, origin = null) =>
-    post('/api/chat', { message, session_id: _getSessionId(), ...(origin ? { origin } : {}) }),
+  // answer: {slot, value} when the message is a tapped answer to the assistant's question.
+  chat: (message, origin = null, answer = null) =>
+    post('/api/chat', {
+      message, session_id: _getSessionId(),
+      ...(origin ? { origin } : {}), ...(answer ? { answer } : {}),
+    }),
   conversations: () => req('/api/conversations'),
   conversation: (id) => req(`/api/conversations/${id}`),
   deleteConversation: (id) => del(`/api/conversations/${id}`),
