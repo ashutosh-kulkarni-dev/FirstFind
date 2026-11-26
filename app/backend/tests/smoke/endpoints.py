@@ -10,6 +10,7 @@ Run by pytest (tests/test_smoke.py), or directly from app/backend:
 """
 import os
 import pathlib
+import sys
 import tempfile
 import uuid
 
@@ -55,7 +56,8 @@ def main():
     seed()
     with TestClient(app) as client:   # `with` triggers the app lifespan
         _run(client)
-    _summary()
+    # Non-zero exit on any failed check, so test_smoke.py (and CI) goes red.
+    sys.exit(1 if _summary() else 0)
 
 
 def _run(c):
@@ -195,10 +197,14 @@ def _run(c):
         "greeting/general": ("hi", None),
         "find_by_area": (f"thrift stores in {area}", "find_by_area"),
         "find_by_category": (f"{cat} stores" if cat else "vintage stores", None),
-        "find_by_price": ("stores under 500", "find_by_price"),
+        # A request that pins down only one thing gets a clarifying question first
+        # (38dd4ac); a specific one skips straight to the intent.
+        "find_by_price": (f"thrift stores under 500 in {area}", "find_by_price"),
+        "find_by_price (vague) -> clarify": ("stores under 500", "clarify"),
         "open_now": ("what is open right now", "open_now"),
         "zone_exploration": ("show me the thrift zones", "zone_exploration"),
-        "store_recommendation": ("recommend some stores for me", "store_recommendation"),
+        "store_recommendation": (f"recommend some thrift stores in {area}", "store_recommendation"),
+        "store_recommendation (vague) -> clarify": ("recommend some stores for me", "clarify"),
         "review_insight": (f"what do people say about {two_names[0]}", "review_insight"),
         "store_comparison": (f"compare {two_names[0]} and {two_names[1]}", "store_comparison"),
         "best_time": ("best time to visit", "best_time_to_visit"),
@@ -285,6 +291,7 @@ def _summary():
         # tick mark and crashes with UnicodeEncodeError at process-exit print.
         print("ALL FUNCTIONALITY VERIFIED [OK]")
     print("=" * 60)
+    return len(failed)
 
 
 if __name__ == "__main__":

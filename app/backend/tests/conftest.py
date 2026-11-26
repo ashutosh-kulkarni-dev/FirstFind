@@ -39,6 +39,22 @@ def _clean_database():
     yield
 
 
+@pytest.fixture(autouse=True)
+def _reset_rate_limits():
+    """Start each test with fresh rate-limit windows.
+
+    Every TestClient request comes from the same IP, so without this the
+    per-IP limiters carry counts across tests: a request-heavy test can push a
+    later, unrelated test into 429s depending purely on test order.
+    """
+    layer = app.middleware_stack     # built on the first request; None before that
+    while layer is not None:
+        if hasattr(layer, "hits"):
+            layer.hits.clear()
+        layer = getattr(layer, "app", None)
+    yield
+
+
 @pytest.fixture()
 def db():
     """A database session, rolled back and closed afterwards."""
