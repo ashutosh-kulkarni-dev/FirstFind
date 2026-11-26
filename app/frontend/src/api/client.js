@@ -61,6 +61,8 @@ export async function req(path, opts = {}) {
     const body = await res.json().catch(() => ({}));
     throw new Error(errorText(body.detail) || `Request failed (${res.status})`);
   }
+  // 204 No Content (e.g. DELETE /api/lists/{id}) has no body to parse.
+  if (res.status === 204) return null;
   return res.json();
 }
 

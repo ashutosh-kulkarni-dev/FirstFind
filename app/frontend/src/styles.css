@@ -451,10 +451,13 @@ html.dark .review-item.flagged { background: #1e1600; border-color: #7a5000; }
    content, so long lists ran off the screen instead of scrolling. */
 .explore-shell { flex: none; display: grid; grid-template-columns: 360px 1fr; grid-template-rows: minmax(0, 1fr); height: calc(100vh - 60px); overflow: hidden; }
 .explore-aside { display: flex; flex-direction: column; min-height: 0; background: var(--surface); border-right: 1px solid var(--line); overflow-x: hidden; overflow-y: auto; height: 100%; }
-.explore-map { position: relative; overflow: hidden; height: 100%; }
+/* isolation: Leaflet's panes and controls carry z-index 400–1000. Without a
+   stacking context of its own here, those values compete with the whole page
+   and the map painted over the "Name this list" modal, hiding it. */
+.explore-map { position: relative; overflow: hidden; height: 100%; isolation: isolate; }
 
 /* ---------------- shared small pieces ---------------- */
-.modal-backdrop { position: fixed; inset: 0; z-index: 300; display: grid; place-items: center; background: rgba(0,0,0,.4); }
+.modal-backdrop { position: fixed; inset: 0; z-index: 1000; /* above the chat widget (900) */ display: grid; place-items: center; background: rgba(0,0,0,.4); }
 .modal-card { background: var(--surface); border-radius: 16px; padding: 24px; width: min(360px, 90vw); box-shadow: 0 8px 40px rgba(0,0,0,.25); }
 .modal-card .input { width: 100%; }
 .modal-title { font-size: 20px; color: var(--ink); margin-bottom: 14px; }
