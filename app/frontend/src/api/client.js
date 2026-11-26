@@ -43,7 +43,12 @@ function errorText(detail) {
   if (!detail) return ''
   if (typeof detail === 'string') return detail
   if (Array.isArray(detail)) {
-    return detail.map(d => (d?.msg || '').replace(/^Value error, /, '')).filter(Boolean).join(' ')
+    return detail.map(d => {
+      // The email validator's wording ("value is not a valid email address: The
+      // part after the @-sign is a special-use or reserved name…") is too technical.
+      if (d?.loc?.at(-1) === 'email') return 'Please enter a valid email address.'
+      return (d?.msg || '').replace(/^Value error, /, '')
+    }).filter(Boolean).join(' ')
   }
   return ''
 }
