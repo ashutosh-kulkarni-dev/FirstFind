@@ -11,9 +11,11 @@ export function createDarkMap(el) {
 }
 
 import { scoreHex } from '../score'
+import { escapeHtml } from '../html'
 
 export function storePopupHtml(store) {
-  const subtitle = [store.area, store.cat].filter(Boolean).join(' · ')
+  const subtitle = escapeHtml([store.area, store.cat].filter(Boolean).join(' · '))
+  const id = encodeURIComponent(store.id ?? '')
   const c = scoreHex(store.score)
   const scoreChip = store.score != null
     ? `<span style="display:inline-grid;place-items:center;padding:2px 7px;border-radius:12px;background:${c}22;color:${c};font-size:11px;font-weight:700;">★ ${Number(store.score).toFixed(1)}</span>`
@@ -25,9 +27,9 @@ export function storePopupHtml(store) {
     ? `<div style="margin-top:6px;display:flex;align-items:center;gap:6px;">${scoreChip}${openChip}</div>`
     : ''
   return `<div style="min-width:160px;font-family:Inter,sans-serif;">
-    <div style="font-family:Anton,sans-serif;font-size:16px;color:#0f1a2b;letter-spacing:-.3px;">${(store.name || '').toUpperCase()}</div>
+    <div style="font-family:Anton,sans-serif;font-size:16px;color:#0f1a2b;letter-spacing:-.3px;">${escapeHtml((store.name || '').toUpperCase())}</div>
     <div style="margin-top:2px;color:#6c7885;font-size:11.5px;">${subtitle}</div>
     ${metaRow}
-    <a href="/store/${store.id}" data-store-id="${store.id}" style="display:inline-block;margin-top:8px;color:#1478d1;font-size:12px;font-weight:700;">View store →</a>
+    <a href="/store/${id}" data-store-id="${id}"style="display:inline-block;margin-top:8px;color:#1478d1;font-size:12px;font-weight:700;">View store →</a>
   </div>`
 }

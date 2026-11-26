@@ -53,10 +53,12 @@ def verify_google_token(credential: str) -> Optional[GoogleIdentity]:
         return None
     if payload.get("email_verified") not in (True, "true"):
         return None
+    if not payload.get("sub") or not payload.get("email"):
+        return None
 
     return GoogleIdentity(
-        sub=payload["sub"],
-        email=payload["email"].strip().lower(),
+        sub=str(payload["sub"]),
+        email=str(payload["email"]).strip().lower(),
         name=payload.get("name", ""),
         picture=payload.get("picture"),
         email_verified=True,

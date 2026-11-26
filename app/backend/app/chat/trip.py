@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import Optional
 
+from ..common.geo import haversine_km
 from .contracts import Entities, GeoResult, Prefs, Trip
 
 MAX_TRIP_SIZE = 5
@@ -61,7 +62,7 @@ def refine(trip: Trip, op: str, all_stores: list[dict],
            entities: Optional[Entities] = None) -> Trip:
     """Apply a refinement operation to the current trip. Returns a new Trip.
 
-    ops: "cheaper", "open_only", "drop", "add_area", "reorder"
+    ops: "cheaper", "open_only", "drop", "reorder" (anything else: unchanged)
     all_stores: the full ranked candidate pool (same as retrieval returned).
     """
     if not trip.store_ids:
@@ -78,12 +79,11 @@ def refine(trip: Trip, op: str, all_stores: list[dict],
         new_ids = [sid for sid in trip.store_ids
                    if not expensive or sid != expensive.get("id")]
         # Optionally pad from the pool
-        pool_ids = {s["id"] for s in all_stores}
         trip_set = set(new_ids)
         for s in all_stores:
             if len(new_ids) >= MAX_TRIP_SIZE:
                 break
-            if s["id"] not in trip_set and s["id"] in pool_ids:
+            if s["id"] not in trip_set:
                 p = s.get("price_min")
                 if p is not None:
                     threshold = price_key(expensive) if expensive else 9999
@@ -120,15 +120,7 @@ def _nearest_neighbour_order(trip: Trip, stores: list[dict]) -> Trip:
         return trip
 
     def hav(a: dict, b: dict) -> float:
-        import math
-        lat1, lng1 = a.get("lat", 0), a.get("lng", 0)
-        lat2, lng2 = b.get("lat", 0), b.get("lng", 0)
-        r = 6371.0
-        p1, p2 = math.radians(lat1), math.radians(lat2)
-        dp = math.radians(lat2 - lat1)
-        dl = math.radians(lng2 - lng1)
-        aa = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
-        return 2 * r * math.asin(math.sqrt(aa))
+        return haversine_km(a.get("lat", 0), a.get("lng", 0), b.get("lat", 0), b.get("lng", 0))
 
     # Start from the store closest to the trip center, or the first store
     remaining = list(stores)

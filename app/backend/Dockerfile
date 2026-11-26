@@ -26,6 +26,12 @@ COPY app ./app
 COPY run.py .
 
 # Railway/Render inject $PORT. Bind 0.0.0.0 and disable reload for production.
-ENV PORT=8000
+# The app sits behind the host's TLS proxy, so trust its X-Forwarded-* headers.
+# Uvicorn's default trusts only 127.0.0.1, which made every visitor share the
+# proxy's IP — one global rate-limit bucket for the whole site — and broke the
+# production HTTPS redirect. Narrow FORWARDED_ALLOW_IPS to the proxy's range if
+# the container is ever reachable directly.
+ENV PORT=8000 \
+    FORWARDED_ALLOW_IPS="*"
 EXPOSE 8000
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips \"${FORWARDED_ALLOW_IPS}\""]

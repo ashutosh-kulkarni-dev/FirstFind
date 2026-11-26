@@ -7,13 +7,13 @@ import StoreCard from './StoreCard'
 
 const WELCOME = {
   role: 'bot',
-  text: "Hi — I'm your FIRSTFIND style assistant. Tell me what you're after by area, style, or budget, ask what's open now, or where Bengaluru's thrift zones are.",
+  text: "Hi! Tell me an area, a style or a budget — or ask me to plan a thrift walk.",
   stores: [],
   suggestions: [
     'Best stores in Indiranagar',
     'Vintage under ₹500',
+    'Plan a thrift walk near me',
     "What's open now?",
-    'Where are the budget thrift zones?',
   ],
 }
 
@@ -107,37 +107,45 @@ export default function ChatCore({ compact = false }) {
 
   const NEAR_ME_RE = /\b(near me|close to me|around me|nearby|my location|current location|around here|near here)\b/i
 
-  async function send(text) {
+  // Ask the browser for the user's position once; remembered for the session.
+  // Resolves to null when denied or unavailable (the backend then asks for an area).
+  async function locate() {
+    if (originRef.current !== null) return originRef.current || null
+    if (!navigator.geolocation) { originRef.current = false; return null }
+    const pos = await new Promise(resolve => {
+      navigator.geolocation.getCurrentPosition(
+        p => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
+        () => resolve(null),
+        { timeout: 8000 }
+      )
+    })
+    originRef.current = pos ?? false  // false = denied/unavailable: don't prompt again
+    return pos
+  }
+
+  // answer: {slot, value} when this message is a tapped answer to a question.
+  async function send(text, answer = null) {
     const msg = (text ?? input).trim()
     if (!msg || busy) return
     setInput('')
     setMessages(m => [...m, { role: 'user', text: msg }])
     setBusy(true)
 
-    // Request geolocation once if "near me" phrasing detected and not yet cached.
-    // Non-blocking: if denied or unavailable, origin stays null and the backend replies honestly.
-    let origin = originRef.current
-    if (NEAR_ME_RE.test(msg) && origin === null && navigator.geolocation) {
-      origin = await new Promise(resolve => {
-        navigator.geolocation.getCurrentPosition(
-          pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-          () => resolve(null),
-          { timeout: 5000 }
-        )
-      })
-      originRef.current = origin ?? false  // false = permission denied/unavailable, skip future prompts
-    }
+    // "Near me", or "Use my location" for a trip start: ask the browser.
+    const wantsLocation = answer?.value === 'here' || NEAR_ME_RE.test(msg)
+    const origin = wantsLocation ? await locate() : null
 
     try {
-      const res = await api.chat(msg, origin && origin !== false ? origin : null)
+      const res = await api.chat(msg, origin, answer)
       setMessages(m => [...m, {
-        role: 'bot', text: res.reply, intent: res.intent,
+        role: 'bot', text: res.reply,
         stores: res.stores || [], suggestions: res.suggestions || [],
+        clarify: res.clarify || null,
         map: res.map || null, action: res.action || null, trip: res.trip || null,
       }])
     } catch (e) {
       setMessages(m => [...m, {
-        role: 'bot', text: `Hmm, I couldn't reach the server (${e.message}). Is the backend running on port 8000?`,
+        role: 'bot', text: `Sorry, something went wrong (${e.message}). Please try again in a moment.`,
         stores: [], suggestions: [],
       }])
     } finally {
@@ -145,7 +153,9 @@ export default function ChatCore({ compact = false }) {
     }
   }
 
-  const lastSuggestions = messages[messages.length - 1]?.suggestions || []
+  const last = messages[messages.length - 1]
+  const lastSuggestions = last?.suggestions || []
+  const clarify = last?.role === 'bot' ? last.clarify : null
 
   return (
     <>
@@ -221,7 +231,8 @@ export default function ChatCore({ compact = false }) {
 
               {!compact && m.map && (
                 <div style={{ width: '78%' }}>
-                  <MiniMap center={m.map.center} radiusKm={m.map.radius_km} stores={m.map.stores || []} metro={m.map.metro} />
+                  <MiniMap center={m.map.center} radiusKm={m.map.radius_km} stores={m.map.stores || []}
+                    metro={m.map.metro} route={m.map.route || null} />
                 </div>
               )}
 
@@ -233,10 +244,6 @@ export default function ChatCore({ compact = false }) {
                   <span className="chat-map-ic">◉</span> {m.action.label || 'View these on the full map →'}
                 </button>
               )}
-
-              {!compact && m.intent && (
-                <div className="intent-tag">intent · {m.intent.replaceAll('_', ' ')}</div>
-              )}
             </div>
           )
         })}
@@ -247,7 +254,20 @@ export default function ChatCore({ compact = false }) {
         )}
       </div>
 
-      {lastSuggestions.length > 0 && !busy && (
+      {clarify && !busy && (
+        <div className="chips" role="group" aria-label={clarify.question}>
+          {clarify.options.map(o => (
+            <button key={o.value} className="chip chip-answer"
+              onClick={() => send(o.label, { slot: clarify.slot, value: o.value })}>{o.label}</button>
+          ))}
+          {clarify.skip && (
+            <button className="chip chip-skip"
+              onClick={() => send(clarify.skip, { slot: clarify.slot, value: null })}>{clarify.skip}</button>
+          )}
+        </div>
+      )}
+
+      {!clarify && lastSuggestions.length > 0 && !busy && (
         <div className="chips">
           {lastSuggestions.map(s => <button key={s} className="chip" onClick={() => send(s)}>{s}</button>)}
         </div>

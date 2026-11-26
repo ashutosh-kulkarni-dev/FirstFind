@@ -10,22 +10,14 @@ which shrugs off a single outlier store while bounding the real extent.
 Return contract:
     [{label, center_lat, center_lng, radius_km, store_ids, avg_score, avg_price}]
 """
-import math
-import numpy as np
 from collections import Counter
+
+import numpy as np
 from sklearn.cluster import HDBSCAN, KMeans
 from sklearn.preprocessing import StandardScaler
 
+from ..common.geo import haversine_km as _haversine_km
 from ..config import N_ZONES, SEED, MAX_RADIUS_KM
-
-
-def _haversine_km(lat1, lng1, lat2, lng2) -> float:
-    r = 6371.0
-    p1, p2 = math.radians(lat1), math.radians(lat2)
-    dp = math.radians(lat2 - lat1)
-    dl = math.radians(lng2 - lng1)
-    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
-    return 2 * r * math.asin(math.sqrt(a))
 
 
 def _real_radius(center_lat, center_lng, members: list[dict]) -> float:

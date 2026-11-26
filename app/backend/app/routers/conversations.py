@@ -1,13 +1,15 @@
-from typing import List, Optional
+from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from ..auth import get_current_user
 from ..chat.history import claim_session
 from ..database import get_db
-from ..models import Conversation, User
+from ..models import ChatMessage, Conversation, User
+from ..schemas import SessionId
 
 router = APIRouter(prefix="/api/conversations", tags=["conversations"])
 
@@ -15,14 +17,15 @@ router = APIRouter(prefix="/api/conversations", tags=["conversations"])
 # ---- schemas (local — not shared, these are conversation-specific) ----------
 
 class TurnIn(BaseModel):
-    role: str           # "user" | "assistant"
-    text: str
+    role: Literal["user", "assistant"]
+    text: str = Field(max_length=4000)
     meta: Optional[dict] = None
 
 
 class ClaimIn(BaseModel):
-    session_id: str
-    turns: List[TurnIn] = []
+    session_id: SessionId
+    # A guest transcript is short; the cap stops one request storing megabytes.
+    turns: list[TurnIn] = Field(default_factory=list, max_length=100)
 
 
 # ---- endpoints --------------------------------------------------------------
@@ -30,19 +33,24 @@ class ClaimIn(BaseModel):
 @router.get("")
 def list_conversations(db: Session = Depends(get_db),
                        user: User = Depends(get_current_user)):
-    convs = (db.query(Conversation)
-             .filter(Conversation.user_id == user.id)
-             .order_by(Conversation.updated_at.desc())
-             .limit(50)
-             .all())
+    # Count messages in SQL: len(c.messages) loaded every message of all 50
+    # conversations just to count them.
+    counts = (db.query(ChatMessage.conversation_id, func.count(ChatMessage.id))
+              .group_by(ChatMessage.conversation_id).subquery())
+    rows = (db.query(Conversation, func.coalesce(counts.c[1], 0))
+            .outerjoin(counts, counts.c.conversation_id == Conversation.id)
+            .filter(Conversation.user_id == user.id)
+            .order_by(Conversation.updated_at.desc())
+            .limit(50)
+            .all())
     return [
         {
             "id": c.id,
             "title": c.title or "Untitled conversation",
-            "message_count": len(c.messages),
+            "message_count": n,
             "updated_at": c.updated_at.isoformat(),
         }
-        for c in convs
+        for c, n in rows
     ]
 
 

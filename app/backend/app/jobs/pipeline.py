@@ -78,7 +78,10 @@ def recompute_store_scores(db) -> int:
 def recompute_zones(db) -> int:
     """Stage 3: recluster stores into zones and rewrite the Zone table."""
     stores = db.query(Store).all()
-    zone_dicts = zones_ml.cluster_stores(zone_rows(stores))
+    # Cluster only stores users can see: closed (is_active=False) stores used
+    # to be counted in zone sizes and could pull a zone's centre and label.
+    visible = [s for s in stores if s.is_active is not False]
+    zone_dicts = zones_ml.cluster_stores(zone_rows(visible))
 
     for s in stores:
         s.zone_id = None

@@ -24,8 +24,11 @@ def create_list(body: SavedListIn, db: Session = Depends(get_db),
     db.add(lst)
     db.flush()   # get lst.id before adding items
 
+    seen: set[str] = set()
     for pos, sid in enumerate(body.store_ids):
-        if db.get(Store, sid):   # only attach stores that exist
+        # Only attach visible stores, once each.
+        if sid not in seen and has_coords(db.get(Store, sid)):
+            seen.add(sid)
             db.add(SavedListItem(list_id=lst.id, store_id=sid, position=pos))
 
     db.commit()
@@ -78,7 +81,8 @@ def update_list(list_id: int, body: SavedListPatch,
     max_pos = max((item.position for item in lst.items), default=-1)
 
     for sid in body.add_ids:
-        if sid not in existing_ids and db.get(Store, sid):
+        if sid not in existing_ids and has_coords(db.get(Store, sid)):
+            existing_ids.add(sid)
             max_pos += 1
             db.add(SavedListItem(list_id=lst.id, store_id=sid, position=max_pos))
 

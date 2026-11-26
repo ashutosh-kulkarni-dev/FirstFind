@@ -18,7 +18,11 @@ export default function Auth() {
   const gBtnRef = useRef(null)
 
   // Where to land after auth — set by the gating helper (?next=/lists etc.).
-  const next = params.get('next') || '/'
+  // Only same-site paths: "//other.site" or "https://…" would be handed to the
+  // router (which throws on a cross-origin URL) from a crafted login link.
+  const nextParam = params.get('next') || ''
+  const next = nextParam.startsWith('/') && !nextParam.startsWith('//') && !nextParam.startsWith('/\\')
+    ? nextParam : '/'
 
   // Load Google Identity Services and render their button when a client id is
   // configured. Runs only once; the ref keeps the DOM node stable across re-renders.

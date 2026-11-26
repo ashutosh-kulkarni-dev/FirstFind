@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from collections import namedtuple
 from functools import lru_cache
 from typing import Optional
@@ -42,8 +43,12 @@ def _load_places() -> list[tuple[str, str, float, float]]:
 
 
 def resolve_place(norm: str) -> Optional[PlaceHit]:
-    """Return PlaceHit if norm contains a known Bengaluru place alias, else None."""
+    """Return PlaceHit if norm contains a known Bengaluru place alias, else None.
+
+    Whole words only: a plain substring test matched the alias "orr" (Outer
+    Ring Road) inside "sorry" and "worry" and sent those chats to a map search.
+    """
     for alias, canonical, lat, lng in _load_places():
-        if alias in norm:
+        if re.search(rf"(?<!\w){re.escape(alias)}(?!\w)", norm):
             return PlaceHit(canonical=canonical, lat=lat, lng=lng)
     return None

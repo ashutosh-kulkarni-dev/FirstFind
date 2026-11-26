@@ -10,7 +10,8 @@ from ..database import get_db
 from ..ml.recommender import user_recs
 from ..models import Store, User, Zone
 from ..schemas import ChatIn
-from ..common.serializers import STORE_HAS_COORDS, has_coords, store_to_dict, zone_to_dict
+from ..common.serializers import (BY_SCORE_DESC, STORE_HAS_COORDS, has_coords,
+                                  store_to_dict, zone_to_dict)
 
 router = APIRouter(prefix="/api", tags=["misc"])
 
@@ -25,7 +26,7 @@ def zones(db: Session = Depends(get_db)):
     out = []
     for z in db.query(Zone).all():
         top = (db.query(Store).filter(Store.zone_id == z.id, *STORE_HAS_COORDS)
-               .order_by(Store.experience_score.desc()).limit(3).all())
+               .order_by(*BY_SCORE_DESC).limit(3).all())
         out.append(zone_to_dict(z, stores=top))
     return out
 
@@ -42,10 +43,9 @@ def recommendations(db: Session = Depends(get_db),
         personalized = bool(stores)
     if not stores:  # cold start / guest fallback
         # Scored stores surface first once real reviews exist; until then this
-        # returns real stores (unscored) rather than an empty list. MySQL sorts
-        # NULLs last under DESC, so no explicit score filter is needed.
+        # returns real stores (unscored) rather than an empty list.
         stores = (db.query(Store).filter(*STORE_HAS_COORDS)
-                  .order_by(Store.experience_score.desc()).limit(6).all())
+                  .order_by(*BY_SCORE_DESC).limit(6).all())
     return {"personalized": personalized,
             "stores": [store_to_dict(s) for s in stores]}
 
@@ -54,7 +54,9 @@ def recommendations(db: Session = Depends(get_db),
 def chat(body: ChatIn, db: Session = Depends(get_db),
          user: Optional[User] = Depends(get_optional_user)):
     origin = (body.origin.lat, body.origin.lng) if body.origin else None
-    result = chat_engine.respond(body.message, db, user, body.session_id, origin=origin)
+    answer = body.answer.model_dump() if body.answer else None
+    result = chat_engine.respond(body.message, db, user, body.session_id, origin=origin,
+                                 answer=answer)
     # Persist the turn for logged-in users only; guests stay ephemeral.
     # Import lazily so history stays an optional, removable module.
     if user:

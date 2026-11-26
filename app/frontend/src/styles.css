@@ -23,10 +23,7 @@
 
   /* AI-score scale */
   --score-green: #22c55e;
-  --score-lime: #84cc16;
-  --score-amber: #f59e0b;
   --score-red: #f43f5e;
-  --score-none: #94a3b8;
 
   /* sentiment */
   --sent-pos: #16a34a;
@@ -207,7 +204,7 @@ html.dark .chat-head-banner { background: linear-gradient(145deg, #0a0a0a, #1616
 .bubble {
   max-width: 78%; padding: 11px 15px; font-size: 13.5px; line-height: 1.5; border-radius: 16px;
   background: var(--surface); color: var(--ink); border: 1px solid var(--line);
-  border-bottom-left-radius: 5px;
+  border-bottom-left-radius: 5px; white-space: pre-line;   /* route stops are one per line */
 }
 .bubble.mine {
   background: var(--nav); color: #fff; border: 0; border-bottom-right-radius: 5px; border-bottom-left-radius: 16px;
@@ -217,7 +214,10 @@ html.dark .chat-head-banner { background: linear-gradient(145deg, #0a0a0a, #1616
 .bubble.typing span:nth-child(2) { animation-delay: .18s; }
 .bubble.typing span:nth-child(3) { animation-delay: .36s; }
 .msg-stores { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 9px; max-width: 78%; }
-.intent-tag { margin-top: 6px; font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--muted-2); }
+/* The assistant's question: tappable answers, plus a quieter Skip */
+.chip-answer { border-color: var(--brand-blue-2); color: var(--brand-blue-ink); font-weight: 600; }
+html.dark .chip-answer { color: #7fb6ea; }
+.chip-skip { border-style: dashed; }
 .chat-map-btn {
   display: flex; align-items: center; gap: 8px; margin-top: 9px; max-width: 78%;
   padding: 10px 13px; border: 0; border-radius: 12px; background: var(--map-bg);
@@ -451,10 +451,13 @@ html.dark .review-item.flagged { background: #1e1600; border-color: #7a5000; }
    content, so long lists ran off the screen instead of scrolling. */
 .explore-shell { flex: none; display: grid; grid-template-columns: 360px 1fr; grid-template-rows: minmax(0, 1fr); height: calc(100vh - 60px); overflow: hidden; }
 .explore-aside { display: flex; flex-direction: column; min-height: 0; background: var(--surface); border-right: 1px solid var(--line); overflow-x: hidden; overflow-y: auto; height: 100%; }
-.explore-map { position: relative; overflow: hidden; height: 100%; }
+/* isolation: Leaflet's panes and controls carry z-index 400–1000. Without a
+   stacking context of its own here, those values compete with the whole page
+   and the map painted over the "Name this list" modal, hiding it. */
+.explore-map { position: relative; overflow: hidden; height: 100%; isolation: isolate; }
 
 /* ---------------- shared small pieces ---------------- */
-.modal-backdrop { position: fixed; inset: 0; z-index: 300; display: grid; place-items: center; background: rgba(0,0,0,.4); }
+.modal-backdrop { position: fixed; inset: 0; z-index: 1000; /* above the chat widget (900) */ display: grid; place-items: center; background: rgba(0,0,0,.4); }
 .modal-card { background: var(--surface); border-radius: 16px; padding: 24px; width: min(360px, 90vw); box-shadow: 0 8px 40px rgba(0,0,0,.25); }
 .modal-card .input { width: 100%; }
 .modal-title { font-size: 20px; color: var(--ink); margin-bottom: 14px; }
@@ -559,4 +562,15 @@ html.dark .review-item.flagged { background: #1e1600; border-color: #7a5000; }
 @media (max-width: 520px) {
   .nav-links { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .nav-chip { display: none; }
+}
+
+/* Chat mini map: numbered stops on a walking route */
+.mini-stop {
+  width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center;
+  background: #33a0e6; color: #fff; font: 700 11px Inter, sans-serif;
+  border: 2px solid #fff; box-shadow: 0 1px 6px rgba(0,0,0,.45);
+}
+.mini-start {
+  width: 14px; height: 14px; border-radius: 50%; background: #ff2865;
+  border: 3px solid #fff; box-shadow: 0 0 0 3px rgba(255,40,101,.3);
 }

@@ -19,8 +19,8 @@ def is_open_now(store: Store, now: Optional[dt.datetime] = None) -> Optional[boo
     """True/False if we have enough info, None if unknown."""
     now = now or now_ist()
     day = DAYS[now.weekday()]
-    closed = [d for d in (store.closed_days or "").split(",") if d]
-    if day in closed:
+    closed = {d.strip().lower() for d in (store.closed_days or "").split(",") if d.strip()}
+    if day.lower() in closed:
         return False
     if not store.open_time or not store.close_time:
         return None
@@ -30,4 +30,7 @@ def is_open_now(store: Store, now: Optional[dt.datetime] = None) -> Optional[boo
     except ValueError:
         return None
     t = now.hour * 60 + now.minute
-    return (o_h * 60 + o_m) <= t <= (c_h * 60 + c_m)
+    opens, closes = o_h * 60 + o_m, c_h * 60 + c_m
+    if closes < opens:   # past midnight, e.g. 18:00–01:00
+        return t >= opens or t <= closes
+    return opens <= t <= closes

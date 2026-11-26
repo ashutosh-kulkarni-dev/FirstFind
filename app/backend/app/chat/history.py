@@ -15,11 +15,12 @@ import json
 import logging
 from typing import Optional
 
-log = logging.getLogger(__name__)
-
 from sqlalchemy.orm import Session
 
+from ..common.geo import utcnow
 from ..models import ChatMessage, Conversation, User
+
+log = logging.getLogger(__name__)
 
 
 def record_turn(
@@ -47,7 +48,7 @@ def record_turn(
             text=result.get("reply", ""),
             meta=json.dumps(meta) if meta else None,
         ))
-        conv.updated_at = __import__("datetime").datetime.utcnow()
+        conv.updated_at = utcnow()
         db.commit()
     except Exception:
         db.rollback()

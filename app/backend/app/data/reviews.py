@@ -37,6 +37,7 @@ from pathlib import Path
 
 import httpx
 
+from ..common.geo import utcnow
 from ..common.aliases import alias_for
 from ..config import BOT_EMAIL, GOOGLE_PLACES_API_KEY, INGEST_MAX_DETAILS
 from ..database import SessionLocal
@@ -250,7 +251,7 @@ def ingest_from_google(db, bot: User, limit: int | None = None,
             place_id = _resolve_place_id(client, store)
             if not place_id:
                 no_place += 1
-                store.reviews_fetched_at = datetime.utcnow()   # don't retry every week
+                store.reviews_fetched_at = utcnow()   # don't retry every week
                 continue
             place = client.details(place_id, "rating,userRatingCount,businessStatus,reviews")
         except PlacesBudgetExceeded:
@@ -266,7 +267,7 @@ def ingest_from_google(db, bot: User, limit: int | None = None,
             continue
 
         visited += 1
-        store.reviews_fetched_at = datetime.utcnow()
+        store.reviews_fetched_at = utcnow()
         # Keep the Google aggregates fresh while we are here (same API call).
         if place.get("rating") is not None:
             store.google_rating = float(place["rating"])
@@ -287,7 +288,7 @@ def ingest_from_google(db, bot: User, limit: int | None = None,
                 store_id=store.id, user_id=bot.id, rating=r["rating"],
                 author_name=alias_for(store.id, key[1]),
                 text=r["text"], source="google", external_id=key[1],
-                created_at=r["created_at"] or datetime.utcnow(),
+                created_at=r["created_at"] or utcnow(),
             ))
             new_count += 1
 

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from functools import lru_cache
 from typing import Optional
 
@@ -29,16 +30,20 @@ log = logging.getLogger(__name__)
 
 _METRO_ASSET = ASSETS_DIR / "metro_stations_blr.json"
 
-# Area centroid cache — loaded once from DB per process.
-# Maps canonical area name → (lat, lng) mean of its stores.
+# Area centroid cache: canonical area name → (lat, lng) mean of its stores.
+# Rebuilt hourly so stores the daily job adds, moves or hides are picked up
+# without a restart (it used to be built once per process, forever).
+_AREA_TTL_S = 3600
 _area_coords: dict[str, tuple[float, float]] = {}
+_area_coords_at = 0.0
 
 
 def _ensure_area_coords(db: Session) -> dict[str, tuple[float, float]]:
-    """Build the area→centroid map lazily from the DB (only once per process)."""
-    global _area_coords
-    if _area_coords:
+    """The area→centroid map, built lazily from the DB and refreshed hourly."""
+    global _area_coords, _area_coords_at
+    if _area_coords and time.monotonic() - _area_coords_at < _AREA_TTL_S:
         return _area_coords
+    _area_coords_at = time.monotonic()
     from collections import defaultdict
     buckets: dict[str, list[tuple[float, float]]] = defaultdict(list)
     for s in db.query(Store).filter(*STORE_HAS_COORDS).all():
@@ -58,7 +63,7 @@ def _load_metro() -> dict:
     return json.loads(_METRO_ASSET.read_text(encoding="utf-8"))
 
 
-def _nearest_metro(lat: float, lng: float) -> Optional[dict]:
+def nearest_metro(lat: float, lng: float) -> Optional[dict]:
     data = _load_metro()
     best: Optional[dict] = None
     best_dist = float("inf")
@@ -78,7 +83,7 @@ def _nearest_metro(lat: float, lng: float) -> Optional[dict]:
     return best
 
 
-def _resolve_center(db: Session, entities: Entities,
+def resolve_center(db: Session, entities: Entities,
                     origin: Optional[tuple[float, float]] = None) -> Optional[tuple[float, float]]:
     """Return (lat, lng) for the queried place, or None.
 
@@ -126,15 +131,13 @@ def locate(db: Session, entities: Entities,
     if entities.intent not in GEOGRAPHIC_INTENTS:
         return None
     # Accept if any location signal is present: area, locality, gazetteer hit, or near-me
+    # ("near me" without an origin is no location: honest fallback, not a mis-bind.)
     has_location = (entities.area or entities.locality or entities.place is not None
                     or (entities.near_me and origin is not None))
     if not has_location:
-        # "near me" without origin — honest fallback, not a mis-bind
-        if entities.near_me:
-            return None
         return None
 
-    center = _resolve_center(db, entities, origin=origin)
+    center = resolve_center(db, entities, origin=origin)
     if center is None:
         return None
 
@@ -148,7 +151,7 @@ def locate(db: Session, entities: Entities,
         return None
 
     store_ids = [s["id"] for s in cluster.get("stores", [])]
-    nearest = _nearest_metro(lat, lng)
+    nearest = nearest_metro(lat, lng)
 
     return GeoResult(
         center=(lat, lng),

@@ -1,5 +1,12 @@
-"""Distance maths."""
+"""Distance maths, and the UTC clock the database columns use."""
+import datetime as dt
 import math
+
+
+def utcnow() -> dt.datetime:
+    """Current UTC time as a naive datetime — how every DateTime column stores
+    it. Replaces the deprecated datetime.utcnow()."""
+    return dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
 
 
 def haversine_km(lat1, lng1, lat2, lng2) -> float:

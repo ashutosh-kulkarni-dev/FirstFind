@@ -18,25 +18,26 @@ from sqlalchemy.orm import Session
 from ..models import Store, User, Zone
 from ..common.hours import is_open_now, now_ist
 from .contracts import Draft, Entities
+from .slots import describe, honest_kind
 from .retrieval import (get_known_areas, get_store_by_name,
                         get_stores_for_comparison, rank_stores,
                         _sentiment_summary)
 
 SUGGESTIONS = [
-    "Show me thrift stores in Koramangala",
-    "Vintage stores under ₹500",
-    "Which stores are open right now?",
-    "Which neighbourhoods have the most thrift stores?",
-    "What do people say about the stores in Indiranagar?",
+    "Thrift stores in Koramangala",
+    "Vintage under ₹500",
+    "Plan a thrift walk in Indiranagar",
+    "What's open right now?",
+    "Ethnic wear for women",
     "Recommend some stores for me",
     "How do I check a thrifted jacket?",
 ]
 
 GREETING_SUGGESTIONS = [
-    "Show me thrift stores in Koramangala",
-    "Vintage stores under ₹500",
-    "Which stores are open right now?",
-    "Where are the best thrift zones?",
+    "Thrift stores in Koramangala",
+    "Vintage under ₹500",
+    "Plan a thrift walk near me",
+    "What's open right now?",
 ]
 
 
@@ -60,60 +61,53 @@ def _fmt_score(s: Store) -> str:
     return f"{s.experience_score:.1f}★" if s.experience_score else "unrated"
 
 
-def _handle_find_by_area(ctx: HandlerCtx) -> Draft:
-    place_hit = getattr(ctx.entities, 'place', None)
-    near_me = getattr(ctx.entities, 'near_me', False)
-    location = (ctx.entities.area or ctx.entities.locality
-                or (place_hit.canonical if place_hit else None)
-                or ("your location" if near_me else None))
+def _where(e: Entities) -> tuple[str, bool]:
+    """(" in Koramangala" / " near you" / "", has_location)."""
+    place = getattr(e, "place", None)
+    loc = e.area or e.locality or (place.canonical if place else None)
+    if loc:
+        return f" in {loc}", True
+    if getattr(e, "near_me", False):
+        return " near you", True
+    return "", False
+
+
+def _what(e: Entities, stores: Optional[list] = None) -> str:
+    """'budget-friendly vintage stores for women' — the store kind only when
+    every store shown is of that kind."""
+    style = e.style or (e.category if e.category in {"vintage", "streetwear", "ethnic", "denim",
+                                                      "formal"} else None)
+    kind = honest_kind(e.store_kind, stores) if stores else e.store_kind
+    return describe(e.price_tier, e.audience, kind, style)
+
+
+def _handle_search(ctx: HandlerCtx) -> Draft:
+    """Area, style and budget searches: one short, friendly line; the store
+    cards carry the details."""
+    e = ctx.entities
+    where, has_loc = _where(e)
+    what = _what(e, ctx.stores)
+    under = f" under ₹{e.price_max}" if e.price_max else ""
     if ctx.stores:
-        n = len(ctx.stores)
-        if near_me and not place_hit and not ctx.entities.area:
-            reply = f"Found {n} store{'s' if n != 1 else ''} near you."
-        else:
-            reply = f"Found {n} store{'s' if n != 1 else ''} in {location}."
-    else:
+        lead = "Good news — here" if len(ctx.stores) >= 3 else "Here"
+        return Draft(reply=f"{lead} are {what}{under}{where} you might like.", stores=ctx.stores)
+    if has_loc:
         areas = get_known_areas(ctx.db)
-        reply = f"I don't have any stores listed in {location or 'that area'} yet."
-        return Draft(reply=reply, stores=[], suggestions=[f"Thrift stores in {a}" for a in areas[:3]])
-    return Draft(reply=reply, stores=ctx.stores)
-
-
-def _handle_find_by_category(ctx: HandlerCtx) -> Draft:
-    label = ctx.entities.category or "that style"
-    _place = getattr(ctx.entities, 'place', None)
-    _loc = ctx.entities.area or (_place.canonical if _place else None)
-    where = f" in {_loc}" if _loc else ""
-    if ctx.stores:
-        reply = f"Best matches for {label}{where} first (some stores don't list a style):"
-    else:
-        reply = f"I couldn't find any {label} stores{where}."
-        return Draft(reply=reply, stores=[], suggestions=[f"{c.title()} stores" for c in
-                     ["vintage", "streetwear", "denim", "ethnic"] if c != (ctx.entities.category or "")])
-    return Draft(reply=reply, stores=ctx.stores)
-
-
-def _handle_find_by_price(ctx: HandlerCtx) -> Draft:
-    price = ctx.entities.price_max or 500
-    _place = getattr(ctx.entities, 'place', None)
-    _loc = ctx.entities.area or (_place.canonical if _place else None)
-    where = f" in {_loc}" if _loc else ""
-    if ctx.stores:
-        reply = (f"Best picks{where} for a ₹{price} budget — known-cheapest first "
-                 "(stores without listed prices are included):")
-    else:
-        reply = f"I don't have any stores{where} to suggest right now."
-    return Draft(reply=reply, stores=ctx.stores)
+        return Draft(reply=f"I don't have {what}{under}{where} yet. Want to try a nearby area?",
+                     stores=[], suggestions=[f"Thrift stores in {a}" for a in areas[:3]])
+    return Draft(reply=f"I couldn't find {what}{under} yet — try another style or budget?",
+                 stores=[], suggestions=["Vintage under ₹500", "Ethnic wear for women",
+                                         "Streetwear in Koramangala"])
 
 
 def _handle_open_now(ctx: HandlerCtx) -> Draft:
-    now = now_ist().strftime("%I:%M %p")
+    now = now_ist().strftime("%I:%M %p").lstrip("0")
     open_ct = sum(1 for s in ctx.stores if is_open_now(s) is True)
     if open_ct:
-        reply = f"Likely open right now ({now}), best matches first:"
+        reply = f"These should be open now ({now}) — happy hunting!"
     else:
-        reply = (f"I couldn't confirm anything open at {now} — many stores here "
-                 "haven't shared timings. Best options, call before visiting:")
+        reply = (f"I can't confirm anything open at {now} — lots of stores don't list hours, "
+                 "so it's worth calling ahead.")
     return Draft(reply=reply, stores=ctx.stores)
 
 
@@ -125,26 +119,23 @@ def _handle_zone_exploration(ctx: HandlerCtx) -> Draft:
             + (f", avg {z.avg_score}★" if z.avg_score else "")
             for z in zones
         ]
-        reply = ("Bengaluru's thrift scene clusters into these neighbourhoods:\n"
-                 + "\n".join(lines)
-                 + "\nAsk me about any area, or check the Zones page for the map view.")
+        reply = ("Bengaluru's shopping clusters:\n" + "\n".join(lines)
+                 + "\nAsk about any of them, or say \"plan a walk\" there.")
     else:
-        reply = "Zone data isn't computed yet — run the seed script first."
+        reply = "I don't have the neighbourhood map ready yet — try asking about an area."
     return Draft(reply=reply, stores=[])
 
 
 def _handle_store_recommendation(ctx: HandlerCtx) -> Draft:
-    if ctx.stores:
-        if ctx.user:
-            reply = "Based on stores you've viewed and saved, you might like these:"
-        else:
-            reply = ("You're browsing as a guest, so here are the highest-rated stores overall — "
-                     "log in and interact with a few stores to unlock personalized picks.")
+    if ctx.stores and ctx.user:
+        reply = "Picked for you, based on the stores you've saved and liked."
+    elif ctx.stores:
+        what = _what(ctx.entities)
+        reply = (f"Here are some well-loved {what}. Log in and save a few to get picks made for you."
+                 if what != "stores" else
+                 "Here are some well-loved spots. Log in and save a few to get picks made for you.")
     else:
-        if ctx.user:
-            reply = "You haven't interacted with enough stores yet, so here are the city's best:"
-        else:
-            reply = "Here are the highest-rated stores:"
+        reply = "I don't have picks for that yet — tell me an area or a style?"
     return Draft(reply=reply, stores=ctx.stores)
 
 
@@ -167,10 +158,7 @@ def _handle_review_insight(ctx: HandlerCtx) -> Draft:
         reply = (f"Best-reviewed stores in {ctx.entities.area}:" if stores
                  else f"I don't have any stores listed in {ctx.entities.area} yet.")
         return Draft(reply=reply, stores=stores)
-    return Draft(
-        reply="Which store do you want review insights for? Name one and I'll summarise what people say.",
-        stores=[],
-    )
+    return Draft(reply="Which store? Name one and I'll sum up what people say.", stores=[])
 
 
 def _handle_store_comparison(ctx: HandlerCtx) -> Draft:
@@ -185,10 +173,8 @@ def _handle_store_comparison(ctx: HandlerCtx) -> Draft:
                  f"₹{b.price_min or '?'}–{b.price_max or '?'}\n"
                  f"On community experience alone, **{winner.name}** edges it.")
         return Draft(reply=reply, stores=[a, b])
-    return Draft(
-        reply="Name two stores and I'll compare them — e.g. 'compare EcoDhaga and Love Me Twice'.",
-        stores=[],
-    )
+    return Draft(reply="Name two stores and I'll compare them — like “EcoDhaga vs Love Me Twice”.",
+                 stores=[])
 
 
 def _handle_best_time(ctx: HandlerCtx) -> Draft:
@@ -208,19 +194,18 @@ def _handle_best_time(ctx: HandlerCtx) -> Draft:
 
 
 def _handle_shopping_advice(ctx: HandlerCtx) -> Draft:
-    # Delegates to advice.py via engine; returns a sentinel that engine swaps out.
-    # This handler is here so the registry is complete; engine calls advice.lookup()
-    # directly and bypasses retrieval for this intent.
-    return Draft(reply="__advice__", stores=[])
+    # With CHAT_ADVICE on, the engine answers advice questions itself before
+    # dispatch, so this only runs with the advice module switched off. It used
+    # to return a "__advice__" placeholder that then reached the user verbatim.
+    return _handle_general(ctx)
 
 
 def _handle_general(ctx: HandlerCtx) -> Draft:
     return Draft(
-        reply=("I can help you find thrift stores by area, category, or budget, check "
-               "what's open now, explore thrift zones, compare stores, and summarise "
-               "reviews. Try one of these:"),
+        reply=("I can find stores by area, style or budget, check what's open, "
+               "or plan a walking route. Try one of these:"),
         stores=[],
-        suggestions=SUGGESTIONS[:3],
+        suggestions=SUGGESTIONS[:4],
     )
 
 
@@ -231,9 +216,9 @@ def _handle_general(ctx: HandlerCtx) -> Draft:
 HandlerFn = Callable[[HandlerCtx], Draft]
 
 HANDLERS: dict[str, HandlerFn] = {
-    "find_by_area":         _handle_find_by_area,
-    "find_by_category":     _handle_find_by_category,
-    "find_by_price":        _handle_find_by_price,
+    "find_by_area":         _handle_search,
+    "find_by_category":     _handle_search,
+    "find_by_price":        _handle_search,
     "open_now":             _handle_open_now,
     "zone_exploration":     _handle_zone_exploration,
     "store_recommendation": _handle_store_recommendation,

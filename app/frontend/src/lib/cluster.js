@@ -7,7 +7,7 @@
 
 const EARTH_KM = 6371
 
-export function haversineKm(aLat, aLng, bLat, bLng) {
+function haversineKm(aLat, aLng, bLat, bLng) {
   const toRad = d => (d * Math.PI) / 180
   const dLat = toRad(bLat - aLat)
   const dLng = toRad(bLng - aLng)

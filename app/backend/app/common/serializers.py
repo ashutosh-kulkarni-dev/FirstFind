@@ -18,6 +18,12 @@ STORE_HAS_COORDS = (Store.lat.isnot(None), Store.lng.isnot(None),
                     Store.is_active.isnot(False))
 
 
+# Best score first, unscored stores last — on every database. A bare
+# `.desc()` puts NULLs last on MySQL/SQLite but FIRST on Postgres (production).
+# `.nullslast()` is not portable to MySQL, hence the IS NULL key.
+BY_SCORE_DESC = (Store.experience_score.is_(None), Store.experience_score.desc())
+
+
 def has_coords(store: Store) -> bool:
     """In-Python equivalent of STORE_HAS_COORDS for already-loaded objects."""
     return (store is not None and store.lat is not None

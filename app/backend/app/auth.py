@@ -1,6 +1,7 @@
 """JWT auth utilities and FastAPI dependencies."""
 import datetime as dt
 import hashlib
+import hmac
 import os
 from typing import Optional
 
@@ -51,7 +52,17 @@ def verify_password(password: str, stored: str) -> bool:
         return False
     iters, salt, dk_hex = parsed
     dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, iters)
-    return dk.hex() == dk_hex
+    # Constant-time compare so response timing reveals nothing about the hash.
+    return hmac.compare_digest(dk.hex(), dk_hex)
+
+
+# Hashed once; login checks a password against it when the email is unknown so
+# "no such account" takes as long as "wrong password" (no email enumeration).
+_DUMMY_HASH = hash_password("not-a-real-password")
+
+
+def burn_password_check(password: str) -> None:
+    verify_password(password, _DUMMY_HASH)
 
 
 def needs_rehash(stored: str) -> bool:
@@ -65,7 +76,7 @@ def create_token(user: User) -> str:
         "sub": str(user.id),
         "email": user.email,
         "name": user.name,
-        "exp": dt.datetime.utcnow() + dt.timedelta(hours=JWT_EXPIRE_HOURS),
+        "exp": dt.datetime.now(dt.timezone.utc) + dt.timedelta(hours=JWT_EXPIRE_HOURS),
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGO)
 
@@ -93,4 +104,8 @@ def get_optional_user(request: Request, db: Session = Depends(get_db)) -> Option
     payload = _decode(header[7:])
     if not payload:
         return None
-    return db.get(User, int(payload["sub"]))
+    try:
+        user_id = int(payload["sub"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    return db.get(User, user_id)
